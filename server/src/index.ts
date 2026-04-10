@@ -13,6 +13,8 @@ import {
   authRoutes,
   bookingRoutes,
   categoryRoutes,
+  commentRoutes,
+  forumRoutes,
   favoriteRoutes,
   mediaRoutes,
   orderRoutes,
@@ -46,38 +48,29 @@ app.use(
 );
 app.use(cookieParser());
 
-const orderService = new OrderService();
 const bookingService = new BookingService();
-// Ch?y m?i 10 ph?t
-cron.schedule("*/10 * * * *", async () => {
-  console.log("?? Cron: ki?m tra don c?n h?y...");
-  await orderService.cancelExpiredOrders();
-});
-cron.schedule("*/10 * * * *", async () => {
-  console.log("?? Cron: g?i nh?c thanh toan...");
-  await orderService.autoCompleteOrders();
-});
-cron.schedule("0 * * * *", async () => {
-  console.log("🔄 Running booking cleanup job...");
-  try {
-    const result = await bookingService.cancelExpiredPendingBookings();
-    console.log(
-      `✅ Cleanup completed: ${result.remindersSent} reminders, ${result.bookingsCancelled} cancelled`
-    );
-  } catch (err) {
-    console.error("❌ Booking cleanup job failed:", err);
-  }
-});
-cron.schedule("*/15 * * * *", async () => {
-  try {
 
-    const result =   await bookingService.autoCompleteBooking();
-    console.log(`✅ ${result} bookings auto-completed.`);
-  } catch (err) {
-    console.error("❌ L?i khi g?i nh?c nh?:", err);
-  }
+// cron.schedule("0 * * * *", async () => {
+//   console.log("🔄 Running booking cleanup job...");
+//   try {
+//     const result = await bookingService.cancelExpiredPendingBookings();
+//     console.log(
+//       `✅ Cleanup completed: ${result.remindersSent} reminders, ${result.bookingsCancelled} cancelled`
+//     );
+//   } catch (err) {
+//     console.error("❌ Booking cleanup job failed:", err);
+//   }
+// });
+// cron.schedule("*/15 * * * *", async () => {
+//   try {
+
+//     const result =   await bookingService.autoCompleteBooking();
+//     console.log(`✅ ${result} bookings auto-completed.`);
+//   } catch (err) {
+//     console.error("❌ L?i khi g?i nh?c nh?:", err);
+//   }
  
-});
+// });
 // health check
 app.get("/", (_, res) => {
   return res.status(OK).json({
@@ -105,6 +98,8 @@ app.use("/amenities", amenityRoutes);
 app.use("/favorites", authenticate, favoriteRoutes);
 app.use("/properties", propertyRoutes);
 app.use("/sites", siteRoutes);
+app.use("/comments", commentRoutes);
+app.use("/forum", forumRoutes);
 app.use("/payos/webhook", payosRoutes);
 app.use("/messages", authenticate, supportRouter);
 app.use("/dashboard", authenticate, dashboardRoutes);

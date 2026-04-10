@@ -21,3 +21,5 @@ export { FavoriteService } from "@/services/favorite.service";
 export { PropertyService } from "@/services/property.service";
 export { ReviewService } from "@/services/review.service";
 export { SiteService } from "@/services/site.service";
+export { CommentService } from "@/services/comment.service";
+export { ForumService } from "@/services/forum.service";

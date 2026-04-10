@@ -3,6 +3,8 @@ import {
   AmenityService,
   AuthService,
   BookingService,
+  CommentService,
+  ForumService,
   // Hipcamp-style services
   CartService,
   CategoryService,
@@ -49,6 +51,8 @@ container.register(TOKENS.ReviewService, () => new ReviewService(), { singleton:
 container.register(TOKENS.AmenityService, () => new AmenityService(), { singleton: true });
 container.register(TOKENS.PropertyService, () => new PropertyService(), { singleton: true });
 container.register(TOKENS.SiteService, () => new SiteService(), { singleton: true });
+container.register(TOKENS.CommentService, () => new CommentService(), { singleton: true });
+container.register(TOKENS.ForumService, () => new ForumService(), { singleton: true });
 
 export type { Container } from "./container";
 export { TOKENS } from "./tokens";

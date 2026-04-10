@@ -16,6 +16,8 @@ export const TOKENS = {
   PropertyService: Symbol("PropertyService"),
   SiteService: Symbol("SiteService"),
   NotificationService: Symbol("NotificationService"),
+  CommentService: Symbol("CommentService"),
+  ForumService: Symbol("ForumService"),
 } as const;
 
 export type TokenMap = typeof TOKENS;

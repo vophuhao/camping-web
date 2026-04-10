@@ -35,6 +35,18 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Forum legacy aliases */
+  --bg-primary: var(--background);
+  --bg-secondary: var(--secondary);
+  --bg-tertiary: var(--card);
+  --bg-hover: var(--muted);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --border-color: var(--border);
+  --primary-light: color-mix(in oklab, var(--primary) 18%, transparent);
+  --primary-dark: color-mix(in oklab, var(--primary) 80%, black);
+  --primary-alpha: color-mix(in oklab, var(--primary) 14%, transparent);
 }
 
 .dark {
@@ -69,6 +81,18 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Forum legacy aliases */
+  --bg-primary: var(--background);
+  --bg-secondary: var(--secondary);
+  --bg-tertiary: var(--card);
+  --bg-hover: var(--muted);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --border-color: var(--border);
+  --primary-light: color-mix(in oklab, var(--primary) 18%, transparent);
+  --primary-dark: color-mix(in oklab, var(--primary) 80%, black);
+  --primary-alpha: color-mix(in oklab, var(--primary) 14%, transparent);
 }
 
 @theme inline {

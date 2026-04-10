@@ -20,7 +20,7 @@ import { useState } from 'react';
 const navItems = [
   { name: 'Trang chủ', href: '/' },
   { name: 'Tìm kiếm', href: '/search' },
-  { name: 'Sản phẩm', href: '/products' },
+  { name: 'Diễn đàn', href: '/forum' },
   // { name: 'Giới thiệu', href: '/about' },
   // { name: 'Liên hệ', href: '/contact' },
 ];
@@ -92,40 +92,43 @@ export default function Header() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
                 {user.role === 'admin' && (
-                  <Link href="/admin">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="sm"
+                  >
+                    <Link href="/admin">
                       {/* <LayoutDashboard className="mr-2 h-4 w-4" /> */}
                       Admin
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
                 {user.role === 'host' && (
-                  <Link href="/host">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="sm"
+                  >
+                    <Link href="/host">
                       {/* <LayoutDashboard className="mr-2 h-4 w-4" /> */}
                       Trang Host
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
                 {user.role === 'user' && (
-                  <Link href="/become-host">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="sm"
+                  >
+                    <Link href="/become-host">
                       {/* <LayoutDashboard className="mr-2 h-4 w-4" /> */}
                       Trở thành Host
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
                 <Button
                   onClick={() => router.push('/cart')}
@@ -159,14 +162,12 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/sign-in">
-                  <Button variant="ghost" size="sm">
-                    Đăng nhập
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button size="sm">Đăng ký</Button>
-                </Link>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/sign-in">Đăng nhập</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/sign-up">Đăng ký</Link>
+                </Button>
               </div>
             )}
           </div>
@@ -233,29 +234,34 @@ export default function Header() {
               {isAuthenticated && user ? (
                 <div className="space-y-2">
                   {user.role === 'admin' && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-start"
                     >
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
+                      <Link
+                        href="/admin"
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Admin Panel
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   )}
                   {user.role === 'host' && (
-                    <Link href="/host" onClick={() => setMobileMenuOpen(false)}>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <Link
+                        href="/host"
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Host Panel
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   )}
                   <div className="flex items-center gap-2 rounded-md border px-3 py-2">
                     <User className="h-4 w-4" />
@@ -272,20 +278,22 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Link
-                    href="/sign-in"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Button variant="outline" className="w-full">
+                  <Button asChild variant="outline" className="w-full">
+                    <Link
+                      href="/sign-in"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       Đăng nhập
-                    </Button>
-                  </Link>
-                  <Link
-                    href="/sign-up"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Button className="w-full">Đăng ký</Button>
-                  </Link>
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link
+                      href="/sign-up"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Đăng ký
+                    </Link>
+                  </Button>
                 </div>
               )}
             </div>

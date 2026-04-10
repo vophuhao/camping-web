@@ -1,0 +1,779 @@
+import { v2 as cloudinary } from "cloudinary";
+import sanitizeHtml from "sanitize-html";
+import validator from "validator";
+import streamifier from "streamifier";
+import ForumPost from "../models/forum.post.model";
+import Comment from "../models/comment.model";
+
+type UploadedFile = {
+  buffer: Buffer;
+};
+
+type UploadedFiles = {
+  [key: string]: UploadedFile[];
+};
+
+
+
+export interface CreatePostInput {
+  title: string;
+  content: string;
+  subject: string;
+  summary: string | undefined;
+  tags: string | string[] | undefined;
+  badge: string | undefined;
+  images: string[] | undefined;
+  attachments: string[] | undefined;
+  visibility: "public" | "private" | undefined;
+  status: string | undefined;
+  pinned: boolean | undefined;
+  isAnonymous: boolean | undefined;
+  aiGenerated: boolean | string | undefined;
+}
+
+export interface UpdatePostInput {
+  title: string | undefined;
+  content: string | undefined;
+  subject: string | undefined;
+  summary: string | undefined;
+  tags: string | string[] | undefined;
+  badge: string | undefined;
+  images: string[] | undefined;
+  attachments: string[] | undefined;
+  visibility: string | undefined;
+  status: string | undefined;
+  pinned: boolean | undefined;
+  isAnonymous: boolean | undefined;
+}
+
+export interface GetPostsInput {
+  page: number;
+  pageSize: number;
+  search: string | undefined;
+  category: string | undefined;
+}
+export interface GetUserPostsInput {
+  page: number;
+  pageSize: number;
+  userId: string;
+  isOwnProfile: boolean;
+  isAdmin: boolean;
+}
+
+export class ForumService {
+  /**
+   * Upload buffer to Cloudinary
+   */
+  private uploadBufferToCloudinary = (buffer: Buffer): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "forum-posts", resource_type: "image" },
+        (error: any, result: any) => {
+          if (result) resolve(result);
+          else reject(error);
+        }
+      );
+      streamifier.createReadStream(buffer).pipe(stream);
+    });
+  };
+
+  /**
+   * Process base64 images in content and upload to Cloudinary
+   */
+  private processContentImages = async (content: string): Promise<string> => {
+    if (!content) return "";
+    
+    const imgTagRegex =
+      /<img[^>]+src=["'](data:image\/(?:png|jpeg|jpg|gif);base64,[^"'>]+)["'][^>]*>/gi;
+    let match;
+    let newContent = content;
+    const uploadPromises = [];
+    const replacements: any[] = [];
+
+    while ((match = imgTagRegex.exec(content)) !== null) {
+      const base64Data = match[1];
+      if (!base64Data) {
+        continue;
+      }
+      const uploadPromise = this.uploadBufferToCloudinary(
+        Buffer.from(base64Data.split(",")[1] || "", "base64")
+      )
+        .then((result: any) => {
+          replacements.push({ old: base64Data, url: result.secure_url });
+        })
+        .catch(() => {});
+      uploadPromises.push(uploadPromise);
+    }
+
+    await Promise.all(uploadPromises);
+
+    for (const { old, url } of replacements) {
+      newContent = newContent.replace(old, url);
+    }
+
+    return newContent;
+  };
+
+  /**
+   * Sanitize and process content
+   */
+  private sanitizeContent = async (content: string): Promise<string> => {
+    let processedContent = await this.processContentImages(content);
+    processedContent = sanitizeHtml(processedContent, {
+      allowedTags: [
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "blockquote",
+        "p",
+        "a",
+        "ul",
+        "ol",
+        "nl",
+        "li",
+        "b",
+        "i",
+        "strong",
+        "em",
+        "strike",
+        "code",
+        "hr",
+        "br",
+        "div",
+        "span",
+        "img",
+        "pre",
+        "u",
+      ],
+      allowedAttributes: {
+        a: ["href", "name", "target"],
+        img: ["src", "alt", "title", "width", "height", "style"],
+        "*": ["data-*", "style"],
+      },
+      allowedSchemes: ["data", "http", "https"],
+      allowProtocolRelative: true,
+    });
+
+    return processedContent;
+  };
+
+  /**
+   * Create a new forum post
+   */
+  async createPost(
+    userId: string,
+    input: CreatePostInput,
+    files?: UploadedFiles
+  ): Promise<any> {
+    const {
+      title,
+      content,
+      subject,
+      summary,
+      tags,
+      badge,
+      images,
+      attachments,
+      visibility = "public",
+      status = "active",
+      pinned = false,
+      isAnonymous = false,
+      aiGenerated = false,
+    } = input;
+
+    if (!title || !content || !subject) {
+      throw new Error("Title, content, and subject are required.");
+    }
+
+    // Upload cover image
+    let imageUrl = "";
+    if (files?.coverImage?.[0]) {
+      const result = await this.uploadBufferToCloudinary(files.coverImage[0].buffer);
+      imageUrl = result.secure_url;
+    }
+
+    // Upload multiple images
+    let imagesArr: string[] = [];
+    if (files?.images) {
+      for (const file of files.images) {
+        const result = await this.uploadBufferToCloudinary(file.buffer);
+        imagesArr.push(result.secure_url);
+      }
+    } else if (Array.isArray(images)) {
+      imagesArr = images;
+    }
+
+    // Upload attachments
+    let attachmentsArr: string[] = [];
+    if (files?.attachments) {
+      for (const file of files.attachments) {
+        const result = await this.uploadBufferToCloudinary(file.buffer);
+        attachmentsArr.push(result.secure_url);
+      }
+    } else if (Array.isArray(attachments)) {
+      attachmentsArr = attachments;
+    }
+
+    // Process tags
+    let tagsArr: string[] = [];
+    if (typeof tags === "string") {
+      tagsArr = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    } else if (Array.isArray(tags)) {
+      tagsArr = tags;
+    }
+
+    // Safe content
+    const safeTitle = validator.escape(title);
+    const safeSummary = validator.escape(summary || "");
+
+    // Determine AI badge
+    const isAIGenerated =
+      aiGenerated === true || aiGenerated === "true" || aiGenerated === "1";
+    let safeBadge: string | undefined;
+    if (isAIGenerated) {
+      safeBadge = "ai";
+    } else if (
+      badge &&
+      ["featured", "ai", "meme", "quote", "hot", "new"].includes(badge)
+    ) {
+      safeBadge = badge;
+    }
+
+    // Process content
+    const processedContent = await this.sanitizeContent(content);
+    const safeTagsArr = tagsArr.map((t) => validator.escape(t));
+
+    console.log("DEBUG: ForumPost constructor:", typeof ForumPost, ForumPost);
+    const post = new ForumPost({
+      title: safeTitle,
+      content: processedContent,
+      subject,
+      summary: safeSummary,
+      tags: safeTagsArr,
+      imageUrl,
+      images: imagesArr,
+      attachments: attachmentsArr,
+      userId,
+      visibility,
+      status,
+      pinned,
+      isAnonymous,
+      aiGenerated: isAIGenerated,
+      ...(safeBadge && { badge: safeBadge }),
+    });
+
+    await post.save();
+    await post.populate("userId", "name avatarUrl email");
+
+    return post;
+  }
+
+  /**
+   * Get all posts with pagination and filters
+   */
+  async getPosts(input: GetPostsInput): Promise<{
+    posts: any[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  }> {
+    const { page, pageSize, search, category } = input;
+    const skip = (page - 1) * pageSize;
+
+    const conditions: any[] = [
+      { status: "active" },
+      { visibility: "public" },
+    ];
+
+    if (category) {
+      conditions.push({ subject: category });
+    }
+
+    if (search && search.trim()) {
+      conditions.push({
+        $or: [
+          { title: { $regex: search.trim(), $options: "i" } },
+          { content: { $regex: search.trim(), $options: "i" } },
+        ],
+      });
+    }
+
+    const query = { $and: conditions };
+
+    const posts = await ForumPost.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .populate("userId", "username avatarUrl email");
+
+    const total = await ForumPost.countDocuments(query);
+
+    const postsWithCounts = await Promise.all(
+      posts.map(async (post: any) => {
+        const obj = post.toObject();
+        obj.likeCount = Array.isArray(obj.likes) ? obj.likes.length : 0;
+        obj.saveCount = Array.isArray(obj.savedBy) ? obj.savedBy.length : 0;
+        const commentCount = await Comment.countDocuments({ postId: post._id });
+        obj.commentCount = commentCount;
+        return obj;
+      })
+    ); 
+    return {
+      posts: postsWithCounts,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  /**
+   * Get a single post by ID or slug
+   */
+  async getPost(id: string, userId?: string): Promise<any> {
+    
+    const post = await ForumPost.findOne({ slug: id }).populate(
+      "userId",
+      "username avatarUrl email _id "
+    );
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    if (!post.userId) {
+      throw new Error("User not found for this post");
+    }
+
+    // Check access permissions
+    const isAdmin = false; // This would be passed from controller
+    const isOwner = userId && post.userId._id.toString() === userId.toString();
+
+    if (post.status === "deleted") {
+      throw new Error("Post not found");
+    }
+
+    if (post.status === "hidden" && !isAdmin && !isOwner) {
+      throw new Error("Post not found");
+    }
+
+    if (post.visibility === "private") {
+      if (!userId || post.userId._id.toString() !== userId) {
+        throw new Error("Access denied");
+      }
+    }
+
+    const postObj = post.toObject();
+    postObj.likeCount = post.likes?.length || 0;
+    postObj.saveCount = post.savedBy?.length || 0;
+
+    const commentCount = await Comment.countDocuments({ postId: post._id });
+    postObj.commentCount = commentCount;
+
+    if (userId) {
+      postObj.isLiked =
+        post.likes?.some((id: any) => id.equals(userId)) || false;
+      postObj.isSaved =
+        post.savedBy?.some((id: any) => id.equals(userId)) || false;
+    }
+
+    // Handle view count increment with deduplication
+    postObj.viewCount = await this.incrementViewCount(post, userId);
+
+    return postObj;
+  }
+
+  /**
+   * Increment view count with deduplication
+   */
+  private incrementViewCount = (
+    post: any,
+    _userId?: string
+  ): Promise<number> => {
+    return new Promise((resolve) => {
+      // Simplified view count - would need session/cache in production
+      post.viewCount = (post.viewCount || 0) + 1;
+      post.save().then(() => resolve(post.viewCount));
+    });
+  };
+
+  /**
+   * Update a post
+   */
+  async updatePost(
+    postId: string,
+    userId: string,
+    input: UpdatePostInput,
+    files?: UploadedFiles
+  ): Promise<any> {
+    const post = await ForumPost.findById(postId);
+    if (!post) {
+      throw new Error("Bài viết không tồn tại");
+    }
+
+    if (post.userId.toString() !== userId) {
+      throw new Error("Không có quyền sửa bài viết này");
+    }
+
+    const { title, content, subject, summary, tags, badge, images, attachments, visibility, status, pinned, isAnonymous } = input;
+
+    if (title) post.title = validator.escape(title);
+    if (content) post.content = await this.sanitizeContent(content);
+    if (subject) post.subject = subject;
+    if (summary) post.summary = validator.escape(summary);
+    if (badge) post.badge = validator.escape(badge);
+    if (visibility) post.visibility = visibility;
+    if (status) post.status = status;
+    if (typeof pinned !== "undefined") post.pinned = !!pinned;
+    if (typeof isAnonymous !== "undefined") post.isAnonymous = !!isAnonymous;
+
+    // Handle tags
+    if (tags) {
+      if (typeof tags === "string") {
+        post.tags = tags
+          .split(",")
+          .map((t: string) => validator.escape(t.trim()))
+          .filter(Boolean);
+      } else if (Array.isArray(tags)) {
+        post.tags = tags.map((t: string) => validator.escape(t));
+      }
+    }
+
+    // Upload cover image
+    if (files?.coverImage?.[0]) {
+      const result = await this.uploadBufferToCloudinary(
+        files.coverImage[0].buffer
+      );
+      post.imageUrl = result.secure_url;
+    }
+
+    // Upload multiple images
+    if (files?.images) {
+      post.images = [];
+      for (const file of files.images) {
+        const result = await this.uploadBufferToCloudinary(file.buffer);
+        post.images.push(result.secure_url);
+      }
+    } else if (images && Array.isArray(images)) {
+      post.images = images;
+    }
+
+    // Upload attachments
+    if (files?.attachments) {
+      post.attachments = [];
+      for (const file of files.attachments) {
+        const result = await this.uploadBufferToCloudinary(file.buffer);
+        post.attachments.push(result.secure_url);
+      }
+    } else if (attachments && Array.isArray(attachments)) {
+      post.attachments = attachments;
+    }
+
+    post.isEdited = true;
+    post.updatedAt = new Date();
+
+    await post.save();
+    await post.populate("userId", "name avatarUrl email");
+
+    return post;
+  }
+
+  /**
+   * Delete a post
+   */
+  async deletePost(postId: string, userId: string): Promise<{ message: string }> {
+    const post = await ForumPost.findById(postId);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    if (post.userId.toString() !== userId) {
+      throw new Error("Permission denied");
+    }
+
+    await post.deleteOne();
+    return { message: "Post deleted" };
+  }
+
+  /**
+   * Toggle like on a post
+   */
+  async toggleLike(postId: string, userId: string): Promise<{
+    success: boolean;
+    liked: boolean;
+    likeCount: number;
+    post: any;
+  }> {
+    const post = await ForumPost.findById(postId);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    const liked = post.likes?.some(
+      (id: any) => id && id.toString() === userId.toString()
+    );
+
+    let updatedPost;
+    if (liked) {
+      updatedPost = await ForumPost.findByIdAndUpdate(
+        postId,
+        { $pull: { likes: userId } },
+        { new: true }
+      ).populate("userId", "name avatarUrl email");
+    } else {
+      updatedPost = await ForumPost.findByIdAndUpdate(
+        postId,
+        { $addToSet: { likes: userId } },
+        { new: true }
+      ).populate("userId", "name avatarUrl email");
+    }
+
+    if (!updatedPost) {
+      throw new Error("Post not found");
+    }
+
+    // Update likeCount after likes array changes
+    const newLikeCount = Array.isArray(updatedPost.likes) ? updatedPost.likes.length : 0;
+    updatedPost.likeCount = newLikeCount;
+    await updatedPost.save();
+
+    const postObj = updatedPost.toObject() as any;
+    
+    postObj.likeCount = newLikeCount;
+    postObj.isLiked = updatedPost.likes?.some(
+      (id: any) => id && id.toString() === userId.toString()
+    ) ?? false;
+    postObj.isBookmarked = (updatedPost.savedBy?.some(
+      (id: any) => id && id.toString() === userId.toString()
+    ) ?? false);
+
+    return {
+      success: true,
+      liked: !liked,
+      likeCount: newLikeCount,
+      post: postObj,
+    };
+  }
+
+  /**
+   * Toggle save on a post
+   */
+  async toggleSave(postId: string, userId: string): Promise<{
+    success: boolean;
+    saved: boolean;
+    post: any;
+  }> {
+    const post = await ForumPost.findById(postId);
+    if (!post) {
+      throw new Error("Bài viết không tồn tại");
+    }
+
+    const hasSaved =
+      post.savedBy &&
+      post.savedBy.some((id: any) => id.toString() === userId.toString());
+
+    let updatedPost;
+    if (hasSaved) {
+      updatedPost = await ForumPost.findByIdAndUpdate(
+        postId,
+        { $pull: { savedBy: userId } },
+        { new: true }
+      ).populate("userId", "name avatarUrl email");
+    } else {
+      updatedPost = await ForumPost.findByIdAndUpdate(
+        postId,
+        { $addToSet: { savedBy: userId } },
+        { new: true }
+      ).populate("userId", "name avatarUrl email");
+    }
+
+    if (!updatedPost) {
+      throw new Error("Bài viết không tồn tại");
+    }
+
+    // Update saveCount after savedBy array changes
+    const newSaveCount = Array.isArray(updatedPost.savedBy) ? updatedPost.savedBy.length : 0;
+    updatedPost.saveCount = newSaveCount;
+    await updatedPost.save();
+
+    const postObj = updatedPost.toObject() as any;
+    
+    postObj.saveCount = newSaveCount;
+    postObj.likeCount = Array.isArray(updatedPost.likes) ? updatedPost.likes.length : 0;
+    postObj.isBookmarked =
+      Array.isArray(updatedPost.savedBy) &&
+      updatedPost.savedBy.some((id: any) => id.toString() === userId.toString());
+    postObj.isLiked =
+      Array.isArray(updatedPost.likes) &&
+      updatedPost.likes.some((id: any) => id.toString() === userId.toString());
+
+    return {
+      success: true,
+      saved: !hasSaved,
+      post: postObj,
+    };
+  }
+
+  /**
+   * Get user's posts
+   */
+  async getUserPosts(input: GetUserPostsInput): Promise<{
+    posts: any[];
+    currentPage: number;
+    totalPages: number;
+    totalPosts: number;
+  }> {
+    const { page, pageSize, userId, isOwnProfile, isAdmin } = input;
+
+    const query: any = { userId };
+
+    if (!isOwnProfile && !isAdmin) {
+      query.visibility = "public";
+      query.status = "active";
+    } else if (isOwnProfile || isAdmin) {
+      query.status = { $ne: "deleted" };
+    }
+
+    const total = await ForumPost.countDocuments(query);
+    const posts = await ForumPost.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .populate("userId", "name avatarUrl email");
+
+    const postsWithLikeInfo = posts.map((post: any) => {
+      const postObj = post.toObject();
+      postObj.likeCount = post.likes?.length || 0;
+      postObj.saveCount = post.savedBy?.length || 0;
+      return postObj;
+    });
+
+    return {
+      posts: postsWithLikeInfo,
+      currentPage: page,
+      totalPages: Math.ceil(total / pageSize),
+      totalPosts: total,
+    };
+  }
+
+  /**
+   * Get saved posts
+   */
+  async getSavedPosts(userId: string, isAdmin: boolean): Promise<any[]> {
+    const query: any = { savedBy: userId };
+    if (!isAdmin) {
+      query.status = "active";
+    } else {
+      query.status = { $ne: "deleted" };
+    }
+
+    const posts = await ForumPost.find(query)
+      .sort({ createdAt: -1 })
+      .populate("userId", "name avatarUrl email");
+
+    return posts;
+  }
+
+  /**
+   * Get trending posts (sorted by likes and creation date)
+   */
+  async getTrending(): Promise<
+    Array<{
+      _id: string;
+      title: string;
+      slug: string;
+      createdAt: Date;
+      author: string;
+      likes: number;
+    }>
+  > {
+    const trending = await ForumPost.aggregate([
+      {
+        $match: {
+          visibility: "public",
+          status: "active",
+          userId: { $exists: true },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $match: {
+          "user.0": { $exists: true },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          slug: 1,
+          createdAt: 1,
+          author: {
+            $ifNull: ["$user.0.name", "$user.0.username", "Unknown"],
+          },
+          likes: { $size: { $ifNull: ["$likes", []] } },
+        },
+      },
+      {
+        $sort: { likes: -1, createdAt: -1 },
+      },
+      {
+        $limit: 5,
+      },
+    ]);
+
+    return trending;
+  }
+
+  /**
+   * Get forum categories (top 5 subjects by post count)
+   */
+  async getCategories(): Promise<
+    Array<{
+      name: string;
+      count: number;
+    }>
+  > {
+    const categories = await ForumPost.aggregate([
+      {
+        $match: {
+          subject: { $exists: true, $nin: [null, ""] },
+          visibility: "public",
+          status: "active",
+        },
+      },
+      {
+        $group: {
+          _id: "$subject",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          name: "$_id",
+          count: 1,
+          _id: 0,
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $limit: 5,
+      },
+    ]);
+
+    return categories;
+  }
+}

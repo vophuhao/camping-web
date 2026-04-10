@@ -38,11 +38,10 @@ const availabilitySchema = new mongoose.Schema<AvailabilityDocument>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Site",
       required: true,
-      index: true,
     },
 
-    date: { type: Date, required: true, index: true },
-    isAvailable: { type: Boolean, default: true, index: true },
+    date: { type: Date, required: true },
+    isAvailable: { type: Boolean, default: true },
 
     price: { type: Number, min: 0 },
     minNights: { type: Number, min: 1 },
@@ -59,6 +58,9 @@ const availabilitySchema = new mongoose.Schema<AvailabilityDocument>(
 );
 
 // Indexes
+availabilitySchema.index({ site: 1 });
+availabilitySchema.index({ date: 1 });
+availabilitySchema.index({ isAvailable: 1 });
 availabilitySchema.index({ site: 1, date: 1 }, { unique: true }); // mỗi site chỉ có 1 record cho 1 ngày
 availabilitySchema.index({ site: 1, date: 1, isAvailable: 1 });
 
@@ -74,10 +76,9 @@ const propertyAvailabilitySchema = new mongoose.Schema<PropertyAvailabilityDocum
       type: mongoose.Schema.Types.ObjectId,
       ref: "Property",
       required: true,
-      index: true,
     },
-    startDate: { type: Date, required: true, index: true },
-    endDate: { type: Date, required: true, index: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
     reason: { type: String, trim: true, maxlength: 500 },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -91,6 +92,9 @@ const propertyAvailabilitySchema = new mongoose.Schema<PropertyAvailabilityDocum
 );
 
 // Indexes for efficient date range queries
+propertyAvailabilitySchema.index({ property: 1 });
+propertyAvailabilitySchema.index({ startDate: 1 });
+propertyAvailabilitySchema.index({ endDate: 1 });
 propertyAvailabilitySchema.index({ property: 1, startDate: 1, endDate: 1 });
 propertyAvailabilitySchema.index({ property: 1, startDate: -1 }); // For sorting by date
 

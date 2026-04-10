@@ -17,3 +17,7 @@ export { default as CartController } from "./cart.controller";
 export { default as PropertyController } from "./property.controller";
 
 export { default as SiteController } from "./site.controller";
+
+export { default as CommentController } from "./comment.controller";
+
+export { default as ForumController } from "./forum.controller";

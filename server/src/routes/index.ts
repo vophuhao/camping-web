@@ -21,3 +21,5 @@ export { default as favoriteRoutes } from "./favorite.route";
 export { default as propertyRoutes } from "./property.route";
 export { default as reviewRoutes } from "./review.route";
 export { default as siteRoutes } from "./site.route";
+export { default as commentRoutes } from "./comment.route";
+export { default as forumRoutes } from "./forum.route";

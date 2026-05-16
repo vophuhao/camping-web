@@ -61,18 +61,10 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const menuItems: MenuItem[] = [
     { name: 'Dashboard', href: '/admin', icon: Home },
     { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Category', href: '/admin/categories', icon: Package },
-    { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Host', href: '/admin/hosts', icon: Tent },
-    {
-      name: 'Orders',
-      href: '/admin/orders',
-      icon: BarChart,
-     
-    },
     { name: 'Thông báo', href: '/admin/notifications', icon: Bell },
-    { name: 'Đánh giá', href: '/admin/ratings', icon: Settings },
     { name: 'Đăng xuất', icon: LogOut, action: handleLogout },
+
   ];
 
   return (
@@ -115,8 +107,8 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             isHovered
               ? 'bg-[#3B6E5F] text-[#F4FAF4]'
               : !hovered && isActive
-              ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-              : 'hover:bg-gray-200'
+                ? 'bg-[#3B6E5F] text-[#F4FAF4]'
+                : 'hover:bg-gray-200'
           );
 
           const mainContent = (

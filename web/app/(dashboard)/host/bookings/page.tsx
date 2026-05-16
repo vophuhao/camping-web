@@ -5,116 +5,66 @@ import { BookingCalendar } from '@/components/host/booking-calendar';
 import { BookingDetailSheet } from '@/components/host/booking-detail-sheet';
 import { BookingGanttView } from '@/components/host/booking-gantt-view';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import {
-  Calendar,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Download,
-  Eye,
-  LayoutGrid,
-  List,
-  MessageSquare,
-  Search,
-  Users,
-  XCircle,
+  Calendar, CheckCircle, Clock, DollarSign, Download,
+  Eye, LayoutGrid, List, MessageSquare, Search, Users, XCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-import {
-  cancelBooking,
-  completeBooking,
-  getMyBookings,
-} from '@/lib/client-actions';
+import { cancelBooking, completeBooking, getMyBookings } from '@/lib/client-actions';
 import { getMyProperties } from '@/lib/property-site-api';
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800' },
-  confirmed: { label: 'Đã xác nhận', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Đã hủy', color: 'bg-red-100 text-red-800' },
-  completed: { label: 'Hoàn thành', color: 'bg-blue-100 text-blue-800' },
-  refunded: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800' },
+const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  pending: { label: 'Chờ xác nhận', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300', dot: 'bg-amber-500' },
+  confirmed: { label: 'Đã xác nhận', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300', dot: 'bg-emerald-500' },
+  cancelled: { label: 'Đã hủy', color: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300', dot: 'bg-red-500' },
+  completed: { label: 'Hoàn thành', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300', dot: 'bg-blue-500' },
+  refunded: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300', dot: 'bg-purple-500' },
 };
 
-const PAYMENT_STATUS_LABELS: Record<string, { label: string; color: string }> =
-{
-  pending: {
-    label: 'Chờ thanh toán',
-    color: 'bg-yellow-100 text-yellow-800',
-  },
-  paid: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800' },
-  refunded: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800' },
-  failed: { label: 'Thất bại', color: 'bg-red-100 text-red-800' },
+const PAYMENT_CONFIG: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Chờ thanh toán', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' },
+  paid: { label: 'Đã thanh toán', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' },
+  refunded: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300' },
+  failed: { label: 'Thất bại', color: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' },
 };
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
-  const [properties, setProperties] = useState<
-    Array<{ _id: string; name: string }>
-  >([]);
+  const [properties, setProperties] = useState<Array<{ _id: string; name: string }>>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'gantt'>(
-    'gantt',
-  );
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'gantt'>('gantt');
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const router = useRouter();
 
-  const [actionDialog, setActionDialog] = useState<{
-    open: boolean;
-    type: 'confirm' | 'cancel' | 'complete' | null;
-    booking: any;
-  }>({ open: false, type: null, booking: null });
-
-  // State mới cho cancel dialog
-  const [cancelDialog, setCancelDialog] = useState<{
-    open: boolean;
-    booking: any;
-    reason: string;
-  }>({ open: false, booking: null, reason: '' });
+  const [actionDialog, setActionDialog] = useState<{ open: boolean; type: 'confirm' | 'cancel' | 'complete' | null; booking: any }>
+    ({ open: false, type: null, booking: null });
+  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; booking: any; reason: string }>
+    ({ open: false, booking: null, reason: '' });
 
   async function fetchBookings() {
     try {
       const res = await getMyBookings();
-      if (res.success) {
-        setBookings(res.data ?? []);
-      }
+      if (res.success) setBookings(res.data ?? []);
       setLoading(true);
-
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
+      setTimeout(() => setLoading(false), 1000);
+    } catch {
       toast.error('Có lỗi khi tải danh sách booking');
       setLoading(false);
     }
@@ -123,743 +73,412 @@ export default function BookingsPage() {
   async function fetchProperties() {
     try {
       const res = await getMyProperties();
-
-      let propertyList: Array<{ _id: string; name: string }> = [];
-
-      // apiClient interceptor already unwrapped response.data
-      // Backend: ResponseUtil.success(res, {properties, pagination}, message)
-      // Result: { success: true, data: { properties: [...], pagination: {...} }, message: "..." }
+      let list: Array<{ _id: string; name: string }> = [];
       if (res.data?.properties && Array.isArray(res.data.properties)) {
-        // Nested structure from service response
-        propertyList = res.data.properties.map((p: any) => ({
-          _id: p._id,
-          name: p.name,
-        }));
+        list = res.data.properties.map((p: any) => ({ _id: p._id, name: p.name }));
       } else if (res.properties && Array.isArray(res.properties)) {
-        // Direct properties array
-        propertyList = res.properties.map((p: any) => ({
-          _id: p._id,
-          name: p.name,
-        }));
-      } else if (res.data && Array.isArray(res.data)) {
-        // Direct array in data field
-        propertyList = res.data.map((p: any) => ({
-          _id: p._id,
-          name: p.name,
-        }));
+        list = res.properties.map((p: any) => ({ _id: p._id, name: p.name }));
       } else if (Array.isArray(res)) {
-        // Direct array (fallback)
-        propertyList = res.map((p: any) => ({
-          _id: p._id,
-          name: p.name,
-        }));
-      } else {
-        console.error('Unexpected response structure:', res);
-        toast.error('Định dạng dữ liệu property không hợp lệ');
-        return;
+        list = res.map((p: any) => ({ _id: p._id, name: p.name }));
       }
-
-      if (propertyList.length === 0) {
-        console.warn(
-          'No properties found for this host. User may not have created any properties yet.',
-        );
-        toast.info(
-          'Bạn chưa có property nào. Hãy tạo property để bắt đầu nhận booking.',
-        );
-      }
-
-      setProperties(propertyList);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
+      setProperties(list);
+    } catch {
       toast.error('Không thể tải danh sách property');
     }
   }
 
-  useEffect(() => {
-    fetchBookings();
-    fetchProperties();
-  }, []);
+  useEffect(() => { fetchBookings(); fetchProperties(); }, []);
 
   useEffect(() => {
     let filtered = [...bookings];
-
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(b => b.status === activeTab);
-    }
-
+    if (activeTab !== 'all') filtered = filtered.filter(b => b.status === activeTab);
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        b =>
-          b.guest.name.toLowerCase().includes(term) ||
-          b.guest.email.toLowerCase().includes(term) ||
-          b.site.name.toLowerCase().includes(term),
+      const t = searchTerm.toLowerCase();
+      filtered = filtered.filter(b =>
+        b.guest?.name?.toLowerCase().includes(t) ||
+        b.guest?.email?.toLowerCase().includes(t) ||
+        b.site?.name?.toLowerCase().includes(t),
       );
     }
-
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case 'oldest':
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case 'checkin-soon':
-          return new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime();
-        case 'checkout-soon':
-          return (
-            new Date(a.checkOut).getTime() - new Date(b.checkOut).getTime()
-          );
-        case 'price-high':
-          return b.pricing.total - a.pricing.total;
-        case 'price-low':
-          return a.pricing.total - b.pricing.total;
-        default:
-          return 0;
+        case 'newest': return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'oldest': return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'checkin-soon': return new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime();
+        case 'price-high': return b.pricing?.total - a.pricing?.total;
+        case 'price-low': return a.pricing?.total - b.pricing?.total;
+        default: return 0;
       }
     });
-
     setFilteredBookings(filtered);
   }, [bookings, activeTab, sortBy, searchTerm]);
 
   function handleAction(type: 'confirm' | 'cancel' | 'complete', booking: any) {
-    if (type === 'cancel') {
-      // Mở cancel dialog thay vì action dialog
-      setCancelDialog({ open: true, booking, reason: '' });
-    } else {
-      setActionDialog({ open: true, type, booking });
-    }
+    if (type === 'cancel') setCancelDialog({ open: true, booking, reason: '' });
+    else setActionDialog({ open: true, type, booking });
   }
 
-  function handleBookingClick(booking: any) {
-    setSelectedBooking(booking);
-    setDetailSheetOpen(true);
-  }
-  // Hàm xử lý cancel với lý do
+  function handleBookingClick(booking: any) { setSelectedBooking(booking); setDetailSheetOpen(true); }
+
   async function executeCancelWithReason() {
     try {
       const { booking, reason } = cancelDialog;
-      if (!booking || !reason.trim()) {
-        toast.error('Vui lòng nhập lý do từ chối booking');
-        return;
-      }
-
+      if (!booking || !reason.trim()) { toast.error('Vui lòng nhập lý do từ chối'); return; }
       const result = await cancelBooking(booking.code, {
         cancellationReason: reason.trim(),
-        cancellInformation: {
-          fullnameGuest: '', // Add appropriate value
-          bankCode: '', // Add appropriate value
-          bankType: '', // Add appropriate value
-        },
+        cancellInformation: { fullnameGuest: '', bankCode: '', bankType: '' },
       });
-
       if (result?.success) {
         toast.success('Đã hủy booking!');
         setCancelDialog({ open: false, booking: null, reason: '' });
         await fetchBookings();
-      } else {
-        throw new Error(result?.message || 'Có lỗi xảy ra');
-      }
-    } catch (error: any) {
-      console.error('Error canceling booking:', error);
-      toast.error(error?.message || 'Có lỗi xảy ra khi từ chối booking');
-    }
+      } else throw new Error(result?.message || 'Có lỗi xảy ra');
+    } catch (error: any) { toast.error(error?.message || 'Có lỗi xảy ra'); }
   }
 
   async function executeAction() {
     try {
       const { type, booking } = actionDialog;
       if (!type || !booking) return;
-
-      let result;
-
-      switch (type) {
-        case 'confirm':
-          toast.info('Chức năng xác nhận đang được phát triển');
-          setActionDialog({ open: false, type: null, booking: null });
-          return;
-
-        case 'complete':
-          result = await completeBooking(booking._id);
-          break;
-
-        default:
-          throw new Error('Invalid action type');
-      }
-
+      if (type === 'confirm') { toast.info('Chức năng đang phát triển'); setActionDialog({ open: false, type: null, booking: null }); return; }
+      const result = await completeBooking(booking._id);
       if (result?.success) {
-        toast.success(
-          type === 'complete' ? 'Đã hoàn thành booking!' : 'Thành công!',
-        );
+        toast.success('Đã hoàn thành booking!');
         setActionDialog({ open: false, type: null, booking: null });
         await fetchBookings();
-      } else {
-        throw new Error(result?.message || 'Có lỗi xảy ra');
-      }
-    } catch (error: any) {
-      console.error('Error executing action:', error);
-      toast.error(error?.message || 'Có lỗi xảy ra');
-    }
+      } else throw new Error(result?.message || 'Có lỗi xảy ra');
+    } catch (error: any) { toast.error(error?.message || 'Có lỗi xảy ra'); }
   }
 
-  function formatPrice(price: number) {
-    return new Intl.NumberFormat('vi-VN').format(price);
-  }
-
-  function formatDate(date: string) {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  }
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
+  const formatDate = (date: string) => new Date(date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   const stats = {
     total: bookings.length,
     pending: bookings.filter(b => b.status === 'pending').length,
     confirmed: bookings.filter(b => b.status === 'confirmed').length,
     completed: bookings.filter(b => b.status === 'completed').length,
-    totalRevenue: bookings
-      .filter(b => b.paymentStatus === 'paid' && b.status === 'completed')
-      .reduce((sum, b) => sum + b.pricing.total, 0),
+    totalRevenue: bookings.filter(b => b.paymentStatus === 'paid' && b.status === 'completed').reduce((s, b) => s + b.pricing.total, 0),
   };
 
+  const tabs = [
+    { value: 'all', label: 'Tất cả', count: stats.total },
+    { value: 'pending', label: 'Chờ xác nhận', count: stats.pending },
+    { value: 'confirmed', label: 'Đã xác nhận', count: stats.confirmed },
+    { value: 'completed', label: 'Hoàn thành', count: stats.completed },
+    { value: 'cancelled', label: 'Đã hủy', count: bookings.filter(b => b.status === 'cancelled').length },
+    { value: 'refunded', label: 'Hoàn tiền', count: bookings.filter(b => b.status === 'refunded').length },
+  ];
+
+  const statCards = [
+    { label: 'Tổng booking', value: stats.total, icon: Calendar, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30' },
+    { label: 'Chờ xác nhận', value: stats.pending, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/30' },
+    { label: 'Đã xác nhận', value: stats.confirmed, icon: CheckCircle, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30' },
+    { label: 'Doanh thu', value: `${formatPrice(stats.totalRevenue)}₫`, icon: DollarSign, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30', small: true },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur  border-border">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Quản lý booking
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Theo dõi và quản lý các đặt chỗ của khách hàng
-              </p>
+              <h1 className="text-xl font-bold text-foreground">Booking & Lịch</h1>
             </div>
-            <div className="flex items-center gap-3">
-              {/* View mode toggle */}
-              <div className="flex items-center rounded-lg border bg-white p-1">
-                <Button
-                  variant={viewMode === 'gantt' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('gantt')}
-                  className="gap-2"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  Timeline
-                </Button>
-                <Button
-                  variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('calendar')}
-                  className="gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Lịch
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="gap-2"
-                >
-                  <List className="h-4 w-4" />
-                  Danh sách
-                </Button>
+            <div className="flex items-center gap-2">
+              {/* View toggle */}
+              <div className="flex rounded-lg border border-border bg-card overflow-hidden">
+                {[
+                  { mode: 'gantt', icon: LayoutGrid, label: 'Timeline' },
+                  { mode: 'calendar', icon: Calendar, label: 'Lịch' },
+                  { mode: 'list', icon: List, label: 'Danh sách' },
+                ].map(({ mode, icon: Icon, label }) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode as any)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors',
+                      viewMode === mode
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{label}</span>
+                  </button>
+                ))}
               </div>
-              <Button variant="outline" size="lg">
-                <Download className="mr-2 h-5 w-5" />
-                Xuất báo cáo
+              <Button variant="outline" size="sm" className="gap-1.5 border-border text-xs">
+                <Download className="h-3.5 w-3.5" /> Xuất báo cáo
               </Button>
             </div>
           </div>
+
+          {/* Stats row - always visible */}
+          {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {statCards.map(s => {
+              const Icon = s.icon;
+              return (
+                <div key={s.label} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+                  <div className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg', s.bg)}>
+                    <Icon className={cn('h-4 w-4', s.color)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{s.label}</p>
+                    <p className={cn('font-bold', s.color, s.small ? 'text-sm' : 'text-xl')}>{s.value}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div> */}
         </div>
       </div>
 
-      {/* Stats - Only show in list view */}
+      {/* List view filters */}
       {viewMode === 'list' && (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Tổng số</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.total}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
-                    <Clock className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">
-                      Chờ xác nhận
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.pending}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">
-                      Đã xác nhận
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.confirmed}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                    <CheckCircle className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">
-                      Hoàn thành
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.completed}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100">
-                    <DollarSign className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">
-                      Doanh thu
-                    </p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {formatPrice(stats.totalRevenue)} ₫
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <div className="px-6 py-4 border-b border-border bg-card/50">
+          {/* Tabs */}
+          <div className="flex gap-1 flex-wrap mb-4">
+            {tabs.map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
+                  activeTab === tab.value
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                )}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold',
+                    activeTab === tab.value ? 'bg-white/25 text-white' : 'bg-background text-foreground')}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          {/* Search + sort */}
+          <div className="flex gap-2">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input placeholder="Tìm khách hàng, địa điểm..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 h-8 text-xs bg-background border-border" />
+            </div>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Mới nhất</SelectItem>
+                <SelectItem value="oldest">Cũ nhất</SelectItem>
+                <SelectItem value="checkin-soon">Check-in sớm</SelectItem>
+                <SelectItem value="price-high">Giá cao → thấp</SelectItem>
+                <SelectItem value="price-low">Giá thấp → cao</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}
 
-      {/* Filters - Only show in list view */}
-      {viewMode === 'list' && (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full sm:w-auto"
-            >
-              <TabsList className="grid w-full grid-cols-6 sm:w-auto">
-                <TabsTrigger value="all">Tất cả</TabsTrigger>
-                <TabsTrigger value="pending">Chờ xác nhận</TabsTrigger>
-                <TabsTrigger value="confirmed">Đã xác nhận</TabsTrigger>
-                <TabsTrigger value="completed">Hoàn thành</TabsTrigger>
-                <TabsTrigger value="cancelled">Đã hủy</TabsTrigger>
-                <TabsTrigger value="refunded">Đã hoàn tiền</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      {/* Content */}
+      <div className="px-6 py-5">
+        {/* Gantt */}
+        {viewMode === 'gantt' && (
+          loading ? <LoadingSpinner /> : (
+            <BookingGanttView bookings={bookings} properties={properties} onBookingClick={handleBookingClick} />
+          )
+        )}
 
-            <div className="flex gap-2">
-              <div className="relative flex-1 sm:w-64">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Tìm khách hàng, địa điểm..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Calendar */}
+        {viewMode === 'calendar' && (
+          loading ? <LoadingSpinner /> : (
+            <BookingCalendar bookings={bookings} onBookingClick={handleBookingClick} />
+          )
+        )}
+
+        {/* List */}
+        {viewMode === 'list' && (
+          loading ? <LoadingSpinner /> : filteredBookings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-border bg-card">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted mb-3">
+                <Calendar className="h-7 w-7 text-muted-foreground" />
               </div>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sắp xếp" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Mới nhất</SelectItem>
-                  <SelectItem value="oldest">Cũ nhất</SelectItem>
-                  <SelectItem value="checkin-soon">
-                    Check-in sớm nhất
-                  </SelectItem>
-                  <SelectItem value="checkout-soon">
-                    Check-out sớm nhất
-                  </SelectItem>
-                  <SelectItem value="price-high">Giá cao → thấp</SelectItem>
-                  <SelectItem value="price-low">Giá thấp → cao</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Gantt Timeline View */}
-      {viewMode === 'gantt' && (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+              <h3 className="text-base font-semibold text-foreground mb-1">Không có booking nào</h3>
+              <p className="text-sm text-muted-foreground">{searchTerm ? 'Không tìm thấy kết quả' : 'Các booking sẽ xuất hiện ở đây'}</p>
             </div>
           ) : (
-            <BookingGanttView
-              bookings={bookings}
-              properties={properties}
-              onBookingClick={handleBookingClick}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Calendar View */}
-      {viewMode === 'calendar' && (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-            </div>
-          ) : (
-            <BookingCalendar
-              bookings={bookings}
-              onBookingClick={handleBookingClick}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Bookings List */}
-      {viewMode === 'list' && (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-            </div>
-          ) : filteredBookings.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-lg font-medium text-gray-900">
-                  Chưa có booking nào
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {searchTerm
-                    ? 'Không tìm thấy kết quả phù hợp'
-                    : 'Các booking sẽ hiển thị ở đây'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Hiển thị <span className="font-semibold text-foreground">{filteredBookings.length}</span> booking
+              </p>
               {filteredBookings.map(booking => (
-                <Card
+                <BookingCard
                   key={booking._id}
-                  className="overflow-hidden transition-shadow hover:shadow-lg"
-                >
-                  <CardContent className="p-0">
-                    <div className="flex flex-col lg:flex-row">
-                      {/* Campsite Image */}
-                      <div className="relative h-48 w-full lg:h-auto lg:w-64">
-                        <Image
-                          src={booking.site.photos?.[0].url}
-                          alt={booking.site.name}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute top-4 left-4 flex gap-2">
-                          <Badge
-                            className={STATUS_LABELS[booking.status].color}
-                          >
-                            {STATUS_LABELS[booking.status].label}
-                          </Badge>
-                          <Badge
-                            className={
-                              PAYMENT_STATUS_LABELS[booking.paymentStatus].color
-                            }
-                          >
-                            {PAYMENT_STATUS_LABELS[booking.paymentStatus].label}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex flex-1 flex-col p-6">
-                        {/* Guest & Campsite Info */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-xl font-bold text-gray-900">
-                                {booking.guest.name}
-                              </h3>
-                              <span className="text-sm text-gray-500">
-                                • {booking.guest.email}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <p className="text-sm text-gray-500">Tổng tiền</p>
-                            <p className="text-2xl font-bold text-emerald-600">
-                              {formatPrice(booking.pricing.total)} ₫
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Booking Details */}
-                        <div className="mt-4 grid grid-cols-2 gap-4 border-t border-b py-4 sm:grid-cols-4">
-                          <div>
-                            <p className="text-xs text-gray-500">Check-in</p>
-                            <p className="mt-1 font-semibold">
-                              {formatDate(booking.checkIn)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Check-out</p>
-                            <p className="mt-1 font-semibold">
-                              {formatDate(booking.checkOut)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Số đêm</p>
-                            <p className="mt-1 font-semibold">
-                              {booking.nights} đêm
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Khách</p>
-                            <p className="mt-1 font-semibold">
-                              <Users className="mr-1 inline h-4 w-4" />
-                              {booking.numberOfGuests} người
-                              {booking.numberOfPets > 0 &&
-                                ` • ${booking.numberOfPets} pet`}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Guest Message */}
-                        {booking.guestMessage && (
-                          <div className="mt-4 rounded-lg bg-gray-50 p-3">
-                            <div className="flex items-start gap-2">
-                              <MessageSquare className="mt-0.5 h-4 w-4 text-gray-400" />
-                              <div>
-                                <p className="text-xs font-medium text-gray-500">
-                                  Lời nhắn từ khách
-                                </p>
-                                <p className="mt-1 text-sm text-gray-700">
-                                  {booking.guestMessage}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="mt-4 flex gap-2">
-                          {( booking.status !== 'cancelled' && ( booking.paymentStatus === "pending" ||  
-                            (new Date() >= new Date(booking.checkIn) && 
-                              new Date() <= new Date(booking.checkOut))) ) && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="flex-1 text-red-600 hover:bg-red-50 cursor-pointer"
-                                  onClick={() => handleAction("cancel", booking)}
-                                >
-                                  <XCircle className="mr-2 h-4 w-4" />
-                                  Hủy
-                                </Button>
-                              </>
-                            )}
-
-
-                          {/* {booking.status === 'confirmed' &&
-                            new Date(booking.checkOut) < new Date() && (
-                              <Button
-                                size="sm"
-                                className="flex-1 bg-blue-600 hover:bg-blue-700"
-                                onClick={() =>
-                                  handleAction('complete', booking)
-                                }
-                              >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Đánh dấu hoàn thành
-                              </Button>
-                            )} */}
-
-                          <Button
-                            onClick={() =>
-                              router.push(
-                                `/host/bookings/detail/${booking.code}`,
-                              )
-                            }
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 cursor-pointer"
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            Xem chi tiết
-                          </Button>
-
-                          <Button size="sm" variant="outline">
-                            <MessageSquare className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  booking={booking}
+                  formatPrice={formatPrice}
+                  formatDate={formatDate}
+                  onAction={handleAction}
+                  onDetail={() => router.push(`/host/bookings/detail/${booking.code}`)}
+                />
               ))}
             </div>
-          )}
-        </div>
-      )}
+          )
+        )}
+      </div>
 
-      {/* Booking Detail Sheet */}
+      {/* Detail sheet */}
       <BookingDetailSheet
         booking={selectedBooking}
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
-        onConfirm={booking => handleAction('confirm', booking)}
-        onCancel={booking => handleAction('cancel', booking)}
-        onComplete={booking => handleAction('complete', booking)}
+        onConfirm={b => handleAction('confirm', b)}
+        onCancel={b => handleAction('cancel', b)}
+        onComplete={b => handleAction('complete', b)}
       />
 
-      {/* Cancel Dialog with Reason */}
-      <AlertDialog
-        open={cancelDialog.open}
-        onOpenChange={open =>
-          !open && setCancelDialog({ open: false, booking: null, reason: '' })
-        }
-      >
-        <AlertDialogContent className="sm:max-w-[500px]">
+      {/* Cancel dialog */}
+      <AlertDialog open={cancelDialog.open} onOpenChange={open => !open && setCancelDialog({ open: false, booking: null, reason: '' })}>
+        <AlertDialogContent className="sm:max-w-[480px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-600" />
-              Từ chối booking
+              <XCircle className="h-5 w-5 text-red-600" /> Từ chối booking
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              Vui lòng nhập lý do từ chối booking này. Khách hàng sẽ nhận được
-              thông báo về lý do từ chối.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Nhập lý do từ chối. Khách hàng sẽ nhận được thông báo.</AlertDialogDescription>
           </AlertDialogHeader>
-
           <div className="py-4">
-            <label
-              htmlFor="cancelReason"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Lý do từ chối <span className="text-red-500">*</span>
-            </label>
             <Textarea
-              id="cancelReason"
               value={cancelDialog.reason}
-              onChange={e =>
-                setCancelDialog({ ...cancelDialog, reason: e.target.value })
-              }
-              placeholder="Ví dụ: Địa điểm đã được đặt đầy, không thể phục vụ vào thời gian này..."
-              className="min-h-[120px] resize-none"
+              onChange={e => setCancelDialog({ ...cancelDialog, reason: e.target.value })}
+              placeholder="Ví dụ: Địa điểm đã được đặt đầy..."
+              className="min-h-[100px] resize-none text-sm"
               maxLength={500}
             />
-            <p className="mt-1.5 text-xs text-gray-500">
-              {cancelDialog.reason.length}/500 ký tự
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{cancelDialog.reason.length}/500</p>
           </div>
-
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() =>
-                setCancelDialog({ open: false, booking: null, reason: '' })
-              }
-            >
-              Hủy bỏ
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={executeCancelWithReason}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={!cancelDialog.reason.trim()}
-            >
+            <AlertDialogCancel onClick={() => setCancelDialog({ open: false, booking: null, reason: '' })}>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction onClick={executeCancelWithReason} className="bg-red-600 hover:bg-red-700" disabled={!cancelDialog.reason.trim()}>
               Xác nhận từ chối
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm/Complete Action Dialog */}
-      <AlertDialog
-        open={actionDialog.open}
-        onOpenChange={open => setActionDialog({ ...actionDialog, open })}
-      >
+      {/* Action dialog */}
+      <AlertDialog open={actionDialog.open} onOpenChange={open => setActionDialog({ ...actionDialog, open })}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              {actionDialog.type === 'confirm' && (
-                <>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  Xác nhận booking
-                </>
-              )}
-              {actionDialog.type === 'complete' && (
-                <>
-                  <CheckCircle className="h-5 w-5 text-blue-600" />
-                  Hoàn thành booking
-                </>
-              )}
+              <CheckCircle className={cn('h-5 w-5', actionDialog.type === 'confirm' ? 'text-emerald-600' : 'text-blue-600')} />
+              {actionDialog.type === 'confirm' ? 'Xác nhận booking' : 'Hoàn thành booking'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {actionDialog.type === 'confirm' &&
-                'Bạn có chắc chắn muốn xác nhận booking này? Khách hàng sẽ nhận được email xác nhận.'}
-              {actionDialog.type === 'complete' &&
-                'Đánh dấu booking này là đã hoàn thành? Khách hàng có thể để lại đánh giá sau khi hoàn thành.'}
+              {actionDialog.type === 'confirm' ? 'Xác nhận booking này? Khách hàng sẽ nhận email xác nhận.' : 'Đánh dấu booking này là đã hoàn thành?'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={executeAction}
-              className={
-                actionDialog.type === 'confirm'
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }
-            >
+            <AlertDialogAction onClick={executeAction} className={actionDialog.type === 'confirm' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}>
               Xác nhận
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+    </div>
+  );
+}
+
+function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: any) {
+  const status = STATUS_CONFIG[booking.status] || STATUS_CONFIG.pending;
+  const payment = PAYMENT_CONFIG[booking.paymentStatus] || PAYMENT_CONFIG.pending;
+  const canCancel = booking.status !== 'cancelled' && (booking.paymentStatus === 'pending' ||
+    (new Date() >= new Date(booking.checkIn) && new Date() <= new Date(booking.checkOut)));
+
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+      <div className="flex flex-col lg:flex-row">
+        {/* Image */}
+        <div className="relative h-44 lg:h-auto lg:w-52 flex-shrink-0 bg-muted">
+          <Image src={booking.site?.photos?.[0]?.url || '/placeholder.jpg'} alt={booking.site?.name || ''} fill className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent lg:bg-gradient-to-r" />
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', status.color)}>
+              <span className={cn('h-1.5 w-1.5 rounded-full', status.dot)} />
+              {status.label}
+            </span>
+            <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold', payment.color)}>
+              {payment.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-1 flex-col p-5">
+          {/* Top row */}
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="font-semibold text-foreground">{booking.guest?.name}</h3>
+                <span className="text-xs text-muted-foreground">• {booking.guest?.email}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{booking.site?.name}</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-xs text-muted-foreground">Tổng tiền</p>
+              <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatPrice(booking.pricing?.total)} ₫</p>
+            </div>
+          </div>
+
+          {/* Details grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 border-y border-border mb-4">
+            {[
+              { label: 'Check-in', value: formatDate(booking.checkIn) },
+              { label: 'Check-out', value: formatDate(booking.checkOut) },
+              { label: 'Số đêm', value: `${booking.nights} đêm` },
+              { label: 'Khách', value: `${booking.numberOfGuests} người${booking.numberOfPets > 0 ? ` • ${booking.numberOfPets} pet` : ''}` },
+            ].map(d => (
+              <div key={d.label}>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{d.label}</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">{d.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Guest message */}
+          {booking.guestMessage && (
+            <div className="flex gap-2 rounded-lg bg-muted/50 px-3 py-2 mb-4">
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-muted-foreground line-clamp-2">{booking.guestMessage}</p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 mt-auto">
+            {canCancel && (
+              <Button size="sm" variant="outline" className="flex-1 border-border text-red-600 hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-950/30 dark:text-red-400 gap-1.5 text-xs" onClick={() => onAction('cancel', booking)}>
+                <XCircle className="h-3.5 w-3.5" /> Hủy
+              </Button>
+            )}
+            <Button size="sm" variant="outline" className="flex-1 border-border gap-1.5 text-xs" onClick={onDetail}>
+              <Eye className="h-3.5 w-3.5" /> Xem chi tiết
+            </Button>
+            <Button size="sm" variant="ghost" className="w-8 p-0 text-muted-foreground border border-border">
+              <MessageSquare className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

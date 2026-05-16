@@ -156,14 +156,14 @@ const ForumPostDetail: React.FC = () => {
           viewedPostsRef.current.add(postData._id);
         }
         
-        setPost(postData.data.post);
+        setPost(postData.post);
         
-        setIsLiked(postData.data.post.likes?.includes(user?._id) || false);
-        setIsBookmarked(postData.data.post.savedBy?.includes(user?._id) || false);
-        setLikeCount(postData.data.post.likes?.length );
-        setSaveCount(postData.data.post.savedBy?.length );
-        setCommentCount(postData.data.post.commentCount );
-         setViewCount(postData.data.post.viewCount );
+        setIsLiked(postData.post.likes?.includes(user?._id) || false);
+        setIsBookmarked(postData.post.savedBy?.includes(user?._id) || false);
+        setLikeCount(postData.post.likes?.length );
+        setSaveCount(postData.post.savedBy?.length );
+        setCommentCount(postData.post.commentCount );
+         setViewCount(postData.post.viewCount );
          
          // Kiểm tra follow status và lấy thông tin follow
         //  if (postData.userId) {

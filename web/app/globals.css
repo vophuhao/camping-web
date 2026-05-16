@@ -134,7 +134,7 @@
 }
 
 @utility info-label {
-  @apply text-xs text-gray-600;
+  @apply text-xs text-muted-foreground;
 }
 
 @utility info-value {
@@ -150,11 +150,11 @@
 }
 
 @utility form-label {
-  @apply mb-2 flex items-center gap-2 text-sm font-medium text-gray-700;
+  @apply mb-2 flex items-center gap-2 text-sm font-medium text-foreground;
 }
 
 @utility form-input {
-  @apply focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:ring-2 focus:outline-none;
+  @apply focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-input bg-background p-2.5 text-sm text-foreground focus:ring-2 focus:outline-none;
 }
 
 @utility section-title {
@@ -198,7 +198,7 @@
 }
 
 @utility loading-center {
-  @apply p-10 text-center text-gray-500;
+  @apply p-10 text-center text-muted-foreground;
 }
 
 @utility error-center {
@@ -290,3 +290,182 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   GLOBAL DARK MODE OVERRIDES
+   Auto-fix hardcoded colors without touching every file.
+   These rules apply when the .dark class is on <html>.
+   ═══════════════════════════════════════════════════════ */
+
+/* Body base */
+.dark body {
+  background-color: oklch(0.145 0 0);
+  color: oklch(0.985 0 0);
+}
+
+/* bg-white → dark card */
+.dark .bg-white {
+  background-color: oklch(0.205 0 0) !important;
+}
+
+/* bg-gray-50 / bg-slate-50 → dark subtle bg */
+.dark .bg-gray-50,
+.dark .bg-slate-50 {
+  background-color: oklch(0.18 0 0) !important;
+}
+
+/* bg-gray-100 / bg-slate-100 → dark muted bg */
+.dark .bg-gray-100,
+.dark .bg-slate-100 {
+  background-color: oklch(0.22 0 0) !important;
+}
+
+/* bg-gray-200 / bg-slate-200 */
+.dark .bg-gray-200,
+.dark .bg-slate-200 {
+  background-color: oklch(0.26 0 0) !important;
+}
+
+/* bg-gray-300 / bg-slate-300 */
+.dark .bg-gray-300,
+.dark .bg-slate-300 {
+  background-color: oklch(0.30 0 0) !important;
+}
+
+/* border-gray-* / border-slate-* */
+.dark .border-gray-100,
+.dark .border-slate-100 {
+  border-color: oklch(1 0 0 / 8%) !important;
+}
+.dark .border-gray-200,
+.dark .border-slate-200 {
+  border-color: oklch(1 0 0 / 10%) !important;
+}
+.dark .border-gray-300,
+.dark .border-slate-300 {
+  border-color: oklch(1 0 0 / 14%) !important;
+}
+
+/* text-gray-* / text-slate-* */
+.dark .text-gray-900,
+.dark .text-slate-900 {
+  color: oklch(0.985 0 0) !important;
+}
+.dark .text-gray-800,
+.dark .text-slate-800 {
+  color: oklch(0.92 0 0) !important;
+}
+.dark .text-gray-700,
+.dark .text-slate-700 {
+  color: oklch(0.85 0 0) !important;
+}
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: oklch(0.72 0 0) !important;
+}
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: oklch(0.60 0 0) !important;
+}
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: oklch(0.52 0 0) !important;
+}
+
+/* divide-gray / divide-slate */
+.dark .divide-gray-100 > *,
+.dark .divide-slate-100 > * {
+  border-color: oklch(1 0 0 / 8%);
+}
+.dark .divide-gray-200 > *,
+.dark .divide-slate-200 > * {
+  border-color: oklch(1 0 0 / 10%);
+}
+
+/* shadow overrides */
+.dark .shadow,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  --tw-shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* hover:bg-gray-50 / hover:bg-slate-50 */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-slate-50:hover {
+  background-color: oklch(0.22 0 0) !important;
+}
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: oklch(0.26 0 0) !important;
+}
+
+/* Inputs & selects */
+.dark input:not([class*="bg-"]),
+.dark select:not([class*="bg-"]),
+.dark textarea:not([class*="bg-"]) {
+  background-color: oklch(0.22 0 0);
+  color: oklch(0.985 0 0);
+  border-color: oklch(1 0 0 / 12%);
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: oklch(0.55 0 0);
+}
+
+/* Table rows */
+.dark tr:hover {
+  background-color: oklch(0.22 0 0) !important;
+}
+.dark thead {
+  background-color: oklch(0.18 0 0) !important;
+}
+.dark th {
+  color: oklch(0.70 0 0) !important;
+}
+
+/* details/summary (FAQ) */
+.dark details {
+  background-color: oklch(0.20 0 0) !important;
+}
+.dark details:hover {
+  background-color: oklch(0.22 0 0) !important;
+}
+
+/* Gradient from-white overrides */
+.dark .from-white {
+  --tw-gradient-from: oklch(0.205 0 0) !important;
+}
+.dark .to-white {
+  --tw-gradient-to: oklch(0.205 0 0) !important;
+}
+.dark .via-white {
+  --tw-gradient-via: oklch(0.205 0 0) !important;
+}
+
+/* Common page backgrounds */
+.dark .min-h-screen:not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-background"]) {
+  background-color: oklch(0.145 0 0);
+}
+
+/* Sticky headers */
+.dark .sticky {
+  background-color: oklch(0.145 0 0 / 95%);
+}
+
+/* Admin + Host dashboard cards */
+.dark .rounded-xl:not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-purple"]):not([class*="bg-red"]):not([class*="bg-amber"]) {
+  border-color: oklch(1 0 0 / 8%);
+}
+
+/* Info & utility labels */
+.dark .info-label {
+  color: oklch(0.60 0 0);
+}
+
+/* Transition for smooth dark mode switch */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+

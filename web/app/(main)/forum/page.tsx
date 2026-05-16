@@ -29,7 +29,7 @@ const POSTS_PER_PAGE = 10;
 
 // Hàm tạo màu ngẫu nhiên cho tags - Memoized để tránh thay đổi màu mỗi render
 const TAG_COLORS = [
-  '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', 
+  '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444',
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#8b5a2b'
 ] as const;
 
@@ -67,36 +67,36 @@ const ForumPage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
-  const  { user } = useAuthStore();
+  const { user } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
- 
+
   // Chỉ fetch bài viết khi actualSearch thay đổi
   const fetchPosts = useCallback(async () => {
-    
+
     try {
       setLoadingPosts(true);
       // Truyền category nếu có
       const response = await forumApi.getPosts(currentPage, POSTS_PER_PAGE, actualSearch, selectedCategories[0] || '');
-      
+
       if (response?.data) {
         const data = response.data;
         // Lấy user hiện tại từ localStorage
         let currentUserId = '';
         try {
-            
-            currentUserId = user?._id || '' ;
-           
-        } catch {}
+
+          currentUserId = user?._id || '';
+
+        } catch { }
         // Chuẩn hóa dữ liệu post ở đây
         const normalizedPosts = data.map((post: any) => {
           const p: any = post;
           const author = {
-              name: p.userId.username ,
-              avatarUrl: p.userId.avatarUrl
-            }
-          
-         
+            name: p.userId.username,
+            avatarUrl: p.userId.avatarUrl
+          }
+
+
           // Tính toán likeCount và isLiked
           let likeCount = 0;
           if (typeof p.likeCount === 'number' && p.likeCount >= 0) {
@@ -106,7 +106,7 @@ const ForumPage: React.FC = () => {
           }
           let isLiked = false;
           if (Array.isArray(p.likes) && currentUserId) {
-           
+
             isLiked = p.likes.includes(currentUserId);
           } else if (typeof p.isLiked === 'boolean') {
             isLiked = p.isLiked;
@@ -183,7 +183,7 @@ const ForumPage: React.FC = () => {
       try {
         const trendingRes = await forumApi.getTrending();
         if (trendingRes?.data) setTrending(trendingRes.data);
-        
+
         // Tạo tags mặc định ban đầu
         const defaultTags = [
           { id: '1', name: 'Lập trình', color: '#3b82f6', count: 0 },
@@ -195,7 +195,7 @@ const ForumPage: React.FC = () => {
           { id: '7', name: 'Khác', color: '#6b7280', count: 0 }
         ];
         setTags(defaultTags);
-      } catch {}
+      } catch { }
       setLoadingTrending(false);
     };
     loadTrendingAndTags();
@@ -205,10 +205,10 @@ const ForumPage: React.FC = () => {
   // Cập nhật tags từ posts khi có bài viết mới
   useEffect(() => {
     if (posts.length === 0) return;
-    
+
     // Lấy tags từ tất cả bài viết đã load
     const tagMap: Record<string, { id: string; name: string; color?: string; count: number }> = {};
-    
+
     // Lấy tags từ posts hiện tại
     posts.forEach(post => {
       if (post.tags && Array.isArray(post.tags)) {
@@ -216,11 +216,11 @@ const ForumPage: React.FC = () => {
           const tagId = tag.id || tag.name;
           if (tagId) {
             if (!tagMap[tagId]) {
-              tagMap[tagId] = { 
-                id: tagId, 
-                name: tag.name, 
+              tagMap[tagId] = {
+                id: tagId,
+                name: tag.name,
                 color: tag.color || getTagColor(tag.name),
-                count: 0 
+                count: 0
               };
             }
             tagMap[tagId].count++;
@@ -228,28 +228,28 @@ const ForumPage: React.FC = () => {
         });
       }
     });
-    
+
     // Sắp xếp theo số lượng xuất hiện và lấy top 10
     const sortedTags = Object.values(tagMap)
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-    
-         // Cập nhật tags: nếu có tags thực tế thì dùng, không thì giữ tags mặc định
-     if (sortedTags.length > 0) {
-       setTags(sortedTags);
-     } else {
-       // Giữ lại tags mặc định nếu không có tags thực tế
-       const defaultTags = [
-         { id: '1', name: 'Lập trình', color: '#3b82f6', count: 0 },
-         { id: '2', name: 'Toán học', color: '#10b981', count: 0 },
-         { id: '3', name: 'AI', color: '#8b5cf6', count: 0 },
-         { id: '4', name: 'Blog', color: '#f59e0b', count: 0 },
-         { id: '5', name: 'Novel', color: '#ef4444', count: 0 },
-         { id: '6', name: 'Anime', color: '#ec4899', count: 0 },
-         { id: '7', name: 'Khác', color: '#6b7280', count: 0 }
-       ];
-       setTags(defaultTags);
-     }
+
+    // Cập nhật tags: nếu có tags thực tế thì dùng, không thì giữ tags mặc định
+    if (sortedTags.length > 0) {
+      setTags(sortedTags);
+    } else {
+      // Giữ lại tags mặc định nếu không có tags thực tế
+      const defaultTags = [
+        { id: '1', name: 'Lập trình', color: '#3b82f6', count: 0 },
+        { id: '2', name: 'Toán học', color: '#10b981', count: 0 },
+        { id: '3', name: 'AI', color: '#8b5cf6', count: 0 },
+        { id: '4', name: 'Blog', color: '#f59e0b', count: 0 },
+        { id: '5', name: 'Novel', color: '#ef4444', count: 0 },
+        { id: '6', name: 'Anime', color: '#ec4899', count: 0 },
+        { id: '7', name: 'Khác', color: '#6b7280', count: 0 }
+      ];
+      setTags(defaultTags);
+    }
   }, [posts]); // Cập nhật khi posts thay đổi
 
   // Load top subjects khi mount
@@ -300,7 +300,7 @@ const ForumPage: React.FC = () => {
   if (selectedTag) {
     filteredPosts = filteredPosts.filter(post => {
       if (!post.tags) return false;
-      
+
       let tagsArray = post.tags;
       // Xử lý trường hợp tags là JSON string
       if (typeof post.tags === 'string') {
@@ -310,13 +310,13 @@ const ForumPage: React.FC = () => {
           tagsArray = [post.tags];
         }
       }
-      
+
       // Đảm bảo tagsArray là array
       if (!Array.isArray(tagsArray)) {
         tagsArray = [];
       }
-      
-      return tagsArray.some((tag: any) => 
+
+      return tagsArray.some((tag: any) =>
         (typeof tag === 'string' ? tag : String(tag)).toLowerCase() === selectedTag.toLowerCase()
       );
     });
@@ -335,7 +335,7 @@ const ForumPage: React.FC = () => {
     const loadTrending = async () => {
       try {
         const trendingRes = await forumApi.getTrending();
-        
+
         if (trendingRes?.data) {
           // setTrending(trendingRes.data); // This line was removed as per the edit hint
         }
@@ -356,28 +356,28 @@ const ForumPage: React.FC = () => {
     try {
       const post = posts.find(p => p.id === postId);
       if (!post) return;
-      
+
       // Optimistic update - cập nhật UI ngay lập tức
       setPosts(prevPosts => prevPosts.map(p =>
-        p.id === postId ? { 
-          ...p, 
+        p.id === postId ? {
+          ...p,
           isLiked: !p.isLiked,
           likeCount: p.isLiked ? Math.max(0, p.likeCount - 1) : p.likeCount + 1
         } : p
       ));
-      
+
       let response;
       if (post.isLiked) {
         response = await forumApi.unlikePost(postId);
       } else {
         response = await forumApi.likePost(postId);
       }
-      
+
       if (response.data && response.data.success) {
         // Cập nhật với dữ liệu thật từ server
         setPosts(prevPosts => prevPosts.map(p =>
-          p.id === postId ? { 
-            ...p, 
+          p.id === postId ? {
+            ...p,
             isLiked: response.data.liked,
             likeCount: response.data.likeCount
           } : p
@@ -385,8 +385,8 @@ const ForumPage: React.FC = () => {
       } else {
         // Rollback nếu API thất bại
         setPosts(prevPosts => prevPosts.map(p =>
-          p.id === postId ? { 
-            ...p, 
+          p.id === postId ? {
+            ...p,
             isLiked: post.isLiked,
             likeCount: post.likeCount
           } : p
@@ -397,8 +397,8 @@ const ForumPage: React.FC = () => {
       const post = posts.find(p => p.id === postId);
       if (post) {
         setPosts(prevPosts => prevPosts.map(p =>
-          p.id === postId ? { 
-            ...p, 
+          p.id === postId ? {
+            ...p,
             isLiked: post.isLiked,
             likeCount: post.likeCount
           } : p
@@ -412,28 +412,28 @@ const ForumPage: React.FC = () => {
     try {
       const post = posts.find(p => p.id === postId);
       if (!post) return;
-      
+
       // Optimistic update - cập nhật UI ngay lập tức
       setPosts(prevPosts => prevPosts.map(p =>
-        p.id === postId ? { 
-          ...p, 
+        p.id === postId ? {
+          ...p,
           isBookmarked: !p.isBookmarked,
           saveCount: p.isBookmarked ? Math.max(0, (p as any).saveCount - 1) : ((p as any).saveCount || 0) + 1
         } : p
       ));
-      
+
       let response;
       if (post.isBookmarked) {
         response = await forumApi.unsavePost(postId);
       } else {
         response = await forumApi.savePost(postId);
       }
-      
+
       if (response.data && response.data.success) {
         // Cập nhật với dữ liệu thật từ server - chỉ cập nhật isBookmarked, không cập nhật saveCount nữa
         setPosts(prevPosts => prevPosts.map(p =>
-          p.id === postId ? { 
-            ...p, 
+          p.id === postId ? {
+            ...p,
             isBookmarked: response.data.saved
             // Không cập nhật saveCount ở đây để tránh tăng 2 lần
           } : p
@@ -441,8 +441,8 @@ const ForumPage: React.FC = () => {
       } else {
         // Rollback nếu API thất bại
         setPosts(prevPosts => prevPosts.map(p =>
-          p.id === postId ? { 
-            ...p, 
+          p.id === postId ? {
+            ...p,
             isBookmarked: post.isBookmarked,
             saveCount: (post as any).saveCount
           } : p
@@ -453,8 +453,8 @@ const ForumPage: React.FC = () => {
       const post = posts.find(p => p.id === postId);
       if (post) {
         setPosts(prevPosts => prevPosts.map(p =>
-          p.id === postId ? { 
-            ...p, 
+          p.id === postId ? {
+            ...p,
             isBookmarked: post.isBookmarked,
             saveCount: (post as any).saveCount
           } : p
@@ -526,8 +526,8 @@ const ForumPage: React.FC = () => {
       <div style={{ flex: 1, paddingBottom: 240 }}>
         <ScrollToTop />
         <div className="forum-banner">
-          <h1>Diễn đàn BlueStudy</h1>
-          <p>Chia sẻ, thảo luận và học hỏi cùng cộng đồng sinh viên!</p>
+          <h1>Diễn đàn Campo</h1>
+          {/* <p>Chia sẻ, thảo luận và học hỏi cùng cộng đồng sinh viên!</p> */}
         </div>
         <div className="forum-page-layout">
           <div className="forum-main-content">
@@ -551,7 +551,7 @@ const ForumPage: React.FC = () => {
               }}
               // fetchSuggestions={async (query: string): Promise<SearchSuggestion[]> => {
               //   if (!query || query.trim().length < 1) return [];
-                
+
               //   try {
               //     const [postsResult, usersResult] = await Promise.allSettled([
               //       forumApi.getPosts(1, 3, query, ''),

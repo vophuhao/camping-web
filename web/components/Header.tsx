@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ModeToggle } from '@/components/mode-toggle';
 
 const navItems = [
   { name: 'Trang chủ', href: '/' },
@@ -41,7 +42,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/10 backdrop-blur-xs supports-backdrop-filter:bg-white/35">
+    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="container-padding mx-auto max-w-7xl">
         <div className="flex-between h-16">
           {/* Logo */}
@@ -61,9 +62,8 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`hover:text-primary text-sm font-medium transition-colors ${
-                    isActive ? 'text-primary' : 'text-foreground/60'
-                  }`}
+                  className={`hover:text-primary text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'text-foreground/60'
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -73,6 +73,8 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden items-center gap-3 md:flex">
+            {/* Theme toggle */}
+            <ModeToggle />
             {/* Shopping Cart
             <Button
               onClick={() => router.push('/cart')}
@@ -130,7 +132,7 @@ export default function Header() {
                     </Link>
                   </Button>
                 )}
-                <Button
+                {/* <Button
                   onClick={() => router.push('/cart')}
                   variant="ghost"
                   size="icon"
@@ -142,7 +144,7 @@ export default function Header() {
                       {cartCount > 99 ? '99+' : cartCount}
                     </span>
                   )}
-                </Button>
+                </Button> */}
 
                 <div
                   onClick={() => router.push(`/u/${user.username}`)}
@@ -191,7 +193,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="border-t bg-white md:hidden">
+        <div className="border-t bg-background md:hidden">
           <nav className="container-padding mx-auto max-w-7xl space-y-1 py-4">
             {navItems.map(item => {
               const isActive = pathname === item.href;
@@ -200,11 +202,10 @@ export default function Header() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block rounded-md px-3 py-2 text-base font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground/60 hover:text-primary hover:bg-gray-100'
-                  }`}
+                  className={`block rounded-md px-3 py-2 text-base font-medium transition-colors ${isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-foreground/60 hover:text-primary hover:bg-accent'
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -217,9 +218,9 @@ export default function Header() {
                 router.push('/cart');
                 setMobileMenuOpen(false);
               }}
-              className="text-foreground/60 hover:text-primary flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium hover:bg-gray-100"
+              className="text-foreground/60 hover:text-primary flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium hover:bg-accent"
             >
-              <span className="flex items-center gap-2">
+              {/* <span className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 Giỏ hàng
               </span>
@@ -227,7 +228,7 @@ export default function Header() {
                 <span className="bg-primary flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
-              )}
+              )} */}
             </button>
 
             <div className="border-t pt-4">

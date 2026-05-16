@@ -466,6 +466,18 @@ export async function becomeHost(data: any): Promise<ApiResponse> {
   return apiClient.post(`/users/become-host`, data);
 }
 
+export async function verifyKycAndBecomeHost(data: {
+  name: string;
+  gmail: string;
+  phone?: string;
+  idNumber: string;
+  faceMatchScore: number;
+  selfieImage: string;
+}): Promise<ApiResponse> {
+  return apiClient.post(`/users/kyc-become-host`, data);
+}
+
+
 export async function getAllHostRequests(): Promise<ApiResponse> {
   return apiClient.get(`/users/become-host`);
 }

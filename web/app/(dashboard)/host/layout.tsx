@@ -47,7 +47,7 @@ export default function HostLayout({
       {/* Content */}
       <main
         className={`flex-1 transition-all duration-300`}
-        style={{ marginLeft: collapsed ? '4rem' : '11rem' }}
+        style={{ marginLeft: collapsed ? '4rem' : '14rem' }}
       >
         {children}
       </main>

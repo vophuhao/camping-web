@@ -84,13 +84,12 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
       {/* ── Logo + Brand ── */}
       <div className="flex h-14 items-center justify-between px-3 border-border">
         <div className={cn('flex items-center gap-2.5 overflow-hidden transition-all duration-300', collapsed ? 'w-0 opacity-0' : 'w-full opacity-100')}>
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 shadow-sm">
+          {/* <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 shadow-sm">
             <Tent className="h-4 w-4 text-white" />
-          </div>
-          <div className="min-w-0">
+          </div> */}
+          <Link href="/" className="min-w-0 cursor-pointer">
             <p className="text-sm font-bold text-foreground leading-tight truncate">Campo Host</p>
-
-          </div>
+          </Link>
         </div>
         <button
           onClick={() => setCollapsed(!collapsed)}

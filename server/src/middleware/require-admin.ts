@@ -24,7 +24,7 @@ const requireAdmin: RequestHandler = async (req, _res, next) => {
       user.role === "admin",
       ErrorFactory.forbiddenAction(undefined, "Access denied. Admin only")
     );
-
+    (req as any).userId = user._id;
     next(); // user là admin => cho phép tiếp tục
   } catch (error) {
     next(error);

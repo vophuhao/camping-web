@@ -18,5 +18,10 @@ router.delete("/", authenticate, notificationController.deleteAllNotifications);
 
 // Admin routes
 router.post("/", requireAdmin, notificationController.createNotification);
+router.post("/admin/send-bulk", requireAdmin, notificationController.sendBulkToHosts);
+router.get("/admin/hosts", requireAdmin, notificationController.getHosts);
+router.get("/admin/sent", requireAdmin, notificationController.getAdminSentNotifications);
+router.delete("/admin/sent/:notificationId", requireAdmin, notificationController.deleteAdminNotification);
+router.delete("/admin/broadcast", requireAdmin, notificationController.deleteAdminBroadcast);
 
 export default router;

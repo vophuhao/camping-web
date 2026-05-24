@@ -66,8 +66,9 @@ export default function UserProfileLayout({
   // Determine active tab
   const getActiveTab = () => {
     if (pathname.includes('/saves')) return 'saves';
-    if (pathname.includes('/orders')) return 'orders';
     if (pathname.includes('/reviews')) return 'reviews';
+    if (pathname.includes('/posts')) return 'posts';
+    if (pathname.includes('/spots')) return 'spots';
     return 'trips';
   };
 
@@ -136,7 +137,7 @@ export default function UserProfileLayout({
                     </h1>
                     {profile.role === 'host' && (
                       <Badge className="mt-2 border-0 bg-gradient-to-r from-emerald-500 to-emerald-600 text-xs text-white">
-                        🏕️ Chủ nhà
+                        Chủ nhà
                       </Badge>
                     )}
                   </div>
@@ -199,7 +200,7 @@ export default function UserProfileLayout({
               <Card className="shadow-md">
                 <CardContent className="p-4">
                   <h3 className="mb-3 text-sm font-semibold text-gray-900">
-                    🌟 Camper đáng tin cậy
+                    Camper đáng tin cậy
                   </h3>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -257,11 +258,10 @@ export default function UserProfileLayout({
               <div className="grid grid-cols-2 gap-3 md:grid-cols-8">
                 <Link
                   href={`/u/${username}/trips`}
-                  className={`rounded-lg px-2 py-3 text-center transition-all ${
-                    activeTab === 'trips'
-                      ? 'bg-gray-900 text-white shadow-md'
-                      : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
-                  }`}
+                  className={`rounded-lg px-2 py-3 text-center transition-all ${activeTab === 'trips'
+                    ? 'bg-gray-900 text-white shadow-md'
+                    : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
+                    }`}
                 >
                   <div className="text-lg font-bold">
                     {stats?.bookings ?? 0}
@@ -270,44 +270,45 @@ export default function UserProfileLayout({
                 </Link>
                 <Link
                   href={`/u/${username}/saves`}
-                  className={`rounded-lg px-2 py-3 text-center transition-all ${
-                    activeTab === 'saves'
-                      ? 'bg-gray-900 text-white shadow-md'
-                      : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
-                  }`}
+                  className={`rounded-lg px-2 py-3 text-center transition-all ${activeTab === 'saves'
+                    ? 'bg-gray-900 text-white shadow-md'
+                    : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
+                    }`}
                 >
                   <div className="text-lg font-bold">{stats?.saves ?? 0}</div>
                   <div className="mt-1 text-xs">Đã lưu</div>
                 </Link>
+
+                {/* Bài viết diễn đàn */}
                 {isOwnProfile && (
                   <Link
-                    href={`/u/${username}/orders`}
-                    className={`rounded-lg px-2 py-3 text-center transition-all ${
-                      activeTab === 'orders'
-                        ? 'bg-gray-900 text-white shadow-md'
-                        : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-lg font-bold">
-                      {stats?.orders ?? 0}
-                    </div>
-                    <div className="mt-1 flex items-center justify-center gap-1 text-xs">
-                      <ShoppingBag className="h-3 w-3" />
-                      Đơn hàng
-                    </div>
-                  </Link>
-                )}
-                <Link
-                  href={`/u/${username}/reviews`}
-                  className={`rounded-lg px-2 py-3 text-center transition-all ${
-                    activeTab === 'reviews'
+                    href={`/u/${username}/posts`}
+                    className={`rounded-lg px-2 py-3 text-center transition-all ${activeTab === 'posts'
                       ? 'bg-gray-900 text-white shadow-md'
                       : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="text-lg font-bold">{stats?.reviews ?? 0}</div>
-                  <div className="mt-1 text-xs">Đánh giá</div>
-                </Link>
+                      }`}
+                  >
+                    <div className="text-lg font-bold">📝</div>
+                    <div className="mt-1 text-xs">Bài viết</div>
+                  </Link>
+                )}
+
+                {/* Địa điểm chia sẻ */}
+                {isOwnProfile && (
+                  <Link
+                    href={`/u/${username}/spots`}
+                    className={`rounded-lg px-2 py-3 text-center transition-all ${activeTab === 'spots'
+                      ? 'bg-gray-900 text-white shadow-md'
+                      : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className="text-lg font-bold">🏕️</div>
+                    <div className="mt-1 text-xs">Địa điểm</div>
+                  </Link>
+                )}
+
+                {/* Orders & Reviews (commented out) */}
+                {/* ... */}
               </div>
             </div>
 

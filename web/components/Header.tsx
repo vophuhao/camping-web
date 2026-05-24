@@ -21,6 +21,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 const navItems = [
   { name: 'Trang chủ', href: '/' },
   { name: 'Tìm kiếm', href: '/search' },
+  { name: 'Điểm cắm trại', href: '/free-spots' },
   { name: 'Diễn đàn', href: '/forum' },
   // { name: 'Giới thiệu', href: '/about' },
   // { name: 'Liên hệ', href: '/contact' },

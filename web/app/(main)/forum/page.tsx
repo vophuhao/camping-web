@@ -522,13 +522,13 @@ const ForumPage: React.FC = () => {
   }
 
   return (
-    <div className="forum-page-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="forum-page-root mt-10" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, paddingBottom: 240 }}>
         <ScrollToTop />
-        <div className="forum-banner">
+        {/* <div className="forum-banner">
           <h1>Diễn đàn Campo</h1>
-          {/* <p>Chia sẻ, thảo luận và học hỏi cùng cộng đồng sinh viên!</p> */}
-        </div>
+          <p>Chia sẻ, thảo luận và học hỏi cùng cộng đồng sinh viên!</p>
+        </div> */}
         <div className="forum-page-layout">
           <div className="forum-main-content">
             <SmartSearchBox
@@ -692,30 +692,11 @@ const ForumPage: React.FC = () => {
                 </div>
               ) : normalPosts.length === 0 ? (
                 <EmptyState
-                  icon={<span role="img" aria-label="empty">📭</span>}
+
                   title="Không có bài viết nào phù hợp"
                   description="Hãy thử từ khóa khác hoặc tạo bài viết mới để chia sẻ cùng cộng đồng!"
                 >
-                  <button
-                    className="back-to-forum-btn"
-                    style={{
-                      marginTop: 16,
-                      padding: '8px 20px',
-                      background: '#2563eb',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 6,
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                    onClick={() => {
-                      setSearchTerm('');
-                      setActualSearch('');
-                      setCurrentPage(1);
-                    }}
-                  >
-                    Quay lại diễn đàn
-                  </button>
+
                 </EmptyState>
               ) : (
                 <div className="forum-feed-grid" ref={feedRef}>

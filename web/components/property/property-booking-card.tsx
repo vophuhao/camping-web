@@ -5,6 +5,7 @@ import { DateRangePopover } from '@/components/search/date-range-popover';
 import { GuestPopover } from '@/components/search/guest-popover';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { WeatherAdvice } from '@/components/property/weather-advice';
 import { usePropertyBookingState } from '@/hooks/usePropertyBookingState';
 import { getBlockedDates } from '@/lib/client-actions';
 import { getPropertyBlockedDates } from '@/lib/property-site-api';
@@ -489,6 +490,16 @@ export function PropertyBookingCard({
               )}
           </div>
         </div>
+
+        {/* Weather Advice */}
+        {booking.dateRange?.from && (
+          <WeatherAdvice
+            latitude={property.location?.coordinates?.coordinates?.[1] ?? 0}
+            longitude={property.location?.coordinates?.coordinates?.[0] ?? 0}
+            checkIn={booking.dateRange.from}
+            checkOut={booking.dateRange.to}
+          />
+        )}
 
         {/* Guests Popover */}
         <div className="space-y-2">

@@ -75,7 +75,59 @@ export default class NotificationController {
   // Tạo notification mới (Admin only hoặc system)
   createNotification = catchErrors(async (req, res) => {
     const notification = await this.notificationService.createNotification(req.body);
-
     return ResponseUtil.success(res, notification, "Tạo thông báo thành công");
+  });
+
+  // Lấy danh sách host (cho admin chọn recipient)
+  getHosts = catchErrors(async (req: any, res: any) => {
+    const { search } = req.query;
+    const hosts = await this.notificationService.getHosts(search);
+    return ResponseUtil.success(res, hosts, "Lấy danh sách host thành công");
+  });
+
+  // Gửi thông báo hàng loạt đến host
+  sendBulkToHosts = catchErrors(async (req: any, res: any) => {
+    const adminId = req.userId.toString();
+    const { recipientIds, title, message, link, priority } = req.body;
+
+    if (!title?.trim() || !message?.trim()) {
+      return res.status(400).json({ success: false, message: 'Tiêu đề và nội dung không được để trống' });
+    }
+
+    const result = await this.notificationService.sendBulkToHosts({
+      recipientIds: recipientIds ?? [],
+      title,
+      message,
+      link,
+      priority,
+      senderId: adminId,
+    });
+
+    return ResponseUtil.success(res, result, `Đã gửi ${result.sent} thông báo`);
+  });
+
+  // Lấy danh sách thông báo admin đã gửi
+  getAdminSentNotifications = catchErrors(async (req: any, res: any) => {
+    const adminId = req.userId.toString();
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const result = await this.notificationService.getAdminSentNotifications(adminId, page, limit);
+    return ResponseUtil.success(res, result, "Lấy danh sách thông báo đã gửi thành công");
+  });
+
+  // Xóa 1 thông báo admin đã gửi
+  deleteAdminNotification = catchErrors(async (req: any, res: any) => {
+    const adminId = req.userId.toString();
+    const { notificationId } = req.params;
+    const result = await this.notificationService.deleteAdminNotification(notificationId, adminId);
+    return ResponseUtil.success(res, result, "Đã xóa thông báo");
+  });
+
+  // Xóa toàn bộ 1 lần broadcast
+  deleteAdminBroadcast = catchErrors(async (req: any, res: any) => {
+    const adminId = req.userId.toString();
+    const { title, createdAt } = req.body;
+    const result = await this.notificationService.deleteAdminBroadcast(adminId, title, createdAt);
+    return ResponseUtil.success(res, result, `Đã xóa ${result.deletedCount} thông báo`);
   });
 }

@@ -15,6 +15,9 @@ import {
   Users,
   ChevronDown,
   ChevronRight,
+  MessageSquare,
+  MapPin,
+  Flag,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -62,9 +65,18 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     { name: 'Dashboard', href: '/admin', icon: Home },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Host', href: '/admin/hosts', icon: Tent },
+    {
+      name: 'Nội dung',
+      icon: MessageSquare,
+      subMenu: [
+        { name: 'Bài viết', href: '/admin/forum' },
+        { name: 'Địa điểm ', href: '/admin/free-spots' },
+      ],
+    },
+    { name: 'Báo cáo', href: '/admin/reports', icon: Flag },
+    { name: 'Địa điểm', href: '/admin/locations', icon: MapPin },
     { name: 'Thông báo', href: '/admin/notifications', icon: Bell },
     { name: 'Đăng xuất', icon: LogOut, action: handleLogout },
-
   ];
 
   return (

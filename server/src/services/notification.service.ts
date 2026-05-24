@@ -1,5 +1,7 @@
 import NotificationModel, { NotificationDocument } from "@/models/notification.model";
+import UserModel from "@/models/user.model";
 import mongoose from "mongoose";
+
 
 export default class NotificationService {
   // Tạo notification mới
@@ -627,5 +629,104 @@ export default class NotificationService {
         hostName,
       },
     });
+  }
+  // ==================== ADMIN SEND TO HOST HELPERS ====================
+
+  // Lấy danh sách tất cả host
+  async getHosts(search?: string) {
+    const query: any = { role: 'host' };
+    if (search) {
+      query.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+    const hosts = await UserModel.find(query)
+      .select('_id username email avatarUrl isVerified')
+      .sort({ username: 1 })
+      .limit(100);
+    return hosts;
+  }
+
+  // Gửi thông báo hàng loạt đến các host
+  async sendBulkToHosts(data: {
+    recipientIds: string[]; // rỗng = gửi tất cả host
+    title: string;
+    message: string;
+    link?: string;
+    priority?: 'low' | 'medium' | 'high';
+    senderId: string;
+  }) {
+    let targetIds = data.recipientIds;
+
+    // Nếu không chỉ định → gửi tất cả host
+    if (!targetIds || targetIds.length === 0) {
+      const allHosts = await UserModel.find({ role: 'host' }).select('_id');
+      targetIds = allHosts.map((h: any) => h._id.toString());
+    }
+
+    if (targetIds.length === 0) {
+      return { sent: 0, recipientCount: 0 };
+    }
+
+    const notifications = await NotificationModel.insertMany(
+      targetIds.map((hostId: string) => ({
+        recipient: new mongoose.Types.ObjectId(hostId),
+        sender: new mongoose.Types.ObjectId(data.senderId),
+        type: 'system',
+        title: data.title,
+        message: data.message,
+        link: data.link ?? undefined,
+        actionType: 'none',
+        priority: data.priority ?? 'medium',
+        role: 'host',
+        isRead: false,
+        metadata: { isBroadcast: true, sentBy: data.senderId },
+      }))
+    );
+
+    return { sent: notifications.length, recipientCount: targetIds.length };
+  }
+
+  // Lấy các thông báo admin đã gửi (sender = adminId)
+  async getAdminSentNotifications(adminId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    // Chỉ cần filter theo sender - không dùng metadata dot-notation
+    const query: any = { sender: new mongoose.Types.ObjectId(adminId) };
+
+    const [notifications, total] = await Promise.all([
+      NotificationModel.find(query)
+        .populate('recipient', 'username email avatarUrl')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      NotificationModel.countDocuments(query),
+    ]);
+
+    return { notifications, total, totalPages: Math.ceil(total / limit), page };
+  }
+
+  // Admin xóa thông báo đã gửi (theo sender)
+  async deleteAdminNotification(notificationId: string, adminId: string) {
+    const notification = await NotificationModel.findOneAndDelete({
+      _id: notificationId,
+      sender: adminId,
+    });
+    if (!notification) throw new Error('Không tìm thấy thông báo');
+    return { success: true };
+  }
+
+  // Admin xóa toàn bộ 1 broadcast (cùng title + message + senderId)
+  async deleteAdminBroadcast(adminId: string, title: string, createdAt: string) {
+    const targetTime = new Date(createdAt);
+    const windowStart = new Date(targetTime.getTime() - 5000); // ±5 giây
+    const windowEnd = new Date(targetTime.getTime() + 5000);
+    const result = await NotificationModel.deleteMany({
+      sender: adminId,
+      title,
+      createdAt: { $gte: windowStart, $lte: windowEnd },
+    });
+    return { success: true, deletedCount: result.deletedCount };
   }
 }

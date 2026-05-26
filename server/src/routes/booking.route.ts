@@ -12,6 +12,19 @@ const bookingController = new BookingController(bookingService);
 // Webhook (MUST be first - no auth)
 bookingRoutes.post("/payos/webhook", bookingController.handlePayOSWebhook);
 
+// Admin routes (must be before :id params)
+bookingRoutes.get("/admin/all", requireAdmin, bookingController.getAdminBookings);
+bookingRoutes.get("/admin/stats", requireAdmin, bookingController.getAdminBookingStats);
+bookingRoutes.post("/admin/:id/refund", requireAdmin, bookingController.adminProcessRefund);
+bookingRoutes.post("/admin/:id/cancel", requireAdmin, bookingController.adminCancelBooking);
+
+// Host routes
+bookingRoutes.get("/host/list", authenticate, bookingController.getHostBookingsList);
+
+// Guest routes
+bookingRoutes.post("/:id/confirm-arrival", authenticate, bookingController.guestConfirmArrival);
+bookingRoutes.post("/:id/cannot-attend", authenticate, bookingController.guestCannotAttend);
+
 // Fixed routes BEFORE param routes
 bookingRoutes.post("/", authenticate, bookingController.createBooking);
 bookingRoutes.get("/", authenticate, bookingController.searchBookings);
@@ -23,6 +36,9 @@ bookingRoutes.post("/:id/confirm", authenticate, bookingController.confirmBookin
 bookingRoutes.post("/:id/cancel", authenticate, bookingController.cancelBooking);
 bookingRoutes.post("/:id/complete", authenticate, bookingController.completeBooking);
 bookingRoutes.post("/:id/refund", authenticate, bookingController.refundBooking);
+bookingRoutes.post("/:id/request-refund", authenticate, bookingController.requestRefund);
+bookingRoutes.post("/:id/dissatisfaction", authenticate, bookingController.requestDissatisfaction);
+bookingRoutes.post("/:id/dissatisfaction/process", requireAdmin, bookingController.processDissatisfaction);
 bookingRoutes.post("/:code/code", authenticate, bookingController.getBookingByCode);
 bookingRoutes.patch("/:id/payment", authenticate, requireAdmin, bookingController.updatePayment);
 

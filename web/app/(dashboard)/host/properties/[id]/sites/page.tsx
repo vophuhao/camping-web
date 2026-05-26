@@ -240,11 +240,10 @@ export default function PropertySitesPage() {
     return (
       <Card
         key={site._id}
-        className={`overflow-hidden transition-all duration-200 ${
-          selectedSite?._id === site._id
-            ? 'shadow-lg ring-2 ring-emerald-500'
-            : 'hover:shadow-lg'
-        }`}
+        className={`overflow-hidden rounded-2xl transition-all duration-300 border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md ${selectedSite?._id === site._id
+          ? 'shadow-lg ring-2 ring-emerald-500 translate-y-0'
+          : 'shadow-sm hover:shadow-xl hover:-translate-y-1'
+          }`}
         onMouseEnter={() => setHoveredSite(site)}
         onMouseLeave={() => setHoveredSite(null)}
         onClick={() => setSelectedSite(site)}
@@ -472,11 +471,10 @@ export default function PropertySitesPage() {
     return (
       <Card
         key={site._id}
-        className={`group cursor-pointer overflow-hidden transition-all duration-200 ${
-          selectedSite?._id === site._id
-            ? 'shadow-lg ring-2 ring-emerald-500'
-            : 'hover:shadow-md'
-        }`}
+        className={`group cursor-pointer overflow-hidden rounded-xl transition-all duration-300 border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md ${selectedSite?._id === site._id
+          ? 'shadow-md ring-2 ring-emerald-500 translate-y-0'
+          : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'
+          }`}
         onMouseEnter={() => setHoveredSite(site)}
         onMouseLeave={() => setHoveredSite(null)}
         onClick={() => setSelectedSite(site)}
@@ -611,29 +609,31 @@ export default function PropertySitesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900/50 pb-12">
       {/* Header */}
-      <div className="border-b bg-white">
+      <div className="sticky top-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Link
                 href="/host/properties"
-                className="mb-3 inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+                className="mb-4 inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Quay lại properties
+                Quay lại danh sách
               </Link>
 
               {property && (
                 <>
                   <div className="flex items-center gap-3">
-                    <Home className="h-8 w-8 text-emerald-600" />
+                    <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/30 p-2.5">
+                      <Home className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900">
+                      <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                         {property.name}
                       </h1>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
+                      {/* <div className="mt-1.5 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                         <MapPin className="h-4 w-4" />
                         <span>
                           {property.location?.city}, {property.location?.state}
@@ -649,7 +649,7 @@ export default function PropertySitesPage() {
                             </div>
                           </>
                         )}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </>
@@ -657,7 +657,7 @@ export default function PropertySitesPage() {
             </div>
 
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-5 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
               onClick={() =>
                 router.push(`/host/properties/${propertyId}/sites/new`)
               }
@@ -671,88 +671,10 @@ export default function PropertySitesPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats Cards */}
-        {stats && (
-          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Tổng Sites
-                    </p>
-                    <p className="mt-1 text-3xl font-bold text-gray-900">
-                      {stats.totalSites}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-emerald-100 p-3">
-                    <Tent className="h-6 w-6 text-emerald-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Sites hoạt động
-                    </p>
-                    <p className="mt-1 text-3xl font-bold text-gray-900">
-                      {stats.activeSites}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-green-100 p-3">
-                    <Eye className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Tổng bookings
-                    </p>
-                    <p className="mt-1 text-3xl font-bold text-gray-900">
-                      {stats.totalBookings}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-blue-100 p-3">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Doanh thu
-                    </p>
-                    <p className="mt-1 text-3xl font-bold text-gray-900">
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                        notation: 'compact',
-                      }).format(stats.totalRevenue)}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-yellow-100 p-3">
-                    <DollarSign className="h-6 w-6 text-yellow-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Filters */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-1 gap-3">
@@ -820,20 +742,20 @@ export default function PropertySitesPage() {
               {filteredSites.map(site => renderFullSiteCard(site))}
             </div>
           ) : (
-            <Card>
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
               <CardContent className="py-16 text-center">
                 <Tent className="mx-auto mb-4 h-16 w-16 text-gray-400" />
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">
                   {searchQuery ||
-                  statusFilter !== 'all' ||
-                  typeFilter !== 'all'
+                    statusFilter !== 'all' ||
+                    typeFilter !== 'all'
                     ? 'Không tìm thấy site nào'
                     : 'Chưa có site nào'}
                 </h3>
                 <p className="mb-6 text-sm text-gray-600">
                   {searchQuery ||
-                  statusFilter !== 'all' ||
-                  typeFilter !== 'all'
+                    statusFilter !== 'all' ||
+                    typeFilter !== 'all'
                     ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
                     : 'Bắt đầu bằng cách tạo site đầu tiên cho property này'}
                 </p>
@@ -841,7 +763,7 @@ export default function PropertySitesPage() {
                   statusFilter === 'all' &&
                   typeFilter === 'all' && (
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-5 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
                       onClick={() =>
                         router.push(`/host/properties/${propertyId}/sites/new`)
                       }
@@ -862,7 +784,7 @@ export default function PropertySitesPage() {
                 {filteredSites && filteredSites.length > 0 ? (
                   filteredSites.map(site => renderCompactSiteCard(site))
                 ) : (
-                  <Card>
+                  <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
                     <CardContent className="py-16 text-center">
                       <Tent className="mx-auto mb-4 h-16 w-16 text-gray-400" />
                       <h3 className="mb-2 text-lg font-semibold text-gray-900">

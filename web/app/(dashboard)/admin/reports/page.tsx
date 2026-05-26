@@ -6,9 +6,10 @@ import { getReports, updateReport } from '@/lib/reportApi';
 import { toast } from 'sonner';
 import {
   RefreshCw, ChevronLeft, ChevronRight,
-  ExternalLink, CheckCircle2, XCircle, EyeOff, AlertTriangle
+  ExternalLink, CheckCircle2, XCircle, EyeOff, AlertTriangle, Flag, Info
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const STATUS_TABS = [
   { value: '', label: 'Tất cả' },
@@ -28,16 +29,16 @@ const REASON_LABELS: Record<string, string> = {
   spam: 'Spam',
   inappropriate_content: 'Nội dung không phù hợp',
   harassment: 'Quấy rối',
-  fake_information: 'Thông tin sai',
+  fake_information: 'Thông tin sai lệch',
   copyright_violation: 'Vi phạm bản quyền',
-  other: 'Khác',
+  other: 'Lý do khác',
 };
 
-const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: 'Chờ xử lý', color: '#b45309', bg: '#fef3c7' },
-  reviewed: { label: 'Đang xem xét', color: '#1d4ed8', bg: '#dbeafe' },
-  resolved: { label: 'Đã xử lý', color: '#15803d', bg: '#dcfce7' },
-  dismissed: { label: 'Từ chối', color: '#6b7280', bg: '#f3f4f6' },
+const STATUS_BADGE: Record<string, { label: string; class: string }> = {
+  pending: { label: 'Chờ xử lý', class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
+  reviewed: { label: 'Đang xem xét', class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' },
+  resolved: { label: 'Đã xử lý', class: 'bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 border-indigo-500/20' },
+  dismissed: { label: 'Từ chối', class: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' },
 };
 
 export default function AdminReportsPage() {
@@ -57,7 +58,12 @@ export default function AdminReportsPage() {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const res: any = await getReports({ page, limit: 15, status: statusFilter || undefined, targetType: typeFilter || undefined });
+      const res: any = await getReports({ 
+        page, 
+        limit: 15, 
+        status: statusFilter || undefined, 
+        targetType: typeFilter || undefined 
+      });
       setReports(res?.data?.data ?? res?.data ?? []);
       setTotalPages(res?.data?.pagination?.totalPages ?? 1);
       setTotal(res?.data?.pagination?.total ?? 0);
@@ -97,163 +103,306 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 6px', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: 10 }}>
-
-          Xử lý báo cáo vi phạm
-        </h1>
-
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Xử lý báo cáo vi phạm</h1>
+          <p className="text-xs text-slate-400 font-semibold mt-0.5">
+            Quản lý các báo cáo vi phạm nội dung từ thành viên và xử lý bài viết/địa điểm không phù hợp.
+          </p>
+        </div>
       </div>
 
       {/* Status Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid var(--border)' }}>
-        {STATUS_TABS.map((tab) => (
-          <button key={tab.value} onClick={() => { setStatusFilter(tab.value); setPage(1); }} style={{
-            padding: '10px 18px', borderRadius: '10px 10px 0 0', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-            background: statusFilter === tab.value ? 'var(--foreground)' : 'transparent',
-            color: statusFilter === tab.value ? 'var(--background)' : 'var(--muted-foreground)',
-            borderBottom: statusFilter === tab.value ? '2px solid var(--foreground)' : '2px solid transparent',
-            marginBottom: -2,
-          }}>
-            {tab.label}
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800/80">
+        {STATUS_TABS.map((tab) => {
+          const isActive = statusFilter === tab.value;
+          return (
+            <button
+              key={tab.value}
+              onClick={() => { setStatusFilter(tab.value); setPage(1); }}
+              className={cn(
+                'px-4 py-2.5 text-xs font-extrabold transition-all border-b-2 rounded-t-lg -mb-[2px] cursor-pointer',
+                isActive
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-455 bg-indigo-50/10 dark:bg-indigo-950/10'
+                  : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filter Action Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-850 rounded-2xl shadow-xs">
+        <div className="flex flex-wrap items-center gap-3 flex-1">
+          {/* Type dropdown select */}
+          <select
+            value={typeFilter}
+            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-650 dark:text-slate-350 cursor-pointer"
+          >
+            {TYPE_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+
+          {/* Refresh Button */}
+          <button
+            onClick={fetchReports}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-bold text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Làm mới
           </button>
-        ))}
+        </div>
+
+        <div className="text-xs text-slate-400 font-semibold">
+          Tổng số báo cáo: <strong className="text-slate-700 dark:text-slate-200 font-extrabold">{total}</strong>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }} style={{ padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', fontSize: 13, cursor: 'pointer', outline: 'none' }}>
-          {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <button onClick={fetchReports} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', fontSize: 13, cursor: 'pointer' }}>
-          <RefreshCw size={14} /> Làm mới
-        </button>
-        <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>Tổng: <strong>{total}</strong></span>
-      </div>
+      {/* Table Data View */}
+      {loading ? (
+        <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        </div>
+      ) : reports.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl shadow-xs text-slate-400">
+          <Flag className="h-12 w-12 text-slate-200 dark:text-slate-800 mb-3" />
+          <p className="text-sm font-semibold">Không tìm thấy báo cáo nào</p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-805 bg-slate-50/50 dark:bg-slate-950 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                  <th className="px-5 py-3.5 font-bold">Nội dung bị báo cáo</th>
+                  <th className="px-5 py-3.5 font-bold">Loại</th>
+                  <th className="px-5 py-3.5 font-bold">Lý do</th>
+                  <th className="px-5 py-3.5 font-bold">Người báo cáo</th>
+                  <th className="px-5 py-3.5 font-bold">Trạng thái</th>
+                  <th className="px-5 py-3.5 font-bold">Ngày gửi</th>
+                  <th className="px-5 py-3.5 font-bold text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                {reports.map((report) => {
+                  const badge = STATUS_BADGE[report.status] ?? STATUS_BADGE.pending;
+                  const target = report.target;
+                  return (
+                    <tr
+                      key={report._id}
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors cursor-pointer"
+                      onClick={() => setSelectedReport(selectedReport?._id === report._id ? null : report)}
+                    >
+                      {/* Reported target content description */}
+                      <td className="px-5 py-3.5 max-w-[240px]">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                          {target?.title ?? report.targetId}
+                        </div>
+                        {report.description && (
+                          <div className="text-[10px] text-slate-400 mt-1 truncate max-w-[220px]" title={report.description}>
+                            "{report.description}"
+                          </div>
+                        )}
+                      </td>
 
-      <div style={{ background: 'var(--card)', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: 48, textAlign: 'center', color: 'var(--muted-foreground)' }}>
-            <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginBottom: 8 }} />
-            <div>Đang tải...</div>
+                      {/* Type Badge */}
+                      <td className="px-5 py-3.5">
+                        <span className={cn(
+                          'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold border uppercase tracking-wider',
+                          report.targetType === 'post'
+                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                            : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20'
+                        )}>
+                          {report.targetType === 'post' ? '📝 Bài viết' : '🏕️ Địa điểm'}
+                        </span>
+                      </td>
+
+                      {/* Reason */}
+                      <td className="px-5 py-3.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        {REASON_LABELS[report.reason] ?? report.reason}
+                      </td>
+
+                      {/* Reporter */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2">
+                          {report.reporterId?.avatarUrl ? (
+                            <img
+                              src={report.reporterId.avatarUrl}
+                              alt=""
+                              className="h-6 w-6 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-800"
+                            />
+                          ) : (
+                            <div className="h-6 w-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                              {report.reporterId?.username?.charAt(0).toUpperCase() || '—'}
+                            </div>
+                          )}
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-205">
+                            {report.reporterId?.username ?? '—'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="px-5 py-3.5">
+                        <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-extrabold border uppercase tracking-wider', badge.class)}>
+                          {badge.label}
+                        </span>
+                      </td>
+
+                      {/* Created Date */}
+                      <td className="px-5 py-3.5 text-xs text-slate-400 font-semibold">
+                        {new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+
+                      {/* Action buttons */}
+                      <td className="px-5 py-3.5 text-right" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {target?.slug && (
+                            <Link
+                              href={report.targetType === 'post' ? `/forum/${target.slug}` : `/free-spots/${report.targetId}`}
+                              target="_blank"
+                              className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 transition-colors shadow-xs"
+                              title="Xem chi tiết"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                          )}
+                          {report.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => openNoteModal(report._id, 'resolved', 'hide_target')}
+                                disabled={!!actionLoading}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:text-rose-400 dark:border-rose-900/50 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                title="Ẩn nội dung bị báo cáo"
+                              >
+                                <EyeOff className="h-3 w-3" /> Ẩn đi
+                              </button>
+                              <button
+                                onClick={() => openNoteModal(report._id, 'dismissed', 'none')}
+                                disabled={!!actionLoading}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:text-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/80 text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                title="Từ chối báo cáo này"
+                              >
+                                <XCircle className="h-3 w-3" /> Bỏ qua
+                              </button>
+                              <button
+                                onClick={() => openNoteModal(report._id, 'resolved', 'none')}
+                                disabled={!!actionLoading}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-205 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                title="Phê duyệt không ẩn nội dung"
+                              >
+                                <CheckCircle2 className="h-3 w-3" /> Giải quyết
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ) : reports.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: 'var(--muted-foreground)' }}>Không có báo cáo nào</div>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
-                {['Nội dung bị báo cáo', 'Loại', 'Lý do', 'Người báo cáo', 'Trạng thái', 'Ngày', 'Hành động'].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((report) => {
-                const badge = STATUS_BADGE[report.status] ?? STATUS_BADGE.pending;
-                const target = report.target;
-                return (
-                  <tr key={report._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.15s', cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--muted)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    onClick={() => setSelectedReport(selectedReport?._id === report._id ? null : report)}
-                  >
-                    <td style={{ padding: '12px 16px', maxWidth: 240 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{target?.title ?? report.targetId}</div>
-                      {report.description && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>"{report.description}"</div>}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 99, background: report.targetType === 'post' ? '#dbeafe' : '#dcfce7', color: report.targetType === 'post' ? '#1d4ed8' : '#15803d', fontWeight: 600 }}>
-                        {report.targetType === 'post' ? '📝 Bài viết' : '🏕️ Địa điểm'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13 }}>{REASON_LABELS[report.reason] ?? report.reason}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {report.reporterId?.avatarUrl && <img src={report.reporterId.avatarUrl} alt="" style={{ width: 26, height: 26, borderRadius: '50%' }} />}
-                        <span style={{ fontSize: 13 }}>{report.reporterId?.username ?? '—'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 700, background: badge.bg, color: badge.color }}>{badge.label}</span>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>
-                      {new Date(report.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td style={{ padding: '12px 16px' }} onClick={e => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {target?.slug && (
-                          <Link href={report.targetType === 'post' ? `/forum/${target.slug}` : `/free-spots/${report.targetId}`} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', fontSize: 12, textDecoration: 'none' }}>
-                            <ExternalLink size={12} />
-                          </Link>
-                        )}
-                        {report.status === 'pending' && (
-                          <>
-                            <button onClick={() => openNoteModal(report._id, 'resolved', 'hide_target')} disabled={!!actionLoading} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid #ef4444', background: '#fef2f2', color: '#dc2626', fontSize: 12, cursor: 'pointer' }}>
-                              <EyeOff size={12} /> Ẩn nội dung
-                            </button>
-                            <button onClick={() => openNoteModal(report._id, 'dismissed', 'none')} disabled={!!actionLoading} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid #10b981', background: '#f0fdf4', color: '#065f46', fontSize: 12, cursor: 'pointer' }}>
-                              <XCircle size={12} /> Bỏ qua
-                            </button>
-                            <button onClick={() => openNoteModal(report._id, 'resolved', 'none')} disabled={!!actionLoading} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid #2563eb', background: '#eff6ff', color: '#1d4ed8', fontSize: 12, cursor: 'pointer' }}>
-                              <CheckCircle2 size={12} /> Giải quyết
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+        </div>
+      )}
 
+      {/* Pagination controls */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20 }}>
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1, fontSize: 13 }}>
-            <ChevronLeft size={14} /> Trước
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-650 dark:text-slate-350 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="h-4 w-4" /> Trước
           </button>
-          <span style={{ fontSize: 13 }}>Trang <strong>{page}</strong> / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1, fontSize: 13 }}>
-            Sau <ChevronRight size={14} />
+          <span className="text-xs text-slate-500 font-semibold">
+            Trang <strong className="text-slate-800 dark:text-slate-200 font-black">{page}</strong> / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-650 dark:text-slate-350 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Sau <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Note Modal */}
+      {/* Note modal */}
       {noteModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in"
           onClick={e => e.target === e.currentTarget && setNoteModal(false)}
         >
-          <div style={{ background: 'var(--card)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>
-              {pendingAction?.action === 'hide_target' ? '🚫 Phê duyệt & Ẩn nội dung' : pendingAction?.status === 'dismissed' ? '✅ Từ chối báo cáo' : '✅ Đánh dấu đã giải quyết'}
-            </h3>
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shadow-inner",
+                pendingAction?.action === 'hide_target'
+                  ? "bg-rose-50 dark:bg-rose-950 text-rose-650 dark:text-rose-455"
+                  : pendingAction?.status === 'dismissed'
+                    ? "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                    : "bg-indigo-50 dark:bg-indigo-950 text-indigo-650 dark:text-indigo-400"
+              )}>
+                {pendingAction?.action === 'hide_target' ? <AlertTriangle className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+              </div>
+              <h3 className="text-md font-black text-slate-850 dark:text-slate-100">
+                {pendingAction?.action === 'hide_target' 
+                  ? '🚫 Phê duyệt & Ẩn nội dung' 
+                  : pendingAction?.status === 'dismissed' 
+                    ? '✅ Từ chối báo cáo' 
+                    : '✅ Đánh dấu đã giải quyết'}
+              </h3>
+            </div>
+
             {pendingAction?.action === 'hide_target' && (
-              <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca', marginBottom: 16, fontSize: 13, color: '#dc2626' }}>
-                ⚠️ Hành động này sẽ ẩn nội dung bị báo cáo khỏi tất cả người dùng.
+              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40 text-xs text-rose-600 dark:text-rose-455 font-semibold leading-relaxed">
+                ⚠️ Hành động này sẽ ẩn vĩnh viễn nội dung bị báo cáo khỏi tất cả người dùng hệ thống.
               </div>
             )}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 8 }}>Ghi chú (tùy chọn)</label>
-              <textarea value={resolveNote} onChange={e => setResolveNote(e.target.value)} placeholder="Nhập ghi chú về quyết định xử lý..." rows={3} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13, resize: 'vertical', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Ghi chú xử lý (tùy chọn)</label>
+              <textarea
+                value={resolveNote}
+                onChange={e => setResolveNote(e.target.value)}
+                placeholder="Nhập lý do hoặc thông tin phản hồi bổ sung..."
+                rows={3}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-205 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none resize-none"
+              />
             </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setNoteModal(false)} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', fontSize: 14, cursor: 'pointer' }}>Hủy</button>
-              <button onClick={handleConfirmAction} disabled={!!actionLoading} style={{
-                padding: '10px 20px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                background: pendingAction?.action === 'hide_target' ? '#ef4444' : pendingAction?.status === 'dismissed' ? '#10b981' : '#2563eb',
-                color: '#fff',
-              }}>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => setNoteModal(false)}
+                className="rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-xs font-bold text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleConfirmAction}
+                disabled={!!actionLoading}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer shadow-xs",
+                  pendingAction?.action === 'hide_target'
+                    ? "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
+                    : pendingAction?.status === 'dismissed'
+                      ? "bg-slate-600 hover:bg-slate-700 dark:bg-slate-500 dark:hover:bg-slate-600"
+                      : "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                )}
+              >
                 {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}
               </button>
             </div>
           </div>
         </div>
       )}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

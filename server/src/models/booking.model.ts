@@ -37,7 +37,7 @@ export interface BookingDocument extends mongoose.Document {
   };
 
   // Status
-  status: "pending" | "confirmed" | "cancelled" | "completed" | "refunded";
+  status: "pending" | "confirmed" | "cancelled" | "completed" | "refunded" | "refund_requested";
 
   // Payment
   paymentStatus: "pending" | "paid" | "refunded" | "failed";
@@ -62,6 +62,63 @@ export interface BookingDocument extends mongoose.Document {
   // Review
   reviewed: boolean;
   review?: mongoose.Types.ObjectId; // ref Review
+
+  // Guest arrival confirmation (khách xác nhận đã đến, thay vì host)
+  guestConfirmedAttendance?: boolean;
+  guestConfirmedAt?: Date;
+
+  // Cannot attend request (khách báo không thể đến)
+  cannotAttendRequest?: {
+    requestedAt: Date;
+    reason: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankName: string;
+    evidenceImages?: string[];
+    status: "pending" | "approved" | "rejected";
+    adminNote?: string | undefined;
+    processedAt?: Date;
+    processedBy?: mongoose.Types.ObjectId;
+    refundAmount?: number;
+  };
+
+  // Wallet credit tracking
+  walletCredited?: boolean;
+  walletCreditedAt?: Date;
+  platformFee?: number;
+  hostNetAmount?: number;
+
+  // Payout tracking
+  payoutId?: mongoose.Types.ObjectId;
+  payoutStatus: "pending" | "settled";
+
+  // Refund request (admin-managed)
+  refundRequest?: {
+    requestedAt: Date;
+    reason: string;
+    requestedBy: mongoose.Types.ObjectId;
+    status: "pending" | "approved" | "rejected";
+    processedAt?: Date;
+    processedBy?: mongoose.Types.ObjectId;
+    adminNote?: string | undefined;
+  };
+
+  // Dissatisfaction request (khách không hài lòng sau khi đến nơi)
+  dissatisfactionRequest?: {
+    requestedAt: Date;
+    reason: string;
+    phone: string;
+    email: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankName: string;
+    evidenceImages: string[];
+    status: "pending" | "approved" | "rejected";
+    adminNote?: string | undefined;
+    processedAt?: Date;
+    processedBy?: mongoose.Types.ObjectId;
+    refundAmount?: number;
+  };
 
   // Timestamps
   createdAt: Date;
@@ -126,7 +183,7 @@ const bookingSchema = new mongoose.Schema<BookingDocument>(
 
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed", "refunded"],
+      enum: ["pending", "confirmed", "cancelled", "completed", "refunded", "refund_requested"],
       default: "pending",
       index: true,
     },
@@ -165,6 +222,71 @@ const bookingSchema = new mongoose.Schema<BookingDocument>(
 
     reviewed: { type: Boolean, default: false },
     review: { type: mongoose.Schema.Types.ObjectId, ref: "Review" },
+
+    // Guest arrival confirmation
+    guestConfirmedAttendance: { type: Boolean, default: false },
+    guestConfirmedAt: { type: Date },
+
+    // Cannot attend request
+    cannotAttendRequest: {
+      requestedAt: { type: Date },
+      reason: { type: String, maxlength: 1000 },
+      bankAccountName: { type: String, maxlength: 200 },
+      bankAccountNumber: { type: String, maxlength: 50 },
+      bankName: { type: String, maxlength: 100 },
+      evidenceImages: [{ type: String }],
+      status: { type: String, enum: ["pending", "approved", "rejected"] },
+      adminNote: { type: String, maxlength: 500 },
+      processedAt: { type: Date },
+      processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      refundAmount: { type: Number, min: 0 },
+    },
+
+    // Wallet credit tracking
+    walletCredited: { type: Boolean, default: false },
+    walletCreditedAt: { type: Date },
+    platformFee: { type: Number, min: 0 },
+    hostNetAmount: { type: Number, min: 0 },
+
+    // Payout tracking
+    payoutId: { type: mongoose.Schema.Types.ObjectId, ref: "Payout" },
+    payoutStatus: {
+      type: String,
+      enum: ["pending", "settled"],
+      default: "pending",
+      index: true,
+    },
+
+    // Refund request (admin-managed)
+    refundRequest: {
+      requestedAt: { type: Date },
+      reason: { type: String, maxlength: 1000 },
+      requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      status: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+      },
+      processedAt: { type: Date },
+      processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      adminNote: { type: String, maxlength: 500 },
+    },
+
+    // Dissatisfaction request (khách không hài lòng)
+    dissatisfactionRequest: {
+      requestedAt: { type: Date },
+      reason: { type: String, maxlength: 2000 },
+      phone: { type: String, maxlength: 20 },
+      email: { type: String, maxlength: 100 },
+      bankAccountName: { type: String, maxlength: 200 },
+      bankAccountNumber: { type: String, maxlength: 50 },
+      bankName: { type: String, maxlength: 100 },
+      evidenceImages: [{ type: String }],
+      status: { type: String, enum: ["pending", "approved", "rejected"] },
+      adminNote: { type: String, maxlength: 1000 },
+      processedAt: { type: Date },
+      processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      refundAmount: { type: Number, min: 0 },
+    },
   },
   {
     timestamps: true,

@@ -8,40 +8,39 @@ import { connectRedis, connectToDatabase } from "./config";
 import { APP_ORIGIN, NODE_ENV, OK, PORT } from "./constants";
 import { authenticate, errorHandler } from "./middleware";
 import {
-  addressRoutes,
   amenityRoutes,
   authRoutes,
   bookingRoutes,
-  categoryRoutes,
   commentRoutes,
   forumRoutes,
   favoriteRoutes,
   mediaRoutes,
-  orderRoutes,
-  productRoutes,
   propertyRoutes,
   reviewRoutes,
   siteRoutes,
   userRoutes,
+  payoutRoutes,
 } from "./routes";
-import cartRoutes from "./routes/cart.route";
+
 import dashboardHRoutes from "./routes/dashbardH.route";
 import dashboardRoutes from "./routes/dashboard.route";
 import supportRouter from "./routes/directMessage.route";
 import notificationRoutes from "./routes/notification.route";
 import payosRoutes from "./routes/payos.route,";
-import ratingRoutes from "./routes/rating.route";
 import freeSpotRoutes from "./routes/free-spot.route";
 import reportRoutes from "./routes/report.route";
-import { BookingService, OrderService } from "./services";
+import walletRoutes from "./routes/wallet.route";
+import mobileSelfieRoutes from "./routes/mobile-selfie.route";
+import { BookingService } from "./services";
+import PayoutService from "./services/payout.service";
 import { initializeSocket } from "./socket";
 // import dashboardRoutes from "./routes/dashboard.route";
 
 const app = express();
 
 // add middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
   cors({
     origin: APP_ORIGIN,
@@ -51,28 +50,47 @@ app.use(
 app.use(cookieParser());
 
 const bookingService = new BookingService();
+const payoutService = new PayoutService();
 
-// cron.schedule("0 * * * *", async () => {
-//   console.log("🔄 Running booking cleanup job...");
-//   try {
-//     const result = await bookingService.cancelExpiredPendingBookings();
-//     console.log(
-//       `✅ Cleanup completed: ${result.remindersSent} reminders, ${result.bookingsCancelled} cancelled`
-//     );
-//   } catch (err) {
-//     console.error("❌ Booking cleanup job failed:", err);
-//   }
-// });
-// cron.schedule("*/15 * * * *", async () => {
-//   try {
+// Cron: Tổng kết payout đầu mỗi tháng (ngày 1, 00:00)
+cron.schedule("0 0 1 * *", async () => {
+  console.log("💰 Running monthly payout job...");
+  try {
+    const now = new Date();
+    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // previous month (1-indexed)
+    const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const result = await payoutService.runMonthlyPayout(prevMonth, prevYear);
+    console.log(`✅ Payout completed: ${result.message}`);
+  } catch (err) {
+    console.error("❌ Monthly payout job failed:", err);
+  }
+});
 
-//     const result =   await bookingService.autoCompleteBooking();
-//     console.log(`✅ ${result} bookings auto-completed.`);
-//   } catch (err) {
-//     console.error("❌ L?i khi g?i nh?c nh?:", err);
-//   }
- 
-// });
+// Cron: Tự động cộng tiền vào ví host sau 5 ngày khách không xác nhận (mỗi 6 giờ)
+cron.schedule("0 */6 * * *", async () => {
+  console.log("🔄 Running auto-settle expired bookings job...");
+  try {
+    const result = await bookingService.autoSettleExpiredBookings();
+    if (result.settled > 0) {
+      console.log(`✅ Auto-settle: đã giải quyết ${result.settled}/${result.total} booking hết hạn`);
+    }
+  } catch (err) {
+    console.error("❌ Auto-settle job failed:", err);
+  }
+});
+
+// Cron: Tự động xóa các booking chưa thanh toán có check-in bằng ngày hiện tại (mỗi ngày lúc 1:00 AM)
+cron.schedule("0 1 * * *", async () => {
+  console.log("🔄 Running cleanup unpaid bookings job...");
+  try {
+    const result = await bookingService.cancelUnpaidBookingsOnCheckinDay();
+    console.log(
+      `✅ Cleanup completed: deleted ${result.deleted}/${result.total} unpaid bookings`
+    );
+  } catch (err) {
+    console.error("❌ Cleanup unpaid bookings job failed:", err);
+  }
+});
 // health check
 app.get("/", (_, res) => {
   return res.status(OK).json({
@@ -85,15 +103,9 @@ app.use("/auth", authRoutes);
 
 // protected routes
 app.use("/users", authenticate, userRoutes);
-app.use("/categories", categoryRoutes);
-app.use("/products", productRoutes);
 app.use("/media", authenticate, mediaRoutes);
-app.use("/cart", authenticate, cartRoutes);
-app.use("/address", authenticate, addressRoutes);
 app.use("/support", authenticate, supportRouter);
-app.use("/orders", authenticate, orderRoutes);
 app.use("/notifications", notificationRoutes);
-app.use("/rating", ratingRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/amenities", amenityRoutes);
@@ -108,6 +120,9 @@ app.use("/payos/webhook", payosRoutes);
 app.use("/messages", authenticate, supportRouter);
 app.use("/dashboard", authenticate, dashboardRoutes);
 app.use("/dashboardH", authenticate, dashboardHRoutes);
+app.use("/payouts", payoutRoutes);
+app.use("/wallet", walletRoutes);
+app.use("/mobile-selfie", mobileSelfieRoutes);
 // app.use("/dashboard", authenticate, dashboardRoutes);
 
 app.use(errorHandler);

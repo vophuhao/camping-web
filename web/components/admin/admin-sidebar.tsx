@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useUnreadCount } from '@/hooks/useNotification';
 import {
   BarChart,
+  BarChart3,
   Bell,
   Home,
   LogOut,
@@ -18,12 +19,17 @@ import {
   MessageSquare,
   MapPin,
   Flag,
+  CalendarCheck,
+  DollarSign,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from 'next-themes';
 
 type MenuItem = {
   name: string;
@@ -41,6 +47,8 @@ type SidebarProps = {
 export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const { user } = useAuthStore();
   const [hovered, setHovered] = useState<string | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { data: unreadData } = useUnreadCount();
@@ -61,6 +69,12 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     );
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const userInitial = user?.username?.charAt(0).toUpperCase() || 'A';
+
   const menuItems: MenuItem[] = [
     { name: 'Dashboard', href: '/admin', icon: Home },
     { name: 'Users', href: '/admin/users', icon: Users },
@@ -74,104 +88,118 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       ],
     },
     { name: 'Báo cáo', href: '/admin/reports', icon: Flag },
+    { name: 'Booking', href: '/admin/bookings', icon: CalendarCheck },
+    { name: 'Doanh thu', href: '/admin/revenue', icon: BarChart3 },
+    { name: 'Thanh toán', href: '/admin/payouts', icon: DollarSign },
     { name: 'Địa điểm', href: '/admin/locations', icon: MapPin },
     { name: 'Thông báo', href: '/admin/notifications', icon: Bell },
-    { name: 'Đăng xuất', icon: LogOut, action: handleLogout },
   ];
 
   return (
     <aside
       className={cn(
-        'fixed top-0 left-0 h-screen bg-white shadow-lg flex flex-col transition-all duration-300',
-        collapsed ? 'w-16' : 'w-45'
+        'fixed top-0 left-0 h-screen bg-slate-900 border-r border-slate-800/80 shadow-2xl flex flex-col transition-all duration-300 z-50',
+        collapsed ? 'w-16' : 'w-56'
       )}
     >
       {/* Logo + Toggle */}
-      <div className="flex h-16 items-center justify-between px-3">
-        <h1
-          className={cn(
-            'text-xl font-bold transition-all duration-300',
-            collapsed ? 'opacity-0 w-0 overflow-hidden' : ''
+      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800/50">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-900/40">
+            <Tent className="h-4.5 w-4.5 text-white" />
+          </div>
+          {!collapsed && (
+            <span className="text-md font-extrabold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent tracking-wide truncate">
+              Campo Admin
+            </span>
           )}
-        >
-          Admin Panel
-        </h1>
+        </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded hover:bg-gray-200"
+          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors"
+          title={collapsed ? 'Mở rộng' : 'Thu gọn'}
         >
-          <BarChart className="h-5 w-5" />
+          <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsed && "rotate-180")} />
         </button>
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 px-2 py-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-hide">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = item.href === '/admin' ? pathname === '/admin' : (item.href ? pathname.startsWith(item.href) : false);
           const isHovered = hovered === (item.href || item.name);
 
           const hasSubmenu = !!item.subMenu;
           const isExpanded = expandedMenus.includes(item.name);
 
+          // Submenu active check
+          const isSubmenuActive = hasSubmenu && item.subMenu!.some(sub => pathname.startsWith(sub.href));
+
           const finalClasses = cn(
-            'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors w-full justify-between',
-            isHovered
-              ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-              : !hovered && isActive
-                ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-                : 'hover:bg-gray-200'
+            'group relative flex items-center gap-3 px-3.5 py-3 rounded-lg text-sm font-medium transition-all duration-150 w-full justify-between cursor-pointer',
+            isActive || isSubmenuActive
+              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-950/40'
+              : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
           );
 
           const mainContent = (
-            <div className="flex items-center gap-3 w-full">
+            <div className="flex items-center gap-3 w-full min-w-0">
               <div className="relative flex-shrink-0">
-                <Icon className="h-5 w-5" />
+                <Icon className={cn("h-4.5 w-4.5 transition-colors", (isActive || isSubmenuActive) ? "text-white" : "group-hover:text-slate-200")} />
                 {item.name === 'Thông báo' && unreadCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
-                  >
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
                     {unreadCount > 9 ? '9+' : unreadCount}
-                  </Badge>
+                  </span>
                 )}
               </div>
-              {!collapsed && <span className="flex-1">{item.name}</span>}
+              {!collapsed && (
+                <span className="flex-1 truncate text-left">{item.name}</span>
+              )}
               {!collapsed && hasSubmenu && (
                 <span className="flex-shrink-0">
-                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {isExpanded ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-200" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-200" />
+                  )}
                 </span>
               )}
             </div>
           );
 
-          // Nếu item có subMenu
+          // Active indicator pill on left edge
+          const activeIndicator = (isActive || isSubmenuActive) && (
+            <div className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-indigo-300" />
+          );
+
           if (hasSubmenu) {
             return (
-              <div key={item.name}>
+              <div key={item.name} className="space-y-0.5">
                 <button
                   onClick={() => toggleMenu(item.name)}
                   onMouseEnter={() => setHovered(item.name)}
                   onMouseLeave={() => setHovered(null)}
                   className={finalClasses}
                 >
+                  {activeIndicator}
                   {mainContent}
                 </button>
 
-                {/* Submenu */}
+                {/* Submenu list */}
                 {isExpanded && !collapsed && (
-                  <div className="ml-6 flex flex-col gap-1 mt-1">
+                  <div className="pl-9 pr-2 py-1 flex flex-col gap-1 border-l border-slate-800/80 ml-5 mt-1 space-y-1">
                     {item.subMenu!.map((sub) => {
-                      const subActive = pathname === sub.href;
+                      const subActive = pathname.startsWith(sub.href);
                       return (
                         <Link
                           key={sub.name}
                           href={sub.href}
                           className={cn(
-                            'px-3 py-2 rounded-lg text-sm transition-colors',
+                            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors truncate',
                             subActive
-                              ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-                              : 'hover:bg-gray-200'
+                              ? 'text-indigo-400 bg-indigo-950/30'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
                           )}
                         >
                           {sub.name}
@@ -184,16 +212,22 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             );
           }
 
-          // Item bình thường
+          const buttonContent = (
+            <>
+              {activeIndicator}
+              {mainContent}
+            </>
+          );
+
           return item.action ? (
             <button
               key={item.name}
               onClick={item.action}
               onMouseEnter={() => setHovered(item.name)}
               onMouseLeave={() => setHovered(null)}
-              className={finalClasses}
+              className={cn(finalClasses, 'hover:bg-red-950/20 hover:text-red-400')}
             >
-              {mainContent}
+              {buttonContent}
             </button>
           ) : (
             <Link
@@ -203,11 +237,64 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
               onMouseLeave={() => setHovered(null)}
               className={finalClasses}
             >
-              {mainContent}
+              {buttonContent}
             </Link>
           );
         })}
       </nav>
+
+      {/* ── Bottom Section ── */}
+      <div className="border-t border-slate-800/60 p-3 space-y-1.5 bg-slate-950/20">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
+            'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+          )}
+        >
+          <div className="relative flex-shrink-0 h-4 w-4">
+            <Sun className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', theme === 'dark' ? 'scale-0 opacity-0' : 'scale-100 opacity-100')} />
+            <Moon className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', theme === 'dark' ? 'scale-100 opacity-100' : 'scale-0 opacity-0')} />
+          </div>
+          <span className={cn('flex-1 truncate transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
+            {theme === 'dark' ? 'Giao diện tối' : 'Giao diện sáng'}
+          </span>
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          title="Đăng xuất"
+          className={cn(
+            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
+            'text-slate-400 hover:bg-red-950/20 hover:text-red-400',
+          )}
+        >
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          <span className={cn('flex-1 truncate transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
+            Đăng xuất
+          </span>
+        </button>
+
+        {/* User Info */}
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-lg p-2 border border-slate-800/40 bg-slate-950/40 transition-all duration-200',
+            collapsed ? 'justify-center' : '',
+          )}
+        >
+          {/* Avatar */}
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 text-sm font-bold ring-2 ring-indigo-100 dark:ring-indigo-900/40">
+            {userInitial}
+          </div>
+          <div className={cn('min-w-0 transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
+            <p className="text-xs font-semibold text-slate-200 truncate">{user?.username || 'Admin'}</p>
+            <p className="text-[10px] text-slate-500 truncate">{user?.email || 'admin@campo.vn'}</p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

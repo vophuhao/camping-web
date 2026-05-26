@@ -9,6 +9,8 @@ import {
   refundBookingSchema,
   searchBookingSchema,
   updatePaymentSchema,
+  requestDissatisfactionSchema,
+  processDissatisfactionSchema,
 } from "@/validators/booking.validator";
 import mongoose from "mongoose";
 
@@ -157,5 +159,155 @@ export default class BookingController {
     const result = await this.bookingService.userCancelPayment(id || "");
     return ResponseUtil.success(res, result, "Hủy thanh toán booking thành công");
   });
-  
+
+  // ==================== ADMIN MANAGED METHODS ====================
+
+  // Khách xác nhận đã đến
+  guestConfirmArrival = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const guestId = mongoIdSchema.parse(req.userId);
+
+    const booking = await this.bookingService.guestConfirmArrival(
+      id || "",
+      guestId
+    );
+    return ResponseUtil.success(res, booking, "Xác nhận đã đến thành công! Tiền đã được cộng vào ví host");
+  });
+
+  // Khách báo không thể đến
+  guestCannotAttend = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const guestId = mongoIdSchema.parse(req.userId);
+    const { reason, bankAccountName, bankAccountNumber, bankName, evidenceImages } = req.body;
+
+    const booking = await this.bookingService.guestCannotAttend(
+      id || "",
+      guestId,
+      { reason, bankAccountName, bankAccountNumber, bankName, evidenceImages }
+    );
+    return ResponseUtil.success(
+      res,
+      booking,
+      "Đã ghi nhận yêu cầu không đến. Admin sẽ xét duyệt hoàn tiền 50% cho bạn"
+    );
+  });
+
+  // User yêu cầu hoàn tiền
+  requestRefund = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const userId = mongoIdSchema.parse(req.userId);
+    const { reason } = req.body;
+
+    const booking = await this.bookingService.requestRefund(id || "", userId, reason || "");
+    return ResponseUtil.success(res, booking, "Đã gửi yêu cầu hoàn tiền");
+  });
+
+  // Admin xử lý refund
+  adminProcessRefund = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const adminId = req.userId.toString();
+    const { approved, adminNote, refundAmount } = req.body;
+
+    const booking = await this.bookingService.adminProcessRefund(
+      id || "",
+      adminId,
+      approved,
+      adminNote,
+      refundAmount
+    );
+    return ResponseUtil.success(
+      res,
+      booking,
+      approved ? "Đã duyệt hoàn tiền" : "Đã từ chối hoàn tiền"
+    );
+  });
+
+  // Admin xem tất cả booking
+  getAdminBookings = catchErrors(async (req, res) => {
+    const { status, paymentStatus, hostId, search, startDate, endDate, page, limit } = req.query;
+    const result = await this.bookingService.getAdminBookings({
+      status: status as string,
+      paymentStatus: paymentStatus as string,
+      hostId: hostId as string,
+      search: search as string,
+      startDate: startDate as string,
+      endDate: endDate as string,
+      page: parseInt(page as string) || 1,
+      limit: parseInt(limit as string) || 20,
+    });
+    return ResponseUtil.paginated(
+      res,
+      result.data,
+      result.pagination,
+      "Lấy danh sách booking thành công"
+    );
+  });
+
+  // Admin thống kê
+  getAdminBookingStats = catchErrors(async (_req, res) => {
+    const stats = await this.bookingService.getAdminBookingStats();
+    return ResponseUtil.success(res, stats, "Lấy thống kê thành công");
+  });
+
+  // Admin hủy booking
+  adminCancelBooking = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const adminId = req.userId.toString();
+    const { reason } = req.body;
+
+    const booking = await this.bookingService.adminCancelBooking(id || "", adminId, reason);
+    return ResponseUtil.success(res, booking, "Đã hủy booking");
+  });
+
+  // Host xem booking của mình (read-only)
+  getHostBookingsList = catchErrors(async (req, res) => {
+    const hostId = mongoIdSchema.parse(req.userId);
+    const { status, page, limit } = req.query;
+
+    const result = await this.bookingService.getHostBookings(hostId, {
+      status: status as string,
+      page: parseInt(page as string) || 1,
+      limit: parseInt(limit as string) || 20,
+    });
+    return ResponseUtil.paginated(
+      res,
+      result.data,
+      result.pagination,
+      "Lấy danh sách booking thành công"
+    );
+  });
+
+  /**
+   * Khách gửi yêu cầu hoàn tiền do không hài lòng
+   * @route POST /bookings/:id/dissatisfaction
+   */
+  requestDissatisfaction = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const guestId = mongoIdSchema.parse(req.userId);
+    const input = requestDissatisfactionSchema.parse(req.body);
+
+    const booking = await this.bookingService.requestDissatisfaction(
+      guestId,
+      id || "",
+      input
+    );
+    return ResponseUtil.success(res, booking, "Đã gửi yêu cầu hoàn tiền không hài lòng");
+  });
+
+  /**
+   * Admin xử lý yêu cầu hoàn tiền không hài lòng
+   * @route POST /bookings/:id/dissatisfaction/process
+   */
+  processDissatisfaction = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const adminId = mongoIdSchema.parse(req.userId);
+    const input = processDissatisfactionSchema.parse(req.body);
+
+    const booking = await this.bookingService.processDissatisfaction(
+      adminId,
+      id || "",
+      input
+    );
+    return ResponseUtil.success(res, booking, "Đã xử lý yêu cầu hoàn tiền");
+  });
 }

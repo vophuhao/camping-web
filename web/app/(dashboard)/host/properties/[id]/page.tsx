@@ -22,8 +22,7 @@ const STEPS = [
   { label: "Cơ bản", description: "Thông tin property" },
   { label: "Vị trí", description: "Địa chỉ và bản đồ" },
   { label: "Hình ảnh", description: "Ảnh property" },
-  { label: "Chính sách", description: "Hủy & hoàn tiền" },
-  { label: "Cài đặt", description: "Hoàn tất" },
+  { label: "Quy định", description: "Nội quy lưu trú" },
 ];
 
 export default function EditPropertyPage() {
@@ -243,9 +242,6 @@ export default function EditPropertyPage() {
       }));
 
       // 3. Prepare payload
-      const rawCp = formData.policies.cancellationPolicy || { type: "moderate", description: "", refundRules: [] };
-      const cpType = (rawCp as any).type === "super_strict" ? "strict" : (rawCp as any).type;
-
       const payload: any = {
         name: b.name.trim(),
         slug: undefined,
@@ -267,25 +263,25 @@ export default function EditPropertyPage() {
         photos: finalPhotos,
         nearbyAttractions: b.nearbyAttractions ?? [],
         cancellationPolicy: {
-          type: cpType,
-          description: (rawCp as any).description?.trim() || undefined,
-          refundRules: (rawCp as any).refundRules ?? [],
+          type: "moderate",
+          description: "Chính sách hủy vừa phải mặc định",
+          refundRules: [],
         },
         rules: formData.policies.rules ?? [],
-        depositRequired: formData.policies.depositRequired ?? false,
-        depositAmount: formData.policies.depositAmount ?? 0,
-        depositType: formData.policies.depositType ?? "fixed",
-        paymentMethods: formData.policies.paymentMethods ?? [],
-        refundPolicy: formData.policies.refundPolicy || undefined,
+        depositRequired: false,
+        depositAmount: 0,
+        depositType: "fixed",
+        paymentMethods: [],
+        refundPolicy: undefined,
         settings: {
-          instantBookEnabled: formData.settings.instantBookEnabled ?? false,
-          requireApproval: formData.settings.requireApproval ?? true,
-          minimumAdvanceNotice: formData.settings.minimumAdvanceNotice ?? 24,
-          bookingWindow: formData.settings.bookingWindow ?? 365,
-          allowWholePropertyBooking: formData.settings.allowWholePropertyBooking ?? false,
+          instantBookEnabled: false,
+          requireApproval: true,
+          minimumAdvanceNotice: 24,
+          bookingWindow: 365,
+          allowWholePropertyBooking: false,
         },
-        checkInInstructions: formData.settings.checkInInstructions || undefined,
-        checkOutInstructions: formData.settings.checkOutInstructions || undefined,
+        checkInInstructions: undefined,
+        checkOutInstructions: undefined,
         status: b.status ?? "pending_approval",
         isActive: !!b.isActive,
         isFeatured: !!b.isFeatured,
@@ -469,37 +465,6 @@ export default function EditPropertyPage() {
         );
       case 3:
         return <PropertyPolicies data={formData.policies} onChange={(d: any) => updateFormData("policies", d)} />;
-      case 4:
-        return (
-          <PropertySettings
-            data={{
-              status: formData.settings.status,
-              visibility: formData.settings.visibility,
-              instantBooking: formData.settings.instantBookEnabled,
-              requireApproval: formData.settings.requireApproval,
-              minimumNotice: formData.settings.minimumAdvanceNotice,
-              advanceBooking: formData.settings.bookingWindow,
-              allowWholePropertyBooking: formData.settings.allowWholePropertyBooking,
-              timezone: formData.settings.timezone,
-              checkInInstructions: formData.settings.checkInInstructions,
-              checkOutInstructions: formData.settings.checkOutInstructions,
-            }}
-            onChange={(d: any) => {
-              updateFormData("settings", {
-                instantBookEnabled: d.instantBooking ?? formData.settings.instantBookEnabled,
-                requireApproval: d.requireApproval ?? formData.settings.requireApproval,
-                minimumAdvanceNotice: d.minimumNotice ?? formData.settings.minimumAdvanceNotice,
-                bookingWindow: d.advanceBooking ?? formData.settings.bookingWindow,
-                allowWholePropertyBooking: d.allowWholePropertyBooking ?? formData.settings.allowWholePropertyBooking,
-                status: d.status ?? formData.settings.status,
-                visibility: d.visibility ?? formData.settings.visibility,
-                timezone: d.timezone ?? formData.settings.timezone,
-                checkInInstructions: d.checkInInstructions ?? formData.settings.checkInInstructions,
-                checkOutInstructions: d.checkOutInstructions ?? formData.settings.checkOutInstructions,
-              });
-            }}
-          />
-        );
       default:
         return null;
     }
@@ -517,28 +482,47 @@ export default function EditPropertyPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900/50 pb-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between w-full">
-            <ArrowLeft className="h-5 w-5 text-gray-500 cursor-pointer hover:text-gray-700" onClick={() => router.push("/host/properties")} />
-            <div className="flex-1 flex justify-center">
-              <StepIndicator currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
-            </div>
-            <div className="w-5" />
+        <div className="flex items-center justify-between bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-4 shadow-sm mb-8">
+          <button 
+            type="button"
+            onClick={() => router.push("/host/properties")}
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex-1 flex justify-center px-4">
+            <StepIndicator currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+          </div>
+          <div className="w-9" />
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-100/40 dark:shadow-none border border-slate-200/50 dark:border-slate-800/50 p-6 sm:p-8 lg:p-10 mb-6 transition-all duration-300">
+          <div className="transition-opacity duration-300 ease-in-out">
+            {renderStep()}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6 sm:p-8 lg:p-12 mb-6">{renderStep()}</div>
-
-        <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border p-4">
-          <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 0} className="gap-2">
+        <div className="flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-md border border-slate-200/50 dark:border-slate-800/50 p-4">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevious} 
+            disabled={currentStep === 0} 
+            className="gap-2 rounded-xl px-5 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+          >
             <ArrowLeft className="h-4 w-4" />
             Quay lại
           </Button>
 
           {currentStep === STEPS.length - 1 ? (
-            <Button onClick={handleSubmit} disabled={updateMutation.isPending || uploading} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={updateMutation.isPending || uploading} 
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-6 gap-2 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            >
               {uploading || updateMutation.isPending ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -546,13 +530,15 @@ export default function EditPropertyPage() {
                 </>
               ) : (
                 <>
-                  
                   Cập nhật
                 </>
               )}
             </Button>
           ) : (
-            <Button onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+            <Button 
+              onClick={handleNext} 
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-6 gap-2 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            >
               Tiếp theo
               <ArrowRight className="h-4 w-4" />
             </Button>

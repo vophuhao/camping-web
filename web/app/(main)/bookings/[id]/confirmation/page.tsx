@@ -27,6 +27,7 @@ import {
   cancelBooking,
   completeBooking,
   getBooking,
+  requestDissatisfaction,
 } from '@/lib/client-actions';
 import { useAuthStore } from '@/store/auth.store';
 import type { Property, Site } from '@/types/property-site';
@@ -56,7 +57,7 @@ import { toast } from 'sonner';
 interface BookingData {
   _id: string;
   code?: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'refunded';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'refunded' | 'refund_requested';
   checkIn: string;
   checkOut: string;
   numberOfGuests: number;
@@ -133,6 +134,16 @@ interface BookingData {
 
   reviewed?: boolean;
   review?: string;
+  cannotAttendRequest?: {
+    requestedAt: string;
+    status: 'pending' | 'approved' | 'rejected';
+    refundAmount?: number;
+  };
+  dissatisfactionRequest?: {
+    requestedAt: string;
+    status: 'pending' | 'approved' | 'rejected';
+    refundAmount?: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -155,6 +166,20 @@ export default function ConfirmationPage() {
 
   // Review dialog state
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+
+  // Dissatisfaction dialog state
+  const [isDissatisfactionOpen, setIsDissatisfactionOpen] = useState(false);
+  const [dissatisfactionForm, setDissatisfactionForm] = useState({
+    reason: '',
+    phone: '',
+    email: '',
+    bankAccountName: '',
+    bankAccountNumber: '',
+    bankName: '',
+  });
+  const [dissatisfactionImages, setDissatisfactionImages] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['booking', bookingId],
@@ -217,6 +242,69 @@ export default function ConfirmationPage() {
     },
   });
 
+  // Dissatisfaction mutation
+  const dissatisfactionMutation = useMutation({
+    mutationFn: (imageUrls: string[]) =>
+      requestDissatisfaction(bookingId, {
+        ...dissatisfactionForm,
+        evidenceImages: imageUrls,
+      }),
+    onSuccess: () => {
+      toast.success('Đã gửi yêu cầu hoàn tiền', {
+        description: 'Chúng tôi sẽ xem xét và phản hồi trong vòng 3-5 ngày làm việc.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+      setIsDissatisfactionOpen(false);
+    },
+    onError: (error: Error) => {
+      toast.error('Không thể gửi yêu cầu', {
+        description: error?.message || 'Vui lòng thử lại sau.',
+      });
+    },
+  });
+
+  const handleDissatisfactionSubmit = async () => {
+    if (!dissatisfactionForm.reason || dissatisfactionForm.reason.length < 10) {
+      toast.error('Lý do phải có ít nhất 10 ký tự');
+      return;
+    }
+    if (!dissatisfactionForm.phone || !dissatisfactionForm.email) {
+      toast.error('Vui lòng điền số điện thoại và email');
+      return;
+    }
+    if (!dissatisfactionForm.bankAccountName || !dissatisfactionForm.bankAccountNumber || !dissatisfactionForm.bankName) {
+      toast.error('Vui lòng điền đầy đủ thông tin ngân hàng');
+      return;
+    }
+    if (dissatisfactionImages.length < 5) {
+      toast.error('Phải cung cấp ít nhất 5 ảnh minh chứng');
+      return;
+    }
+
+    try {
+      setUploadingImages(true);
+      toast.info('Đang upload ảnh minh chứng...');
+      const { uploadMedia } = await import('@/lib/client-actions');
+      const urls: string[] = [];
+      for (let i = 0; i < dissatisfactionImages.length; i++) {
+        const fd = new FormData();
+        fd.append('files', dissatisfactionImages[i]);
+        fd.append('folder', 'dissatisfaction');
+        const res = await uploadMedia(fd);
+        const url = Array.isArray(res?.data) ? res.data[0] : res?.data;
+        if (url) urls.push(url as string);
+      }
+      setUploadedImageUrls(urls);
+      if (urls.length < 5) {
+        toast.error('Upload ảnh thất bại. Vui lòng thử lại.');
+        return;
+      }
+      await dissatisfactionMutation.mutateAsync(urls);
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleCancelBooking = () => {
     if (!cancellationReason.trim()) {
       toast.error('Vui lòng nhập lý do hủy');
@@ -277,6 +365,7 @@ export default function ConfirmationPage() {
       cancelled: 'bg-red-100 text-red-800 border-red-200',
       completed: 'bg-blue-100 text-blue-800 border-blue-200',
       refunded: 'bg-gray-100 text-gray-800 border-gray-200',
+      refund_requested: 'bg-orange-100 text-orange-800 border-orange-200',
     };
     const labels: Record<BookingData['status'], string> = {
       pending: 'Chờ xác nhận',
@@ -284,6 +373,7 @@ export default function ConfirmationPage() {
       cancelled: 'Đã hủy',
       completed: 'Hoàn thành',
       refunded: 'Đã hoàn tiền',
+      refund_requested: 'Đang yêu cầu hoàn tiền',
     };
     return (
       <Badge className={`${styles[status]} px-3 py-1`}>{labels[status]}</Badge>
@@ -514,8 +604,49 @@ export default function ConfirmationPage() {
                 Xem trang địa điểm
               </Button>
 
-              {/* Show Complete Trip button for confirmed bookings after checkout */}
+              {/* Nút Không thể đến - luôn hiển thị khi booking confirmed + paid */}
               {booking.status === 'confirmed' &&
+                booking.paymentStatus === 'paid' &&
+                !booking.cannotAttendRequest &&
+                !booking.dissatisfactionRequest && (
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+                    onClick={() => router.push(`/bookings/${bookingId}/cannot-attend`)}
+                  >
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Không thể đến (hoàn 50%)
+                  </Button>
+                )}
+
+              {/* Nút Không hài lòng - chỉ hiển thị trong 12h sau check-in */}
+              {booking.status === 'confirmed' &&
+                booking.paymentStatus === 'paid' &&
+                !booking.dissatisfactionRequest &&
+                (() => {
+                  const now = new Date();
+                  const checkIn = new Date(booking.checkIn);
+                  const window12h = new Date(checkIn.getTime() + 12 * 60 * 60 * 1000);
+                  return now >= checkIn && now <= window12h;
+                })() && (
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => setIsDissatisfactionOpen(true)}
+                  >
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Không hài lòng (hoàn 100%)
+                  </Button>
+                )}
+
+              {/* Trạng thái đang chờ xét duyệt hoàn tiền */}
+              {booking.dissatisfactionRequest?.status === 'pending' && (
+                <div className="flex-1 rounded-lg border border-orange-200 bg-orange-50 p-3 text-center text-sm text-orange-800">
+                  ⏳ Yêu cầu hoàn tiền không hài lòng đang chờ xét duyệt
+                </div>
+              )}
+
+              {/* Show Complete Trip button for confirmed bookings after checkout */}
+              {booking.status === 'confirmed' && booking.paymentStatus === "paid" &&
                 new Date(booking.checkOut) < new Date() &&
                 !booking.reviewed && (
                   <Button
@@ -762,13 +893,12 @@ export default function ConfirmationPage() {
                   Thông tin này giúp chúng tôi cải thiện dịch vụ
                 </p>
                 <p
-                  className={`text-xs ${
-                    cancellationReason.length < 10
+                  className={`text-xs ${cancellationReason.length < 10
                       ? 'text-red-600'
                       : cancellationReason.length > 450
                         ? 'text-orange-600'
                         : 'text-muted-foreground'
-                  }`}
+                    }`}
                 >
                   {cancellationReason.length}/500
                 </p>
@@ -796,7 +926,7 @@ export default function ConfirmationPage() {
 
                 {booking.property.cancellationPolicy.refundRules &&
                   booking.property.cancellationPolicy.refundRules.length >
-                    0 && (
+                  0 && (
                     <div className="mt-3 space-y-1 text-sm text-red-800">
                       {booking.property.cancellationPolicy.refundRules
                         .sort(
@@ -995,6 +1125,187 @@ export default function ConfirmationPage() {
             siteName={siteName}
           />
         )}
+
+      {/* Dissatisfaction Dialog */}
+      <Dialog open={isDissatisfactionOpen} onOpenChange={setIsDissatisfactionOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              Yêu cầu hoàn tiền - Không hài lòng
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              Áp dụng trong vòng 12 tiếng sau check-in. Nếu admin chấp nhận, bạn sẽ được hoàn{' '}
+              <strong>100%</strong> số tiền đã thanh toán.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Lý do */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">
+                Lý do không hài lòng <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder="Mô tả chi tiết vấn đề: cơ sở vật chất không đúng mô tả, hình ảnh sai thực tế... (tối thiểu 10 ký tự)"
+                value={dissatisfactionForm.reason}
+                onChange={e => setDissatisfactionForm(f => ({ ...f, reason: e.target.value }))}
+                className="min-h-[100px] resize-none"
+                maxLength={2000}
+              />
+              <p className="text-xs text-gray-500">{dissatisfactionForm.reason.length}/2000</p>
+            </div>
+
+            {/* Thông tin liên hệ */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  Số điện thoại <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  placeholder="0909 123 456"
+                  value={dissatisfactionForm.phone}
+                  onChange={e => setDissatisfactionForm(f => ({ ...f, phone: e.target.value }))}
+                  maxLength={20}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="email"
+                  placeholder="example@gmail.com"
+                  value={dissatisfactionForm.email}
+                  onChange={e => setDissatisfactionForm(f => ({ ...f, email: e.target.value }))}
+                  maxLength={100}
+                />
+              </div>
+            </div>
+
+            {/* Thông tin ngân hàng */}
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Thông tin tài khoản nhận hoàn tiền
+              </h4>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  Tên ngân hàng <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  placeholder="VD: Vietcombank, MB Bank, Techcombank..."
+                  value={dissatisfactionForm.bankName}
+                  onChange={e => setDissatisfactionForm(f => ({ ...f, bankName: e.target.value }))}
+                  maxLength={100}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  Tên chủ tài khoản <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  placeholder="Nguyễn Văn A (đúng như trên thẻ)"
+                  value={dissatisfactionForm.bankAccountName}
+                  onChange={e => setDissatisfactionForm(f => ({ ...f, bankAccountName: e.target.value }))}
+                  maxLength={200}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  Số tài khoản <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  placeholder="1234567890"
+                  value={dissatisfactionForm.bankAccountNumber}
+                  onChange={e => setDissatisfactionForm(f => ({ ...f, bankAccountNumber: e.target.value }))}
+                  maxLength={50}
+                />
+              </div>
+            </div>
+
+            {/* Upload ảnh minh chứng */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Ảnh minh chứng{' '}
+                <span className="text-red-500">* (tối thiểu 5 ảnh)</span>
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="block w-full text-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-red-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-red-700 hover:file:bg-red-100 cursor-pointer"
+                onChange={e => {
+                  const files = Array.from(e.target.files || []);
+                  setDissatisfactionImages(prev => [...prev, ...files].slice(0, 20));
+                }}
+              />
+              <p className={`text-xs ${
+                dissatisfactionImages.length < 5 ? 'text-red-600' : 'text-green-600'
+              }`}>
+                {dissatisfactionImages.length} ảnh đã chọn{dissatisfactionImages.length < 5 && ` (cần thêm ${5 - dissatisfactionImages.length} ảnh)`}
+              </p>
+              {dissatisfactionImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {dissatisfactionImages.map((file, idx) => (
+                    <div key={idx} className="relative group">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`preview-${idx}`}
+                        className="h-16 w-16 rounded-lg object-cover border border-gray-200"
+                      />
+                      <button
+                        onClick={() => setDissatisfactionImages(prev => prev.filter((_, i) => i !== idx))}
+                        className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+              <strong>Lưu ý:</strong> Admin sẽ xem xét yêu cầu và phản hồi qua email trong vòng 3-5 ngày làm việc. Nếu được chấp nhận, bạn sẽ được hoàn 100% số tiền đã thanh toán.
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 border-t pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDissatisfactionOpen(false)}
+              disabled={dissatisfactionMutation.isPending || uploadingImages}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleDissatisfactionSubmit}
+              disabled={
+                dissatisfactionMutation.isPending ||
+                uploadingImages ||
+                dissatisfactionImages.length < 5 ||
+                !dissatisfactionForm.reason ||
+                !dissatisfactionForm.phone ||
+                !dissatisfactionForm.email ||
+                !dissatisfactionForm.bankName ||
+                !dissatisfactionForm.bankAccountName ||
+                !dissatisfactionForm.bankAccountNumber
+              }
+            >
+              {(dissatisfactionMutation.isPending || uploadingImages) ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {uploadingImages ? 'Đang upload ảnh...' : 'Đang gửi...'}
+                </>
+              ) : (
+                'Gửi yêu cầu hoàn tiền'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

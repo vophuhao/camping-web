@@ -63,7 +63,7 @@ export default function PropertiesPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-6">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
               Quản lý Properties
             </h1>
             <p className="text-slate-600 mt-2">

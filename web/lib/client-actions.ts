@@ -87,118 +87,6 @@ export async function uploadMedia(formData: FormData): Promise<ApiResponse> {
   });
 }
 
-// ================== category API ==================
-export async function getCategories(
-  page = 1,
-  limit = 10,
-  search?: string,
-): Promise<PaginatedResponse<Category>> {
-  return apiClient.get('/categories', {
-    params: { page, limit, search },
-  });
-}
-
-export async function getAllCategories(): Promise<ApiResponse<Category[]>> {
-  return apiClient.get('/categories/all');
-}
-
-export async function getCategoryById(id: string): Promise<ApiResponse> {
-  return apiClient.get(`/categories/${id}`);
-}
-
-export async function createCategory(data: {
-  name: string;
-  isActive: boolean;
-}): Promise<ApiResponse> {
-  return apiClient.post('/categories', data);
-}
-
-export async function updateCategory(
-  id: string,
-  data: { name: string; isActive: boolean },
-): Promise<ApiResponse> {
-  return apiClient.put(`/categories/${id}`, data);
-}
-
-export async function deleteCategory(id: string): Promise<ApiResponse> {
-  return apiClient.delete(`/categories/${id}`);
-}
-
-// ================== product API ==================
-export async function createProduct(data: {
-  name: string;
-  description?: string;
-  price: number;
-  deal?: number;
-  stock: number;
-  images: string[];
-  category: string;
-  specifications?: ProductSpecification[];
-  variants?: ProductVariant[];
-  details?: ProductDetailSection[];
-  guide?: string[];
-  warnings?: string[];
-  isActive: boolean;
-}): Promise<ApiResponse> {
-  return apiClient.post('/products', data);
-}
-
-export async function updateProduct(
-  id: string,
-  data: {
-    name: string;
-    description?: string;
-    price: number;
-    deal?: number;
-    stock: number;
-    images: string[];
-    category: string;
-    specifications?: ProductSpecification[];
-    variants?: ProductVariant[];
-    details?: ProductDetailSection[];
-    guide?: string[];
-    warnings?: string[];
-    isActive: boolean;
-  },
-): Promise<ApiResponse> {
-  return apiClient.put(`/products/${id}`, data);
-}
-
-export async function getProduct(
-  page = 1,
-  limit = 10,
-  search?: string,
-): Promise<ApiResponse<Product[]>> {
-  return apiClient.get('/products', {
-    params: { page, limit, search },
-  });
-}
-
-export async function getProductBySlug(slug: string): Promise<ApiResponse> {
-  return apiClient.get(`/products/slug/${slug}`);
-}
-
-export async function getAllProduct(): Promise<ApiResponse<Product[]>> {
-  return apiClient.get('/products/all');
-}
-
-export async function deleteProduct(id: string): Promise<ApiResponse> {
-  return apiClient.delete(`/products/${id}`);
-}
-
-export async function getProductsByCategoryName(
-  categoryName: string,
-  page = 1,
-  limit = 10,
-): Promise<ApiResponse<Product[]>> {
-  return apiClient.get(
-    `/products/category/${encodeURIComponent(categoryName)}`,
-    {
-      params: { page, limit },
-    },
-  );
-}
-
 // ================== BOOKING API ==================
 export async function createBooking(data: {
   // NEW: Property-Site architecture (site is required)
@@ -273,6 +161,21 @@ export async function refundBooking(
   bookingId: string,
 ): Promise<ApiResponse<Booking>> {
   return apiClient.post(`/bookings/${bookingId}/refund`);
+}
+
+export async function requestDissatisfaction(
+  bookingId: string,
+  data: {
+    reason: string;
+    phone: string;
+    email: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankName: string;
+    evidenceImages: string[];
+  },
+): Promise<ApiResponse<Booking>> {
+  return apiClient.post(`/bookings/${bookingId}/dissatisfaction`, data);
 }
 
 export async function getAllAmenities(): Promise<ApiResponse<Amenity[]>> {
@@ -596,4 +499,54 @@ export async function getAllOrders(): Promise<ApiResponse> {
 
 export async function blockedUser(id: string): Promise<ApiResponse> {
   return apiClient.post(`/users/block-user/${id}`);
+}
+
+// ================== WALLET API ==================
+export async function getWalletBalance(): Promise<ApiResponse> {
+  return apiClient.get('/wallet/balance');
+}
+
+export async function getWalletTransactions(page = 1, limit = 20): Promise<ApiResponse> {
+  return apiClient.get('/wallet/transactions', { params: { page, limit } });
+}
+
+export async function createWithdrawalRequest(amount: number): Promise<ApiResponse> {
+  return apiClient.post('/wallet/withdraw', { amount });
+}
+
+export async function getMyWithdrawals(page = 1, limit = 20): Promise<ApiResponse> {
+  return apiClient.get('/wallet/withdrawals', { params: { page, limit } });
+}
+
+export async function guestConfirmArrival(bookingId: string): Promise<ApiResponse> {
+  return apiClient.post(`/bookings/${bookingId}/confirm-arrival`);
+}
+
+export async function guestCannotAttend(
+  bookingId: string,
+  data: {
+    reason: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankName: string;
+    evidenceImages?: string[];
+  }
+): Promise<ApiResponse> {
+  return apiClient.post(`/bookings/${bookingId}/cannot-attend`, data);
+}
+
+// Admin wallet routes
+export async function adminGetAllWithdrawals(params?: Record<string, unknown>): Promise<ApiResponse> {
+  return apiClient.get('/wallet/admin/withdrawals', { params });
+}
+
+export async function adminProcessWithdrawal(
+  withdrawalId: string,
+  approved: boolean,
+  adminNote?: string
+): Promise<ApiResponse> {
+  return apiClient.post(`/wallet/admin/withdrawals/${withdrawalId}/process`, {
+    approved,
+    adminNote,
+  });
 }

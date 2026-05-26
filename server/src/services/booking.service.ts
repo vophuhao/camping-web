@@ -14,8 +14,11 @@ import type {
   CancelBookingInput,
   CreateBookingInput,
   SearchBookingInput,
+  RequestDissatisfactionInput,
+  ProcessDissatisfactionInput,
 } from "@/validators/booking.validator";
 import NotificationService from "./notification.service";
+import WalletService from "./wallet.service";
 import mongoose from "mongoose";
 const { PayOS } = require("@payos/node");
 
@@ -295,9 +298,12 @@ export class BookingService {
 
     appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
 
-    // Check permission (chỉ guest hoặc host mới xem được)
+    // Check permission (guest, host, hoặc admin đều xem được)
+    const UserModel = (await import("@/models/user.model")).default;
+    const user = await UserModel.findById(userId).select("role");
+    const isAdmin = user?.role === "admin";
     appAssert(
-      booking.guest._id.toString() === userId || booking.host._id.toString() === userId,
+      booking.guest._id.toString() === userId || booking.host._id.toString() === userId || isAdmin,
       ErrorFactory.forbidden("Bạn không có quyền xem booking này")
     );
 
@@ -432,7 +438,7 @@ export class BookingService {
   }
 
   /**
-   * Refund booking (admin or host action)
+   * Refund booking (admin only)
    */
   async refundBooking(
     bookingId: string,
@@ -442,14 +448,17 @@ export class BookingService {
     const booking = await BookingModel.findById(bookingId);
     appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
 
-    // Check permission (host or admin)
-    const isHost = booking.host.toString() === userId;
-    // Admin check would go here if needed
-    appAssert(isHost, ErrorFactory.forbidden("Bạn không có quyền refund booking này"));
+    // Check permission - admin only
+    const UserModel = (await import("@/models/user.model")).default;
+    const user = await UserModel.findById(userId).select("role");
+    appAssert(
+      user?.role === "admin",
+      ErrorFactory.forbidden("Chỉ admin mới có quyền refund booking")
+    );
 
     // Check status
     appAssert(
-      booking.status === "confirmed" || booking.status === "cancelled",
+      booking.status === "confirmed" || booking.status === "cancelled" || booking.status === "refund_requested",
       ErrorFactory.badRequest("Không thể refund booking này")
     );
 
@@ -462,6 +471,11 @@ export class BookingService {
     // Set refund
     booking.status = "refunded";
     booking.refundAmount = refundAmount || booking.pricing.total;
+    if (booking.refundRequest) {
+      booking.refundRequest.status = "approved";
+      booking.refundRequest.processedAt = new Date();
+      booking.refundRequest.processedBy = new mongoose.Types.ObjectId(userId);
+    }
     await booking.save();
 
     // Unblock dates when booking is refunded
@@ -693,7 +707,7 @@ export class BookingService {
 
     // Create availability records for each date
     const availabilityRecords = dates.map((date) => ({
-      site: siteId,
+      site: new mongoose.Types.ObjectId(siteId),
       date,
       isAvailable: false,
       blockType: "booked" as const,
@@ -1292,5 +1306,610 @@ export class BookingService {
       console.error("❌ Lỗi trong autoCompleteBooking:", error);
       throw error;
     }
+  }
+
+  // ==================== ADMIN MANAGED BOOKING METHODS ====================
+
+
+
+  /**
+   * User yêu cầu hoàn tiền (gửi đến admin)
+   */
+  async requestRefund(
+    bookingId: string,
+    userId: string,
+    reason: string
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findOne({ code: bookingId });
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.guest.toString() === userId,
+      ErrorFactory.forbidden("Bạn không có quyền yêu cầu hoàn tiền")
+    );
+    appAssert(
+      booking.status === "confirmed" || booking.status === "completed",
+      ErrorFactory.badRequest("Không thể yêu cầu hoàn tiền cho booking này")
+    );
+    appAssert(
+      booking.paymentStatus === "paid",
+      ErrorFactory.badRequest("Booking chưa được thanh toán")
+    );
+    appAssert(
+      !booking.refundRequest || booking.refundRequest.status === "rejected",
+      ErrorFactory.badRequest("Đã có yêu cầu hoàn tiền đang chờ xử lý")
+    );
+
+    booking.status = "refund_requested";
+    booking.refundRequest = {
+      requestedAt: new Date(),
+      reason,
+      requestedBy: new mongoose.Types.ObjectId(userId),
+      status: "pending",
+    };
+    await booking.save();
+
+    return booking;
+  }
+
+  /**
+   * Admin xử lý yêu cầu hoàn tiền
+   */
+  async adminProcessRefund(
+    bookingId: string,
+    adminId: string,
+    approved: boolean,
+    adminNote?: string,
+    refundAmount?: number
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findById(bookingId);
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.refundRequest?.status === "pending",
+      ErrorFactory.badRequest("Không có yêu cầu hoàn tiền đang chờ")
+    );
+
+    if (approved) {
+      booking.status = "refunded";
+      booking.refundAmount = refundAmount || booking.pricing.total;
+      booking.refundRequest!.status = "approved";
+      await this.unblockDatesForBooking(booking.site.toString(), booking.checkIn, booking.checkOut);
+    } else {
+      booking.status = "confirmed"; // Trả về status trước
+      booking.refundRequest!.status = "rejected";
+    }
+
+    booking.refundRequest!.processedAt = new Date();
+    booking.refundRequest!.processedBy = new mongoose.Types.ObjectId(adminId);
+    if (adminNote) booking.refundRequest!.adminNote = adminNote;
+
+    await booking.save();
+    return booking;
+  }
+
+  /**
+   * Admin xem tất cả booking
+   */
+  async getAdminBookings(filters: {
+    status?: string;
+    paymentStatus?: string;
+    hostId?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const { status, paymentStatus, hostId, search, startDate, endDate, page = 1, limit = 20 } = filters;
+    const query: any = {};
+
+    if (status) query.status = status;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
+    if (hostId) query.host = new mongoose.Types.ObjectId(hostId);
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    if (search) {
+      query.$or = [
+        { code: { $regex: search, $options: "i" } },
+        { fullnameGuest: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [bookings, total] = await Promise.all([
+      BookingModel.find(query)
+        .populate("property", "name location photos slug")
+        .populate("site", "name accommodationType photos pricing")
+        .populate("guest", "username email avatarUrl")
+        .populate("host", "username email avatarUrl")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      BookingModel.countDocuments(query),
+    ]);
+
+    return {
+      data: bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  /**
+   * Admin thống kê booking
+   */
+  async getAdminBookingStats() {
+    const [statusStats, paymentStats, monthlyStats, refundRequests] = await Promise.all([
+      BookingModel.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 }, revenue: { $sum: "$pricing.total" } } },
+      ]),
+      BookingModel.aggregate([
+        { $group: { _id: "$paymentStatus", count: { $sum: 1 } } },
+      ]),
+      BookingModel.aggregate([
+        { $match: { paymentStatus: "paid" } },
+        {
+          $group: {
+            _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+            revenue: { $sum: "$pricing.total" },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id.year": -1, "_id.month": -1 } },
+        { $limit: 12 },
+      ]),
+      BookingModel.countDocuments({ "refundRequest.status": "pending" }),
+    ]);
+
+    const totalRevenue = statusStats
+      .filter((s: any) => s._id === "completed")
+      .reduce((sum: number, s: any) => sum + s.revenue, 0);
+
+    return {
+      statusStats,
+      paymentStats,
+      monthlyStats: monthlyStats.reverse(),
+      totalRevenue,
+      platformFee: Math.round(totalRevenue * 0.05),
+      pendingRefunds: refundRequests,
+    };
+  }
+
+  /**
+   * Admin hủy booking
+   */
+  async adminCancelBooking(
+    bookingId: string,
+    adminId: string,
+    reason?: string
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findById(bookingId);
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.status === "pending" || booking.status === "confirmed",
+      ErrorFactory.badRequest("Không thể hủy booking này")
+    );
+
+    booking.status = "cancelled";
+    booking.cancelledBy = new mongoose.Types.ObjectId(adminId);
+    booking.cancelledAt = new Date();
+    if (reason) booking.cancellationReason = reason;
+    await booking.save();
+
+    // Unblock dates
+    await this.unblockDatesForBooking(booking.site.toString(), booking.checkIn, booking.checkOut);
+
+    return booking;
+  }
+
+  /**
+   * Host xem booking của mình (read-only)
+   */
+  async getHostBookings(hostId: string, filters: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const { status, page = 1, limit = 20 } = filters;
+    const query: any = { host: new mongoose.Types.ObjectId(hostId) };
+    if (status) query.status = status;
+
+    const skip = (page - 1) * limit;
+    const [bookings, total] = await Promise.all([
+      BookingModel.find(query)
+        .populate("property", "name location photos slug")
+        .populate("site", "name accommodationType photos pricing")
+        .populate("guest", "username email avatarUrl")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      BookingModel.countDocuments(query),
+    ]);
+
+    return {
+      data: bookings,
+      pagination: {
+        page, limit, total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  // ==================== WALLET-BASED ATTENDANCE METHODS ====================
+
+  /**
+   * Khách xác nhận đã đến: cộng tiền vào ví host ngay lập tức
+   * Hiển thị nút từ checkIn đến checkOut + 5 ngày
+   */
+  async guestConfirmArrival(
+    bookingId: string,
+    guestId: string
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findById(bookingId)
+      .populate("property", "name")
+      .lean();
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.guest.toString() === guestId,
+      ErrorFactory.forbidden("Bạn không phải khách của booking này")
+    );
+    appAssert(
+      booking.status === "confirmed",
+      ErrorFactory.badRequest("Booking phải ở trạng thái đã xác nhận")
+    );
+    appAssert(
+      booking.paymentStatus === "paid",
+      ErrorFactory.badRequest("Booking chưa được thanh toán")
+    );
+    appAssert(
+      !booking.guestConfirmedAttendance,
+      ErrorFactory.badRequest("Đã xác nhận đến rồi")
+    );
+    appAssert(
+      !booking.walletCredited,
+      ErrorFactory.badRequest("Tiền đã được chuyển vào ví")
+    );
+
+    // Kiểm tra thời gian: phải trong khoảng checkIn → checkOut + 5 ngày
+    const now = new Date();
+    const checkIn = new Date(booking.checkIn);
+    const checkOut = new Date(booking.checkOut);
+    const deadline = new Date(checkOut.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+    appAssert(
+      now >= checkIn,
+      ErrorFactory.badRequest(
+        `Chưa đến thời gian check-in (${checkIn.toLocaleDateString("vi-VN")})`
+      )
+    );
+    appAssert(
+      now <= deadline,
+      ErrorFactory.badRequest("Thời gian xác nhận đã hết hạn")
+    );
+
+    // Cộng ví host
+    const walletService = new WalletService();
+    await walletService.creditHostWallet(
+      booking.host.toString(),
+      bookingId,
+      booking.pricing.total
+    );
+
+    // Cập nhật booking (BookingModel.findByIdAndUpdate đã được gọi trong creditHostWallet)
+    const updated = await BookingModel.findByIdAndUpdate(
+      bookingId,
+      { guestConfirmedAttendance: true, guestConfirmedAt: now },
+      { new: true }
+    );
+
+    return updated!;
+  }
+
+  /**
+   * Khách báo không thể đến:
+   * - Mở khóa property (availability)
+   * - Host nhận 30% vào ví
+   * - Tạo yêu cầu hoàn tiền 50% cho guest (admin xét duyệt)
+   * - Hiển thị nút 6 giờ trước và 6 giờ sau checkIn
+   */
+  async guestCannotAttend(
+    bookingId: string,
+    guestId: string,
+    input: {
+      reason: string;
+      bankAccountName: string;
+      bankAccountNumber: string;
+      bankName: string;
+      evidenceImages?: string[];
+    }
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findById(bookingId);
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.guest.toString() === guestId,
+      ErrorFactory.forbidden("Bạn không phải khách của booking này")
+    );
+    appAssert(
+      booking.status === "confirmed",
+      ErrorFactory.badRequest("Booking phải ở trạng thái đã xác nhận")
+    );
+    appAssert(
+      booking.paymentStatus === "paid",
+      ErrorFactory.badRequest("Booking chưa được thanh toán")
+    );
+    appAssert(
+      !booking.cannotAttendRequest,
+      ErrorFactory.badRequest("Đã gửi yêu cầu không đến trước đó rồi")
+    );
+    appAssert(
+      !booking.walletCredited,
+      ErrorFactory.badRequest("Tiền đã được xử lý")
+    );
+
+    const now = new Date();
+
+    const refundAmount = Math.round(booking.pricing.total * 0.5);
+
+    // Cập nhật booking trước
+    booking.cannotAttendRequest = {
+      requestedAt: now,
+      reason: input.reason,
+      bankAccountName: input.bankAccountName,
+      bankAccountNumber: input.bankAccountNumber,
+      bankName: input.bankName,
+      evidenceImages: input.evidenceImages ?? [],
+      status: "pending",
+      refundAmount,
+    };
+    await booking.save();
+
+    // Cộng 30% vào ví host
+    const walletService = new WalletService();
+    await walletService.creditHostWalletCannotAttend(
+      booking.host.toString(),
+      bookingId,
+      booking.pricing.total
+    );
+
+    // Mở khóa availability (xóa block đã tạo khi booking)
+    await AvailabilityModel.deleteMany({
+      booking: booking._id,
+    });
+
+    return booking;
+  }
+
+  /**
+   * Khách gửi yêu cầu hoàn tiền do không hài lòng với cơ sở vật chất (12 tiếng sau check-in)
+   * Admin duyệt → hoàn 100%, Host không nhận tiền
+   */
+  async requestDissatisfaction(
+    guestId: string,
+    bookingId: string,
+    input: RequestDissatisfactionInput
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findById(bookingId);
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.guest.toString() === guestId,
+      ErrorFactory.forbidden("Bạn không phải khách của booking này")
+    );
+    appAssert(
+      booking.status === "confirmed",
+      ErrorFactory.badRequest("Booking phải ở trạng thái đã xác nhận")
+    );
+    appAssert(
+      booking.paymentStatus === "paid",
+      ErrorFactory.badRequest("Booking chưa được thanh toán")
+    );
+    appAssert(
+      !booking.dissatisfactionRequest,
+      ErrorFactory.badRequest("Bạn đã gửi yêu cầu hoàn tiền không hài lòng trước đó rồi")
+    );
+
+    // Kiểm tra thời gian: từ checkIn đến checkIn + 12 tiếng
+    const now = new Date();
+    const checkInTime = new Date(booking.checkIn);
+    const windowEnd = new Date(checkInTime.getTime() + 12 * 60 * 60 * 1000);
+    appAssert(
+      now >= checkInTime && now <= windowEnd,
+      ErrorFactory.badRequest(
+        "Yêu cầu hoàn tiền không hài lòng chỉ được gửi trong vòng 12 tiếng sau khi check-in"
+      )
+    );
+
+    // Lưu yêu cầu
+    booking.dissatisfactionRequest = {
+      requestedAt: now,
+      reason: input.reason,
+      phone: input.phone,
+      email: input.email,
+      bankAccountName: input.bankAccountName,
+      bankAccountNumber: input.bankAccountNumber,
+      bankName: input.bankName,
+      evidenceImages: input.evidenceImages,
+      status: "pending",
+    };
+    booking.status = "refund_requested";
+    await booking.save();
+
+    return booking;
+  }
+
+  /**
+   * Admin xử lý yêu cầu hoàn tiền không hài lòng
+   * - Approved: đánh dấu refunded, gửi mail thông báo chấp nhận
+   * - Rejected: ghi chú lý do, gửi mail thông báo từ chối
+   */
+  async processDissatisfaction(
+    adminId: string,
+    bookingId: string,
+    input: ProcessDissatisfactionInput
+  ): Promise<BookingDocument> {
+    const booking = await BookingModel.findById(bookingId).populate("guest", "name email");
+    appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
+    appAssert(
+      booking.dissatisfactionRequest,
+      ErrorFactory.badRequest("Booking này chưa có yêu cầu hoàn tiền không hài lòng")
+    );
+    appAssert(
+      booking.dissatisfactionRequest!.status === "pending",
+      ErrorFactory.badRequest("Yêu cầu này đã được xử lý rồi")
+    );
+
+    const now = new Date();
+    const guest = booking.guest as any;
+    const refundAmount = booking.pricing.total;
+
+    booking.dissatisfactionRequest!.status = input.status;
+    booking.dissatisfactionRequest!.adminNote = input.adminNote;
+    booking.dissatisfactionRequest!.processedAt = now;
+    booking.dissatisfactionRequest!.processedBy = new mongoose.Types.ObjectId(adminId);
+
+    if (input.status === "approved") {
+      booking.dissatisfactionRequest!.refundAmount = refundAmount;
+      booking.status = "refunded";
+      booking.paymentStatus = "refunded";
+      booking.refundAmount = refundAmount;
+
+      // Gửi email chấp nhận
+      try {
+        await sendMail({
+          to: booking.dissatisfactionRequest!.email || guest?.email,
+          subject: "[Cam Trại] Yêu cầu hoàn tiền đã được chấp nhận",
+          html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;background:#f9fafb;border-radius:12px">
+              <h2 style="color:#059669">✅ Yêu cầu hoàn tiền đã được chấp nhận</h2>
+              <p>Xin chào <strong>${guest?.name || booking.fullnameGuest || "Quý khách"}</strong>,</p>
+              <p>Chúng tôi đã xem xét và <strong>chấp nhận</strong> yêu cầu hoàn tiền do không hài lòng của bạn đối với booking <strong>#${booking.code}</strong>.</p>
+              <div style="background:#ecfdf5;border-radius:8px;padding:16px;margin:16px 0">
+                <p style="margin:0">💰 <strong>Số tiền hoàn:</strong> ${new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(refundAmount)}</p>
+                <p style="margin:4px 0 0">🏦 <strong>Tài khoản nhận:</strong> ${booking.dissatisfactionRequest!.bankAccountNumber} - ${booking.dissatisfactionRequest!.bankName}</p>
+                <p style="margin:4px 0 0">👤 <strong>Chủ tài khoản:</strong> ${booking.dissatisfactionRequest!.bankAccountName}</p>
+              </div>
+              ${input.adminNote ? `<p><strong>Ghi chú từ admin:</strong> ${input.adminNote}</p>` : ""}
+              <p>Tiền sẽ được chuyển về tài khoản của bạn trong vòng 3-5 ngày làm việc.</p>
+              <p style="color:#6b7280;font-size:14px">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+            </div>
+          `,
+        });
+      } catch (e) {
+        console.error("Lỗi gửi mail chấp nhận hoàn tiền:", e);
+      }
+    } else {
+      // Rejected → trả lại trạng thái confirmed
+      booking.status = "confirmed";
+
+      // Gửi email từ chối
+      try {
+        await sendMail({
+          to: booking.dissatisfactionRequest!.email || guest?.email,
+          subject: "[Cam Trại] Yêu cầu hoàn tiền không được chấp nhận",
+          html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;background:#f9fafb;border-radius:12px">
+              <h2 style="color:#dc2626">❌ Yêu cầu hoàn tiền không được chấp nhận</h2>
+              <p>Xin chào <strong>${guest?.name || booking.fullnameGuest || "Quý khách"}</strong>,</p>
+              <p>Rất tiếc, sau khi xem xét, chúng tôi <strong>không thể chấp nhận</strong> yêu cầu hoàn tiền của bạn đối với booking <strong>#${booking.code}</strong>.</p>
+              ${input.adminNote ? `<div style="background:#fef2f2;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0"><strong>Lý do:</strong> ${input.adminNote}</p></div>` : ""}
+              <p>Nếu bạn có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ của chúng tôi.</p>
+              <p style="color:#6b7280;font-size:14px">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+            </div>
+          `,
+        });
+      } catch (e) {
+        console.error("Lỗi gửi mail từ chối hoàn tiền:", e);
+      }
+    }
+
+    await booking.save();
+    return booking;
+  }
+
+  /**
+   * Cronjob: Tự động cộng tiền vào ví host sau 5 ngày khách không xác nhận
+   */
+  async autoSettleExpiredBookings() {
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+
+    // Tìm các booking: confirmed + paid + khách chưa xác nhận + chưa cộng ví + đã qua checkIn > 5 ngày
+    const expiredBookings = await BookingModel.find({
+      status: "confirmed",
+      paymentStatus: "paid",
+      guestConfirmedAttendance: { $ne: true },
+      walletCredited: { $ne: true },
+      cannotAttendRequest: { $exists: false },
+      checkIn: { $lte: fiveDaysAgo },
+    });
+
+    const walletService = new WalletService();
+    let settled = 0;
+
+    for (const booking of expiredBookings) {
+      try {
+        await walletService.creditHostWalletAutoSettle(
+          booking.host.toString(),
+          (booking._id as mongoose.Types.ObjectId).toString(),
+          booking.pricing.total
+        );
+        await BookingModel.findByIdAndUpdate(booking._id, {
+          guestConfirmedAttendance: false,
+          walletCredited: true,
+          status: "completed",
+        });
+        settled++;
+      } catch (err) {
+        console.error(`❌ Lỗi auto-settle booking ${booking._id}:`, err);
+      }
+    }
+
+    return { settled, total: expiredBookings.length };
+  }
+
+  /**
+   * Cronjob: Tự động xóa các booking chưa thanh toán có ngày check-in là ngày hôm nay
+   */
+  async cancelUnpaidBookingsOnCheckinDay() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Tìm các booking chưa thanh toán và có checkIn trong ngày hôm nay
+    const unpaidBookings = await BookingModel.find({
+      paymentStatus: { $ne: "paid" },
+      checkIn: { $gte: today, $lte: endOfDay },
+      status: { $nin: ["cancelled", "completed", "refunded"] },
+    });
+
+    let deleted = 0;
+    for (const booking of unpaidBookings) {
+      try {
+        // Mở khóa availability (xóa block đã tạo khi booking)
+        await AvailabilityModel.deleteMany({ booking: booking._id });
+
+        // Xóa booking
+        await BookingModel.findByIdAndDelete(booking._id);
+        deleted++;
+      } catch (err) {
+        console.error(`❌ Lỗi xóa booking chưa thanh toán ${booking._id}:`, err);
+      }
+    }
+
+    return { deleted, total: unpaidBookings.length };
   }
 }

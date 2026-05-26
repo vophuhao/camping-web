@@ -22,8 +22,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { cancelBooking, completeBooking, getMyBookings } from '@/lib/client-actions';
+import { getMyBookings } from '@/lib/client-actions';
 import { getMyProperties } from '@/lib/property-site-api';
+import API from '@/lib/api-client';
+import QRCode from 'qrcode';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   pending: { label: 'Chờ xác nhận', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300', dot: 'bg-amber-500' },
@@ -53,7 +55,7 @@ export default function BookingsPage() {
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const router = useRouter();
 
-  const [actionDialog, setActionDialog] = useState<{ open: boolean; type: 'confirm' | 'cancel' | 'complete' | null; booking: any }>
+  const [actionDialog, setActionDialog] = useState<{ open: boolean; type: 'confirm' | 'cancel' | 'complete' | 'attendance' | null; booking: any }>
     ({ open: false, type: null, booking: null });
   const [cancelDialog, setCancelDialog] = useState<{ open: boolean; booking: any; reason: string }>
     ({ open: false, booking: null, reason: '' });
@@ -113,9 +115,14 @@ export default function BookingsPage() {
     setFilteredBookings(filtered);
   }, [bookings, activeTab, sortBy, searchTerm]);
 
-  function handleAction(type: 'confirm' | 'cancel' | 'complete', booking: any) {
-    if (type === 'cancel') setCancelDialog({ open: true, booking, reason: '' });
-    else setActionDialog({ open: true, type, booking });
+  function handleAction(type: 'confirm' | 'cancel' | 'complete' | 'attendance', booking: any) {
+    if (type === 'attendance') {
+      setActionDialog({ open: true, type: 'attendance', booking });
+    } else if (type === 'cancel') {
+      setCancelDialog({ open: true, booking, reason: '' });
+    } else {
+      setActionDialog({ open: true, type, booking });
+    }
   }
 
   function handleBookingClick(booking: any) { setSelectedBooking(booking); setDetailSheetOpen(true); }
@@ -123,31 +130,49 @@ export default function BookingsPage() {
   async function executeCancelWithReason() {
     try {
       const { booking, reason } = cancelDialog;
-      if (!booking || !reason.trim()) { toast.error('Vui lòng nhập lý do từ chối'); return; }
-      const result = await cancelBooking(booking.code, {
-        cancellationReason: reason.trim(),
-        cancellInformation: { fullnameGuest: '', bankCode: '', bankType: '' },
+      if (!booking) return;
+      const res: any = await API.post(`/bookings/${booking._id}/cancel`, {
+        cancellationReason: reason
       });
-      if (result?.success) {
-        toast.success('Đã hủy booking!');
+      if (res?.data?.success) {
+        toast.success('Đã từ chối/hủy đặt phòng!');
         setCancelDialog({ open: false, booking: null, reason: '' });
         await fetchBookings();
-      } else throw new Error(result?.message || 'Có lỗi xảy ra');
-    } catch (error: any) { toast.error(error?.message || 'Có lỗi xảy ra'); }
+      } else throw new Error(res?.data?.message || 'Có lỗi xảy ra');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || 'Có lỗi xảy ra');
+    }
   }
 
   async function executeAction() {
     try {
       const { type, booking } = actionDialog;
       if (!type || !booking) return;
-      if (type === 'confirm') { toast.info('Chức năng đang phát triển'); setActionDialog({ open: false, type: null, booking: null }); return; }
-      const result = await completeBooking(booking._id);
-      if (result?.success) {
-        toast.success('Đã hoàn thành booking!');
-        setActionDialog({ open: false, type: null, booking: null });
-        await fetchBookings();
-      } else throw new Error(result?.message || 'Có lỗi xảy ra');
-    } catch (error: any) { toast.error(error?.message || 'Có lỗi xảy ra'); }
+      if (type === 'attendance') {
+        const res: any = await API.post(`/bookings/host/${booking._id}/confirm-attendance`, { arrived: true });
+        if (res?.data?.success) {
+          toast.success('Đã xác nhận khách đến!');
+          setActionDialog({ open: false, type: null, booking: null });
+          await fetchBookings();
+        } else throw new Error(res?.data?.message || 'Có lỗi xảy ra');
+      } else if (type === 'confirm') {
+        const res: any = await API.post(`/bookings/${booking._id}/confirm`);
+        if (res?.data?.success) {
+          toast.success('Đã xác nhận đặt phòng thành công!');
+          setActionDialog({ open: false, type: null, booking: null });
+          await fetchBookings();
+        } else throw new Error(res?.data?.message || 'Có lỗi xảy ra');
+      } else if (type === 'complete') {
+        const res: any = await API.post(`/bookings/${booking._id}/complete`);
+        if (res?.data?.success) {
+          toast.success('Đã hoàn thành đặt phòng!');
+          setActionDialog({ open: false, type: null, booking: null });
+          await fetchBookings();
+        } else throw new Error(res?.data?.message || 'Có lỗi xảy ra');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || 'Có lỗi xảy ra');
+    }
   }
 
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
@@ -200,7 +225,7 @@ export default function BookingsPage() {
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors',
                       viewMode === mode
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-indigo-600 text-white'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                     )}
                   >
@@ -247,7 +272,7 @@ export default function BookingsPage() {
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                   activeTab === tab.value
-                    ? 'bg-emerald-600 text-white shadow-sm'
+                    ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
                 )}
               >
@@ -372,7 +397,7 @@ export default function BookingsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle className={cn('h-5 w-5', actionDialog.type === 'confirm' ? 'text-emerald-600' : 'text-blue-600')} />
+              <CheckCircle className={cn('h-5 w-5', actionDialog.type === 'confirm' ? 'text-indigo-600' : 'text-blue-600')} />
               {actionDialog.type === 'confirm' ? 'Xác nhận booking' : 'Hoàn thành booking'}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -381,7 +406,7 @@ export default function BookingsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={executeAction} className={actionDialog.type === 'confirm' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}>
+            <AlertDialogAction onClick={executeAction} className={actionDialog.type === 'confirm' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}>
               Xác nhận
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -394,7 +419,7 @@ export default function BookingsPage() {
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
     </div>
   );
 }
@@ -402,8 +427,34 @@ function LoadingSpinner() {
 function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: any) {
   const status = STATUS_CONFIG[booking.status] || STATUS_CONFIG.pending;
   const payment = PAYMENT_CONFIG[booking.paymentStatus] || PAYMENT_CONFIG.pending;
-  const canCancel = booking.status !== 'cancelled' && (booking.paymentStatus === 'pending' ||
-    (new Date() >= new Date(booking.checkIn) && new Date() <= new Date(booking.checkOut)));
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [showQr, setShowQr] = useState(false);
+
+  const guestConfirmed = booking.guestConfirmedAttendance;
+  const cannotAttendPending = booking.cannotAttendRequest?.status === "pending";
+  const walletCredited = booking.walletCredited;
+
+  const confirmUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/bookings/${booking._id}/confirmation`
+    : `/bookings/${booking._id}/confirmation`;
+
+  async function generateQR() {
+    if (!showQr) {
+      try {
+        const url = await QRCode.toDataURL(confirmUrl, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#1e1b4b', light: '#ffffff' },
+        });
+        setQrDataUrl(url);
+        setShowQr(true);
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      setShowQr(false);
+    }
+  }
 
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
@@ -421,16 +472,29 @@ function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: a
               {payment.label}
             </span>
           </div>
+          {guestConfirmed && (
+            <div className="absolute top-3 right-3">
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-600 text-white">
+                <CheckCircle className="h-3 w-3" /> Khách đã xác nhận
+              </span>
+            </div>
+          )}
+          {cannotAttendPending && (
+            <div className="absolute top-3 right-3">
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-amber-500 text-white">
+                Báo không đến
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex flex-1 flex-col p-5">
-          {/* Top row */}
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-semibold text-foreground">{booking.guest?.name}</h3>
-                <span className="text-xs text-muted-foreground">• {booking.guest?.email}</span>
+                <h3 className="font-semibold text-foreground">{booking.guest?.name || booking.fullnameGuest || '—'}</h3>
+                <span className="text-xs text-muted-foreground">• {booking.guest?.email || booking.email || ''}</span>
               </div>
               <p className="text-sm text-muted-foreground">{booking.site?.name}</p>
             </div>
@@ -440,7 +504,6 @@ function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: a
             </div>
           </div>
 
-          {/* Details grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 border-y border-border mb-4">
             {[
               { label: 'Check-in', value: formatDate(booking.checkIn) },
@@ -455,7 +518,6 @@ function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: a
             ))}
           </div>
 
-          {/* Guest message */}
           {booking.guestMessage && (
             <div className="flex gap-2 rounded-lg bg-muted/50 px-3 py-2 mb-4">
               <MessageSquare className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -463,18 +525,32 @@ function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: a
             </div>
           )}
 
-          {/* Actions */}
+          {/* QR Code section */}
+          {booking.status === 'confirmed' && booking.paymentStatus === 'paid' && (
+            <div className="mb-3">
+              <button
+                onClick={generateQR}
+                className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              >
+                <span>{showQr ? 'Ẩn mã QR' : 'Hiển mã QR check-in'}</span>
+              </button>
+              {showQr && qrDataUrl && (
+                <div className="mt-2 flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                  <img src={qrDataUrl} alt="QR check-in" className="w-24 h-24 rounded-lg" />
+                  <div>
+                    <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-200">Mã QR Check-in</p>
+                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5">Cho khách quét để xác nhận đã đến</p>
+                    <p className="text-[10px] text-indigo-500 mt-1 break-all">{confirmUrl}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Actions: only View Detail for host now */}
           <div className="flex gap-2 mt-auto">
-            {canCancel && (
-              <Button size="sm" variant="outline" className="flex-1 border-border text-red-600 hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-950/30 dark:text-red-400 gap-1.5 text-xs" onClick={() => onAction('cancel', booking)}>
-                <XCircle className="h-3.5 w-3.5" /> Hủy
-              </Button>
-            )}
             <Button size="sm" variant="outline" className="flex-1 border-border gap-1.5 text-xs" onClick={onDetail}>
               <Eye className="h-3.5 w-3.5" /> Xem chi tiết
-            </Button>
-            <Button size="sm" variant="ghost" className="w-8 p-0 text-muted-foreground border border-border">
-              <MessageSquare className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>

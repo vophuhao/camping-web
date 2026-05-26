@@ -3,10 +3,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserPlus, MoreVertical, Edit, Trash2, Ban, CheckCircle } from 'lucide-react';
+import { 
+  Search, 
+  Filter, 
+  Ban, 
+  CheckCircle, 
+  Users, 
+  ShieldAlert, 
+  ShieldCheck, 
+  Lock, 
+  Unlock, 
+  RefreshCw, 
+  AlertTriangle,
+  UserCheck,
+  UserMinus,
+  Calendar,
+  Phone,
+  Mail,
+  UserX,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { blockedUser, getAllUsers } from '@/lib/client-actions';
-
+import { cn } from '@/lib/utils';
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,8 +35,7 @@ export default function UsersManagementPage() {
   const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -32,7 +49,6 @@ export default function UsersManagementPage() {
     try {
       setLoading(true);
       const result = await getAllUsers();
-
       if (result.success) {
         setUsers((result.data as User[]) || []);
       }
@@ -53,8 +69,9 @@ export default function UsersManagementPage() {
       filtered = filtered.filter(
         (u) =>
           u.username.toLowerCase().includes(query) ||
-          u.email.toLowerCase().includes(query) 
-         
+          u.email.toLowerCase().includes(query) ||
+          (u as any).phone?.toLowerCase().includes(query) ||
+          (u as any).phoneNumber?.toLowerCase().includes(query)
       );
     }
 
@@ -88,19 +105,55 @@ export default function UsersManagementPage() {
       console.error('Block user error:', err);
       toast.error(isBlocked ? 'Không thể mở khóa người dùng' : 'Không thể khóa người dùng');
     }
-    setShowDeleteModal(false);
+    setShowBlockModal(false);
     setSelectedUser(null);
-  }
+  };
 
+  // Derive stats dynamically from total loaded users
+  const totalCount = users.length;
+  const adminCount = users.filter(u => u.role?.toLowerCase() === 'admin').length;
+  const hostCount = users.filter(u => u.role?.toLowerCase() === 'host').length;
+  const blockedCount = users.filter(u => u.isBlocked).length;
+
+  const statCards = [
+    {
+      label: 'Tổng người dùng',
+      value: totalCount,
+      icon: Users,
+      bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+      color: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+      label: 'Quản trị viên',
+      value: adminCount,
+      icon: ShieldAlert,
+      bg: 'bg-fuchsia-50 dark:bg-fuchsia-950/30',
+      color: 'text-fuchsia-600 dark:text-fuchsia-400',
+    },
+    {
+      label: 'Chủ nhà (Host)',
+      value: hostCount,
+      icon: UserCheck,
+      bg: 'bg-sky-50 dark:bg-sky-950/30',
+      color: 'text-sky-600 dark:text-sky-400',
+    },
+    {
+      label: 'Tài khoản bị khóa',
+      value: blockedCount,
+      icon: UserMinus,
+      bg: 'bg-rose-50 dark:bg-rose-950/30',
+      color: 'text-rose-600 dark:text-rose-400',
+    },
+  ];
 
   const getRoleBadge = (role: string) => {
     switch (role.toLowerCase()) {
       case 'admin':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-500/20';
       case 'host':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20';
     }
   };
 
@@ -115,81 +168,104 @@ export default function UsersManagementPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-      </div>
-    );
-  }
-  console.log('Filtered Users:', filteredUsers);
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Tổng số: {filteredUsers.length} người dùng
+          <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Quản lý người dùng</h1>
+          <p className="text-xs text-slate-400 font-semibold mt-0.5">
+            Xem, phân quyền và khóa/mở khóa tài khoản thành viên hệ thống.
           </p>
         </div>
       </div>
 
-      {/* Search & Filters */}
-      <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          {/* Search */}
-          <div className="relative flex-1 md:max-w-md">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm theo tên, email, số điện thoại..."
-              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-850 rounded-2xl p-4.5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md shadow-xs">
+              <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-inner", s.bg)}>
+                <Icon className={cn("h-5.5 w-5.5", s.color)} />
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 font-semibold">{s.label}</div>
+                <div className={cn("text-lg font-black mt-0.5", s.color)}>{s.value}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Actions and Filters Bar */}
+      <div className="bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-850 rounded-2xl p-4 shadow-xs space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3 flex-1">
+            {/* Search Input */}
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm theo tên, email, điện thoại..."
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-205 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              />
+            </div>
+
+            {/* Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                showFilters
+                  ? "border-indigo-600 bg-indigo-50/10 text-indigo-600 dark:text-indigo-400"
+                  : "border-slate-255 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-655 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900"
+              )}
+            >
+              <Filter className="h-3.5 w-3.5" /> Bộ lọc
+            </button>
+
+            {/* Refresh Button */}
+            <button
+              onClick={loadUsers}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-bold text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Làm mới
+            </button>
           </div>
 
-          {/* Filter Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <Filter className="h-4 w-4" />
-            Bộ lọc
-          </button>
+          <div className="text-xs text-slate-400 font-semibold">
+            Kết quả: <strong className="text-slate-700 dark:text-slate-200 font-extrabold">{filteredUsers.length}</strong> / {totalCount}
+          </div>
         </div>
 
-        {/* Filter Options */}
+        {/* Expandable filters */}
         {showFilters && (
-          <div className="mt-4 grid gap-4 border-t border-gray-200 pt-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/60">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Vai trò
-              </label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vai trò</label>
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-705 dark:text-slate-200"
               >
-                <option value="all">Tất cả</option>
-                <option value="user">Người dùng</option>
-                <option value="host">Chủ nhà</option>
-                <option value="admin">Quản trị viên</option>
+                <option value="all">Tất cả vai trò</option>
+                <option value="user">Người dùng (Member)</option>
+                <option value="host">Chủ nhà (Host)</option>
+                <option value="admin">Quản trị viên (Admin)</option>
               </select>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Trạng thái
-              </label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Xác thực email</label>
               <select
                 value={verifiedFilter}
                 onChange={(e) => setVerifiedFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-705 dark:text-slate-200"
               >
-                <option value="all">Tất cả</option>
+                <option value="all">Tất cả trạng thái</option>
                 <option value="verified">Đã xác thực</option>
                 <option value="unverified">Chưa xác thực</option>
               </select>
@@ -199,165 +275,176 @@ export default function UsersManagementPage() {
       </div>
 
       {/* Users Table */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Người dùng
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Vai trò
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Tài khoản
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Ngày tạo
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Hành động
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500">
-                    Không tìm thấy người dùng nào
-                  </td>
+      {loading ? (
+        <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl shadow-xs text-slate-400">
+          <UserX className="h-12 w-12 text-slate-200 dark:text-slate-800 mb-3" />
+          <p className="text-sm font-semibold">Không tìm thấy người dùng nào phù hợp</p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-805 bg-slate-50/50 dark:bg-slate-950 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                  <th className="px-5 py-3.5 font-bold">Người dùng</th>
+                  <th className="px-5 py-3.5 font-bold">Email</th>
+                  <th className="px-5 py-3.5 font-bold">Vai trò</th>
+                  <th className="px-5 py-3.5 font-bold">Xác thực</th>
+                  <th className="px-5 py-3.5 font-bold">Tài khoản</th>
+                  <th className="px-5 py-3.5 font-bold">Ngày tham gia</th>
+                  <th className="px-5 py-3.5 font-bold text-right">Khóa / Mở khóa</th>
                 </tr>
-              ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                {filteredUsers.map((user) => (
+                  <tr key={user._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                    {/* User profile with avatar & username */}
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {user.avatarUrl ? (
                           <img
                             src={user.avatarUrl}
                             alt={user.username}
-                            className="h-10 w-10 rounded-full object-cover"
+                            className="h-9 w-9 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800"
                           />
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
-                            {user.username.charAt(0).toUpperCase()}
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950/55 text-xs font-bold text-indigo-650 dark:text-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-900/40">
+                            {user.username.slice(0, 2).toUpperCase()}
                           </div>
                         )}
-                     
+                        <div>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">{user.username}</div>
+                          {((user as any).phone || (user as any).phoneNumber) && (
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                              <Phone className="h-2.5 w-2.5" /> {(user as any).phone || (user as any).phoneNumber}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{user.email}</div>
-                     
+
+                    {/* Email */}
+                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-350">
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="h-3.5 w-3.5 text-slate-400" />
+                        {user.email}
+                      </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getRoleBadge(
-                          user.role
-                        )}`}
-                      >
+
+                    {/* Role */}
+                    <td className="px-5 py-3.5">
+                      <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-extrabold border uppercase tracking-wider', getRoleBadge(user.role))}>
                         {getRoleText(user.role)}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+
+                    {/* Verified Status */}
+                    <td className="px-5 py-3.5">
                       {user.isVerified ? (
-                        <span className="inline-flex items-center gap-1 text-sm text-green-600">
-                          <CheckCircle className="h-4 w-4" />
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-bold">
+                          <CheckCircle className="h-3.5 w-3.5" />
                           Đã xác thực
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-sm text-gray-500">
-                          <Ban className="h-4 w-4" />
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                          <Ban className="h-3.5 w-3.5" />
                           Chưa xác thực
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+
+                    {/* Account Block Status */}
+                    <td className="px-5 py-3.5">
                       {user.isBlocked ? (
-                        <span className="inline-flex items-center gap-1 text-sm text-red-600">
-                          <Ban className="h-4 w-4" />
+                        <span className="inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-450 font-bold bg-rose-50 dark:bg-rose-950/20 px-2 py-0.5 rounded-full border border-rose-500/10">
+                          <ShieldAlert className="h-3.5 w-3.5" />
                           Đã khóa
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-sm text-green-600">
-                          <CheckCircle className="h-4 w-4" />
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-full border border-indigo-500/10">
+                          <ShieldCheck className="h-3.5 w-3.5" />
                           Hoạt động
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowEditModal(true);
-                          }}
-                          className="rounded p-1 text-blue-600 hover:bg-blue-50"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                       
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowDeleteModal(true);
-                          }}
-                          className="rounded p-1 text-red-600 hover:bg-red-50"
-                          title="Xóa"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+
+                    {/* Created Date */}
+                    <td className="px-5 py-3.5 text-xs text-slate-400 font-semibold">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                       </div>
                     </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">
-              {selectedUser.isBlocked ? 'Xác nhận mở khóa tài khoản' : 'Xác nhận khóa tài khoản'}
-            </h3>
-            <p className="mb-6 text-sm text-gray-600">
-              Bạn có chắc chắn muốn {selectedUser.isBlocked ? 'mở khóa' : 'khóa'} người dùng{' '}
-              <span className="font-medium">{selectedUser.username}</span>?
+                    {/* Action toggles (Block / Unblock) */}
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowBlockModal(true);
+                        }}
+                        className={cn(
+                          "inline-flex items-center justify-center p-1.5 rounded-lg border transition-all cursor-pointer shadow-sm hover:shadow",
+                          user.isBlocked
+                            ? "text-indigo-600 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700 dark:text-indigo-400 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40"
+                            : "text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 dark:text-rose-400 dark:border-rose-900/50 dark:bg-rose-950/20 dark:hover:bg-rose-950/40"
+                        )}
+                        title={user.isBlocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+                      >
+                        {user.isBlocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showBlockModal && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner", selectedUser.isBlocked ? "bg-indigo-50 dark:bg-indigo-950 text-indigo-650 dark:text-indigo-400" : "bg-rose-50 dark:bg-rose-950 text-rose-650 dark:text-rose-455")}>
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <h3 className="text-md font-black text-slate-850 dark:text-slate-100">
+                {selectedUser.isBlocked ? 'Mở khóa tài khoản?' : 'Khóa tài khoản?'}
+              </h3>
+            </div>
+            
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Bạn có chắc chắn muốn {selectedUser.isBlocked ? 'mở khóa' : 'khóa'} tài khoản của người dùng{' '}
+              <strong className="text-slate-700 dark:text-slate-200 font-extrabold">{selectedUser.username}</strong> ({selectedUser.email})? 
+              {!selectedUser.isBlocked && " Người dùng sẽ không thể đăng nhập vào hệ thống khi bị khóa."}
             </p>
-            <div className="flex justify-end gap-2">
+
+            <div className="flex justify-end gap-2.5 pt-2">
               <button
                 onClick={() => {
-                  setShowDeleteModal(false);
+                  setShowBlockModal(false);
                   setSelectedUser(null);
                 }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-xl border border-slate-255 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-xs font-bold text-slate-655 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
               >
-                Hủy
+                Hủy bỏ
               </button>
               <button
                 onClick={handleBlockUser}
-                className={`rounded-lg px-4 py-2 text-sm font-medium text-white ${
+                className={cn(
+                  "rounded-xl px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer shadow-xs",
                   selectedUser.isBlocked
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-red-500 hover:bg-red-600'
-                }`}
+                    ? "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                    : "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
+                )}
               >
-                {selectedUser.isBlocked ? 'Mở khóa' : 'Khóa'}
+                {selectedUser.isBlocked ? 'Mở khóa' : 'Xác nhận khóa'}
               </button>
             </div>
           </div>

@@ -34,14 +34,14 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
       {/* Sidebar */}
       <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
       {/* Content */}
       <main
-        className={`flex-1 p-4 transition-all duration-300`}
-        style={{ marginLeft: collapsed ? '4rem' : '11rem' }}
+        className="flex-1 p-6 transition-all duration-300 overflow-y-auto"
+        style={{ marginLeft: collapsed ? '4rem' : '14rem' }}
       >
         {children}
       </main>

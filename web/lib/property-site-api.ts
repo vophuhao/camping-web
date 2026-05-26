@@ -229,7 +229,7 @@ export async function updateProperty(
 /**
  * Delete property (host only)
  */
-export async function deleteProperty(id: string): Promise<{ message: string }> {
+export async function deleteProperty(id: string): Promise<ApiResponse> {
   return apiClient.delete(`/properties/${id}`);
 }
 

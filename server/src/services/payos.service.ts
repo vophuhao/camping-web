@@ -1,6 +1,5 @@
 import { ErrorFactory } from "@/errors";
-import { AvailabilityModel, BookingModel, ProductModel } from "@/models";
-import { OrderModel } from "@/models/order.model";
+import { AvailabilityModel, BookingModel } from "@/models";
 import appAssert from "@/utils/app-assert";
 import mongoose from "mongoose";
 
@@ -58,51 +57,7 @@ export default class PayOSService {
                     return { success: false, code: "MISSING_ORDER_CODE", message: "Thiếu orderCode" };
                 }
 
-                const order = await OrderModel.findOne({ payOSOrderCode: orderCode })
-                    .populate("items.product")
-                    .session(session);
 
-                if (!order) {
-                    await session.abortTransaction();
-                    session.endSession();
-                    return { success: false, code: "ORDER_NOT_FOUND", message: "Không tìm thấy đơn hàng" };
-                }
-
-                if (success) {
-                    order.paymentStatus = "paid";
-                    order.orderStatus = "processing";
-
-                    for (const item of order.items) {
-                        await ProductModel.updateOne(
-                            { _id: item.product._id },
-                            { $inc: { count: item.quantity } },
-                            { session }
-                        );
-                    }
-
-                    await order.save({ session });
-                    await session.commitTransaction();
-                    session.endSession();
-
-                    return { success: true, code: "PAYMENT_SUCCESS", message: "Thanh toán thành công", order };
-                } else {
-                    order.paymentStatus = "failed";
-                    order.orderStatus = "cancelled";
-
-                    for (const item of order.items) {
-                        await ProductModel.updateOne(
-                            { _id: item.product._id },
-                            { $inc: { stock: item.quantity } },
-                            { session }
-                        );
-                    }
-
-                    await order.save({ session });
-                    await session.commitTransaction();
-                    session.endSession();
-
-                    return { success: false, code: "PAYMENT_FAILED", message: "Thanh toán thất bại", order };
-                }
             } catch (err: any) {
                 await session.abortTransaction();
                 session.endSession();

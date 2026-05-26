@@ -1,16 +1,11 @@
 import {
-  AddressService,
   AmenityService,
   AuthService,
   BookingService,
   CommentService,
   ForumService,
   // Hipcamp-style services
-  CartService,
-  CategoryService,
   NotificationService,
-  OrderService,
-  ProductService,
   PropertyService,
   ReviewService,
   SiteService,
@@ -20,17 +15,10 @@ import { Container } from "./container";
 import { TOKENS } from "./tokens";
 
 import DirectMessageService from "@/services/directMessage.service";
-import RatingService from "@/services/rating.service";
 
 export const container = new Container();
 
 // Register services
-container.register(TOKENS.CategoryService, () => new CategoryService(), { singleton: true });
-container.register(TOKENS.ProductService, () => new ProductService(), { singleton: true });
-container.register(TOKENS.AddressService, () => new AddressService(), { singleton: true });
-container.register(TOKENS.OrderService, () => new OrderService(), { singleton: true });
-container.register(TOKENS.CartService, () => new CartService(), { singleton: true });
-container.register(TOKENS.RatingService, () => new RatingService(), { singleton: true });
 container.register(TOKENS.DirectMessageService, () => new DirectMessageService(), {
   singleton: true,
 });

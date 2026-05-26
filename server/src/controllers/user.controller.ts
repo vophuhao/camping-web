@@ -1,5 +1,5 @@
 import { catchErrors, ErrorFactory } from "@/errors";
-import { BookingModel, FavoriteModel, OrderModel, ReviewModel } from "@/models";
+import { BookingModel, FavoriteModel, OrderModel, ReviewModel, PropertyModel } from "@/models";
 import HostModel from "@/models/host.modal";
 import { ResponseUtil, sendMail } from "@/utils";
 import UserModel from "../models/user.model";
@@ -15,9 +15,49 @@ export default class UserController {
 
   getAllHost = catchErrors(async (req, res) => {
     const hosts = await UserModel.find({ role: "host" }).select(
-      "username email avatarUrl createdAt isBlocked"
+      "username email avatarUrl createdAt isBlocked phoneNumber bio"
     );
-    return ResponseUtil.success(res, hosts, "Lấy danh sách host thành công");
+
+    const hostsWithStats = await Promise.all(
+      hosts.map(async (host) => {
+        // locationCount (number of properties owned by host)
+        const locationCount = await PropertyModel.countDocuments({ host: host._id });
+
+        // totalBookings
+        const totalBookings = await BookingModel.countDocuments({ host: host._id });
+
+        // totalRevenue (sum of pricing.total for paid or completed bookings)
+        const bookings = await BookingModel.find({
+          host: host._id,
+          status: { $in: ["confirmed", "completed"] },
+          paymentStatus: "paid",
+        }).select("pricing.total");
+        const totalRevenue = bookings.reduce((sum, b) => sum + (b.pricing?.total || 0), 0);
+
+        // rating (average rating of properties)
+        const properties = await PropertyModel.find({ host: host._id }).select("stats.averageRating");
+        const rating = properties.length > 0
+          ? properties.reduce((sum, p) => sum + (p.stats?.averageRating || 0), 0) / properties.length
+          : 0;
+
+        // KYC host info
+        const hostKyc = await HostModel.findOne({ user: host._id });
+
+        return {
+          ...host.toObject(),
+          phone: host.phoneNumber || hostKyc?.phone || "",
+          address: hostKyc?.bankInfo?.bankName ? `${hostKyc.bankInfo.bankName} - ${hostKyc.bankInfo.accountNumber}` : "",
+          locationCount,
+          totalBookings,
+          totalRevenue,
+          rating,
+          verifiedAt: hostKyc?.createdAt || host.createdAt,
+          isActive: !host.isBlocked,
+        };
+      })
+    );
+
+    return ResponseUtil.success(res, hostsWithStats, "Lấy danh sách host thành công");
   });
 
   getUserByUsernameHandler = catchErrors(async (req, res) => {

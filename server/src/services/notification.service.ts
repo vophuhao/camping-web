@@ -243,7 +243,7 @@ export default class NotificationService {
       message: `${guestName} đã đặt ${propertyName}`,
       booking: bookingId,
       property: propertyId,
-      link: `/host/bookings/${bookingId}`,
+      link: `/host/bookings/details/${bookingId}`,
       actionType: "view_booking",
       priority: "high",
       role: "host",

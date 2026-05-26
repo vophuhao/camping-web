@@ -68,7 +68,7 @@ export default function TripsPage() {
   const now = new Date();
   const upcomingTrips = bookings.filter(
     b =>
-      new Date(b.checkIn) >= now &&
+      new Date(b.checkOut) >= now &&
       b.status !== 'cancelled' &&
       b.status !== 'completed' &&
       b.status !== 'refunded',

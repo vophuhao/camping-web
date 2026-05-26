@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-unescaped-entities */
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { verifyKycAndBecomeHost } from "@/lib/client-actions";
 import { parseBirthYearFromCCCD, captureVideoFrame, compareFaces, dataUrlToImage, loadFaceApi } from "@/lib/face-utils";
-import { CheckCircle2, Camera, Upload, ArrowRight, Shield, AlertCircle, Loader2, RefreshCw, User, CreditCard } from "lucide-react";
+import { CheckCircle2, Camera, Upload, ArrowRight, Shield, AlertCircle, Loader2, RefreshCw, User, CreditCard, Smartphone, QrCode } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
@@ -41,6 +41,55 @@ export default function HostRegisterPage() {
   const [faceError, setFaceError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
+
+  // QR mobile capture
+  const [captureMode, setCaptureMode] = useState<"choose" | "webcam" | "qr">("choose");
+  const [qrSessionId, setQrSessionId] = useState("");
+  const [qrPolling, setQrPolling] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555";
+
+  // Generate session ID for QR
+  function generateSessionId() {
+    return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  // Start QR mode
+  function startQrMode() {
+    const sid = generateSessionId();
+    setQrSessionId(sid);
+    setCaptureMode("qr");
+    setFaceStatus("idle");
+    setFaceError("");
+    setSelfieUrl("");
+    setQrPolling(true);
+  }
+
+  // Build QR URL
+  const qrUrl = qrSessionId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/become-host/mobile-capture?s=${qrSessionId}`
+    : "";
+
+  // Poll for selfie from mobile
+  useEffect(() => {
+    if (!qrPolling || !qrSessionId) return;
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/mobile-selfie/${qrSessionId}`);
+        const json = await res.json();
+        if (json.success && json.data?.ready && json.data?.selfie) {
+          setQrPolling(false);
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          setSelfieUrl(json.data.selfie);
+          toast.success("📱 Đã nhận ảnh từ điện thoại!");
+          // Run face comparison
+          await runFaceComparison(json.data.selfie);
+        }
+      } catch { /* ignore polling errors */ }
+    }, 2000);
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrPolling, qrSessionId]);
 
   /* ─── Validation step 1 ─── */
   function validateStep1() {
@@ -289,28 +338,131 @@ export default function HostRegisterPage() {
                 <h2 className="text-xl font-bold text-gray-900">Xác minh khuôn mặt</h2>
                 <p className="text-sm text-gray-500">Hệ thống sẽ so sánh khuôn mặt của bạn với ảnh trên CCCD để xác minh danh tính.</p>
 
-                {/* Camera */}
-                <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-video">
-                  <video ref={videoRef} className={cn("w-full h-full object-cover", !cameraActive && "hidden")} autoPlay muted playsInline />
-                  {!cameraActive && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white gap-3">
-                      {selfieUrl ? (
-                        <Image src={selfieUrl} alt="Selfie" fill className="object-cover" unoptimized />
-                      ) : (
-                        <>
-                          <Camera className="h-12 w-12 opacity-40" />
-                          <p className="text-sm opacity-60">Camera chưa bật</p>
-                        </>
+                {/* Mode chooser */}
+                {captureMode === "choose" && faceStatus !== "matched" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all group"
+                      onClick={() => { setCaptureMode("webcam"); startCamera(); }}
+                    >
+                      <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                        <Camera className="h-7 w-7 text-emerald-600" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-gray-900 text-sm">Camera máy tính</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Webcam trực tiếp</p>
+                      </div>
+                    </button>
+                    <button
+                      className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all group"
+                      onClick={startQrMode}
+                    >
+                      <div className="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                        <Smartphone className="h-7 w-7 text-blue-600" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-gray-900 text-sm">Camera điện thoại</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Quét QR để chụp</p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* QR Mode */}
+                {captureMode === "qr" && faceStatus !== "matched" && (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-xl border-2 border-blue-200 p-6 text-center">
+                      <div className="flex items-center justify-center gap-2 mb-3">
+                        <QrCode className="h-5 w-5 text-blue-600" />
+                        <p className="font-semibold text-gray-900">Quét mã QR bằng điện thoại</p>
+                      </div>
+                      {/* QR code image from API */}
+                      {qrUrl && (
+                        <div className="flex justify-center mb-3">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`}
+                            alt="QR Code"
+                            width={200}
+                            height={200}
+                            className="rounded-lg border border-gray-200"
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 mb-2">Mở ứng dụng camera trên điện thoại và quét mã QR này</p>
+                      {qrPolling && (
+                        <div className="flex items-center justify-center gap-2 text-blue-600 mt-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <p className="text-sm">Đang chờ ảnh từ điện thoại...</p>
+                        </div>
                       )}
                     </div>
-                  )}
-                  {/* Scanning overlay */}
-                  {cameraActive && faceStatus === "scanning" && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-48 h-64 border-2 border-emerald-400 rounded-full opacity-70 animate-pulse" />
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                      <p className="text-xs text-blue-800">
+                        <strong>Hướng dẫn:</strong> Quét QR → Mở camera trên điện thoại → Chụp ảnh selfie → Hệ thống sẽ tự động nhận ảnh và xác minh.
+                      </p>
                     </div>
-                  )}
-                </div>
+                    <Button variant="outline" className="w-full h-11" onClick={() => { setCaptureMode("choose"); setQrPolling(false); }}>
+                      ← Chọn cách khác
+                    </Button>
+                  </div>
+                )}
+
+                {/* Webcam Mode */}
+                {captureMode === "webcam" && faceStatus !== "matched" && (
+                  <>
+                    {/* Camera */}
+                    <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-video">
+                      <video ref={videoRef} className={cn("w-full h-full object-cover", !cameraActive && "hidden")} autoPlay muted playsInline />
+                      {!cameraActive && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white gap-3">
+                          {selfieUrl ? (
+                            <Image src={selfieUrl} alt="Selfie" fill className="object-cover" unoptimized />
+                          ) : (
+                            <>
+                              <Camera className="h-12 w-12 opacity-40" />
+                              <p className="text-sm opacity-60">Camera chưa bật</p>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {cameraActive && faceStatus === "scanning" && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="w-48 h-64 border-2 border-emerald-400 rounded-full opacity-70 animate-pulse" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      {!cameraActive && faceStatus !== "matched" && !selfieUrl && (
+                        <Button className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-semibold" onClick={startCamera}>
+                          <Camera className="mr-2 h-4 w-4" /> Bật camera và chụp ảnh
+                        </Button>
+                      )}
+                      {cameraActive && (
+                        <Button className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-semibold animate-pulse" onClick={captureSelfie}>
+                          <Camera className="mr-2 h-4 w-4" /> Chụp ảnh ngay
+                        </Button>
+                      )}
+                      {faceStatus === "failed" && selfieUrl && (
+                        <Button variant="outline" className="w-full h-11" onClick={() => { setSelfieUrl(""); setFaceStatus("idle"); startCamera(); }}>
+                          <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
+                        </Button>
+                      )}
+                      {!cameraActive && faceStatus !== "matched" && (
+                        <Button variant="outline" className="w-full h-11" onClick={() => { setCaptureMode("choose"); stopCamera(); }}>
+                          ← Chọn cách khác
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Camera from phone (selfie received via QR) */}
+                {captureMode === "qr" && selfieUrl && faceStatus !== "matched" && faceStatus !== "loading" && (
+                  <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-video">
+                    <img src={selfieUrl} alt="Selfie từ điện thoại" className="w-full h-full object-cover" />
+                  </div>
+                )}
 
                 {/* Status */}
                 {faceStatus === "loading" && (
@@ -332,27 +484,8 @@ export default function HostRegisterPage() {
                   </div>
                 )}
 
-                {/* Buttons */}
-                <div className="space-y-2">
-                  {!cameraActive && faceStatus !== "matched" && (
-                    <Button className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-semibold" onClick={startCamera}>
-                      <Camera className="mr-2 h-4 w-4" /> {selfieUrl ? "Chụp lại" : "Bật camera và chụp ảnh"}
-                    </Button>
-                  )}
-                  {cameraActive && (
-                    <Button className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-semibold animate-pulse" onClick={captureSelfie}>
-                      <Camera className="mr-2 h-4 w-4" /> Chụp ảnh ngay
-                    </Button>
-                  )}
-                  {faceStatus === "failed" && selfieUrl && (
-                    <Button variant="outline" className="w-full h-11" onClick={() => { setSelfieUrl(""); setFaceStatus("idle"); startCamera(); }}>
-                      <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
-                    </Button>
-                  )}
-                </div>
-
                 <div className="flex gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 h-11" onClick={() => { stopCamera(); setStep(2); }}>Quay lại</Button>
+                  <Button variant="outline" className="flex-1 h-11" onClick={() => { stopCamera(); setCaptureMode("choose"); setQrPolling(false); setStep(2); }}>Quay lại</Button>
                   <Button
                     className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 font-semibold disabled:opacity-50"
                     disabled={faceStatus !== "matched" || submitting}

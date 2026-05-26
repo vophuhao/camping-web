@@ -109,7 +109,7 @@ export default function PropertiesPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
           <p className="mt-4 text-slate-600 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function PropertiesPage() {
 
             </div>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
               onClick={() => router.push('/host/properties/new')}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -214,7 +214,7 @@ export default function PropertiesPage() {
                 placeholder="Tìm kiếm khu cắm trại..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white border-slate-200 h-10 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="pl-10 bg-white border-slate-200 h-10 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               />
             </div>
 
@@ -222,14 +222,14 @@ export default function PropertiesPage() {
             <div className="flex bg-white border border-slate-200 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded transition-all ${viewMode === 'grid' ? 'bg-emerald-100 text-emerald-600' : 'text-slate-600 hover:text-slate-900'}`}
+                className={`p-2 rounded transition-all ${viewMode === 'grid' ? 'bg-indigo-100 text-indigo-605' : 'text-slate-600 hover:text-slate-900'}`}
                 title="Grid view"
               >
                 <Grid3x3 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded transition-all ${viewMode === 'list' ? 'bg-emerald-100 text-emerald-600' : 'text-slate-600 hover:text-slate-900'}`}
+                className={`p-2 rounded transition-all ${viewMode === 'list' ? 'bg-indigo-100 text-indigo-605' : 'text-slate-600 hover:text-slate-900'}`}
                 title="List view"
               >
                 <List className="h-4 w-4" />
@@ -251,7 +251,7 @@ export default function PropertiesPage() {
               </p>
               {!searchQuery && statusFilter === 'all' && (
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-indigo-600 hover:bg-indigo-700"
                   onClick={() => router.push('/host/properties/new')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -267,10 +267,10 @@ export default function PropertiesPage() {
                   key={property._id}
                   property={property}
                   statusConfig={statusConfig}
-                  onEdit={(id) => router.push(`/host/properties/${id}`)}
-                  onViewSites={(id) => router.push(`/host/properties/${id}/sites`)}
-                  onAddSite={(id) => router.push(`/host/properties/${id}/sites/new`)}
-                  onDelete={(id) => {
+                  onEdit={(id: string) => router.push(`/host/properties/${id}`)}
+                  onViewSites={(id: string) => router.push(`/host/properties/${id}/sites`)}
+                  onAddSite={(id: string) => router.push(`/host/properties/${id}/sites/new`)}
+                  onDelete={(id: string) => {
                     setPropertyToDelete(id);
                     setDeleteDialogOpen(true);
                   }}
@@ -299,10 +299,10 @@ export default function PropertiesPage() {
                         key={property._id}
                         property={property}
                         statusConfig={statusConfig}
-                        onEdit={(id) => router.push(`/host/properties/${id}`)}
-                        onViewSites={(id) => router.push(`/host/properties/${id}/sites`)}
-                        onAddSite={(id) => router.push(`/host/properties/${id}/sites/new`)}
-                        onDelete={(id) => {
+                        onEdit={(id: string) => router.push(`/host/properties/${id}`)}
+                        onViewSites={(id: string) => router.push(`/host/properties/${id}/sites`)}
+                        onAddSite={(id: string) => router.push(`/host/properties/${id}/sites/new`)}
+                        onDelete={(id: string) => {
                           setPropertyToDelete(id);
                           setDeleteDialogOpen(true);
                         }}
@@ -363,11 +363,11 @@ function PropertyGridCard({ property, statusConfig, onEdit, onViewSites, onAddSi
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="font-bold text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-2 mb-1">
+        <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-1">
           {property.name}
         </h3>
         <div className="flex items-start gap-1 text-sm text-slate-600 mb-3 line-clamp-1">
-          <MapPin className="h-3 w-3 flex-shrink-0 mt-0.5 text-emerald-600" />
+          <MapPin className="h-3 w-3 flex-shrink-0 mt-0.5 text-indigo-600" />
           <span className="line-clamp-1">{property.location?.city}, {property.location?.state}</span>
         </div>
 
@@ -375,7 +375,7 @@ function PropertyGridCard({ property, statusConfig, onEdit, onViewSites, onAddSi
         <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-slate-50 rounded-lg">
           <div className="text-center">
             <p className="text-xs text-slate-600">Sites</p>
-            <p className="text-lg font-bold text-emerald-600">{property.stats?.totalSites || 0}</p>
+            <p className="text-lg font-bold text-indigo-600">{property.stats?.totalSites || 0}</p>
           </div>
           <div className="text-center border-l border-r border-slate-200">
             <p className="text-xs text-slate-600">Bookings</p>
@@ -391,7 +391,7 @@ function PropertyGridCard({ property, statusConfig, onEdit, onViewSites, onAddSi
         <div className="mt-auto flex gap-2 pt-4 border-t border-slate-200">
           <Button
             size="sm"
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
             onClick={() => onViewSites(property._id)}
           >
             <Eye className="h-3.5 w-3.5 mr-1" />
@@ -447,12 +447,12 @@ function PropertyListRow({ property, statusConfig, onEdit, onViewSites, onAddSit
       </td>
       <td className="px-6 py-4 text-sm text-slate-600">
         <div className="flex items-center gap-1">
-          <MapPin className="h-3.5 w-3.5 text-emerald-600" />
+          <MapPin className="h-3.5 w-3.5 text-indigo-600" />
           {property.location?.city}
         </div>
       </td>
       <td className="px-6 py-4 text-center">
-        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-emerald-100 text-emerald-600 font-bold text-sm">
+        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">
           {property.stats?.totalSites || 0}
         </span>
       </td>

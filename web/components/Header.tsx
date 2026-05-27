@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useCartCount } from '@/hooks/useCartCount';
 import { logout } from '@/lib/client-actions';
 import { useAuthStore } from '@/store/auth.store';
 import {
@@ -32,8 +31,6 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, setUser } = useAuthStore();
-  const cartCount = useCartCount(); // ✅ Use socket-based cart count
-
   const handleLogout = async () => {
     const res = await logout();
     if (res.success) {
@@ -63,10 +60,13 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`hover:text-primary text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'text-foreground/60'
+                  className={`relative py-2 text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-foreground/60'
                     }`}
                 >
                   {item.name}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
+                  )}
                 </Link>
               );
             })}

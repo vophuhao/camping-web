@@ -469,3 +469,44 @@ html {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Premium UI/UX Animation & Glassmorphism Utilities */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+@utility animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+@utility glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+}
+
+.dark .glass-card {
+  background: rgba(32, 32, 32, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+@utility img-zoom-hover {
+  @apply overflow-hidden;
+  & img {
+    @apply transition-transform duration-500 ease-out;
+  }
+  &:hover img {
+    @apply scale-105;
+  }
+}
+
+

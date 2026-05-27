@@ -6,7 +6,7 @@ import http from "http";
 import cron from "node-cron";
 import { connectRedis, connectToDatabase } from "./config";
 import { APP_ORIGIN, NODE_ENV, OK, PORT } from "./constants";
-import { authenticate, errorHandler } from "./middleware";
+import { authenticate, errorHandler, globalRateLimit, authRateLimit } from "./middleware";
 import {
   amenityRoutes,
   authRoutes,
@@ -34,11 +34,47 @@ import mobileSelfieRoutes from "./routes/mobile-selfie.route";
 import { BookingService } from "./services";
 import PayoutService from "./services/payout.service";
 import { initializeSocket } from "./socket";
-// import dashboardRoutes from "./routes/dashboard.route";
 
 const app = express();
 
-// add middleware
+// ============================================================
+// Security & Performance Middleware
+// ============================================================
+
+// HTTP Security Headers (nếu helmet đã được cài)
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const helmet = require("helmet");
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Cho phép load media từ Cloudinary
+    contentSecurityPolicy: false, // Disable CSP để không ảnh hưởng API
+  }));
+  console.log("✅ Helmet security headers enabled");
+} catch {
+  console.warn("⚠️  helmet not installed, skipping security headers");
+}
+
+// Gzip/Brotli Compression — giảm response size ~70%
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const compression = require("compression");
+  app.use(compression({
+    level: 6, // Cân bằng giữa speed và compression ratio
+    threshold: 1024, // Chỉ nén response > 1KB
+    filter: (req: express.Request, res: express.Response) => {
+      // Không nén nếu client không hỗ trợ
+      if (req.headers["x-no-compression"]) return false;
+      return compression.filter(req, res);
+    },
+  }));
+  console.log("✅ Compression (gzip) enabled");
+} catch {
+  console.warn("⚠️  compression not installed, skipping gzip");
+}
+
+// ============================================================
+// Standard Middleware
+// ============================================================
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
@@ -49,15 +85,24 @@ app.use(
 );
 app.use(cookieParser());
 
+// ============================================================
+// Global Rate Limiting — 200 req/min/IP
+// ============================================================
+app.use(globalRateLimit);
+
+// ============================================================
+// Cron Jobs
+// ============================================================
 const bookingService = new BookingService();
 const payoutService = new PayoutService();
 
 // Cron: Tổng kết payout đầu mỗi tháng (ngày 1, 00:00)
 cron.schedule("0 0 1 * *", async () => {
+  if (NODE_ENV !== "production") return; // Chỉ chạy trên production
   console.log("💰 Running monthly payout job...");
   try {
     const now = new Date();
-    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // previous month (1-indexed)
+    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth();
     const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
     const result = await payoutService.runMonthlyPayout(prevMonth, prevYear);
     console.log(`✅ Payout completed: ${result.message}`);
@@ -91,17 +136,26 @@ cron.schedule("0 1 * * *", async () => {
     console.error("❌ Cleanup unpaid bookings job failed:", err);
   }
 });
-// health check
+
+// ============================================================
+// Health check
+// ============================================================
 app.get("/", (_, res) => {
   return res.status(OK).json({
     status: "healthy",
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString(),
   });
 });
 
-// public routes
-app.use("/auth", authRoutes);
+// ============================================================
+// Routes — Auth (với strict rate limit chống brute-force)
+// ============================================================
+app.use("/auth", authRateLimit, authRoutes);
 
-// protected routes
+// ============================================================
+// Routes — Protected (require authentication)
+// ============================================================
 app.use("/users", authenticate, userRoutes);
 app.use("/media", authenticate, mediaRoutes);
 app.use("/support", authenticate, supportRouter);
@@ -123,15 +177,20 @@ app.use("/dashboardH", authenticate, dashboardHRoutes);
 app.use("/payouts", payoutRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/mobile-selfie", mobileSelfieRoutes);
-// app.use("/dashboard", authenticate, dashboardRoutes);
 
+// ============================================================
+// Global Error Handler
+// ============================================================
 app.use(errorHandler);
 
+// ============================================================
+// HTTP Server & Socket.IO
+// ============================================================
 const server = http.createServer(app);
-initializeSocket(server); // Kh?i t?o socket v?i server
+initializeSocket(server);
 
 server.listen(PORT, async () => {
-  console.log(`Server listening on port ${PORT} in ${NODE_ENV} environment`);
+  console.log(`🚀 Server listening on port ${PORT} in ${NODE_ENV} environment`);
   await connectToDatabase();
   await connectRedis();
 });

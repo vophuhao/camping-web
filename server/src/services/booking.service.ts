@@ -55,7 +55,7 @@ export class BookingService {
       ErrorFactory.badRequest("Either site or campsite must be provided")
     );
 
-    // Get property and site
+    // Get property and site (pre-validation — outside transaction for read performance)
     const [property, site] = await Promise.all([
       PropertyModel.findById(propertyId),
       siteId ? SiteModel.findById(siteId) : Promise.resolve(null),
@@ -90,7 +90,6 @@ export class BookingService {
       );
     }
 
-    // Check availability
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
     const nights = Math.ceil(
@@ -111,11 +110,7 @@ export class BookingService {
       );
     }
 
-    // Check availability in calendar
-    const isAvailable = await this.checkAvailability(siteId, checkIn, checkOut);
-    appAssert(isAvailable, ErrorFactory.conflict("Site không có sẵn trong thời gian này"));
-
-    // Calculate pricing (from site)
+    // Calculate pricing (from site) — outside transaction
     const pricing = this.calculatePricing(
       site,
       nights,
@@ -150,50 +145,77 @@ export class BookingService {
       console.error("Error creating PayOS payment link:", err.message);
     }
 
-    // Create booking
-    const booking = await BookingModel.create({
-      code,
-      payOSOrderCode,
-      payOSCheckoutUrl,
-      property: propertyId,
-      site: siteId,
-      guest: guestId,
-      host: property.host,
-      checkIn: checkInDate,
-      checkOut: checkOutDate,
-      nights,
-      numberOfGuests,
-      numberOfPets,
-      numberOfVehicles,
-      pricing,
-      guestMessage,
-      fullnameGuest: fullnameGuest,
-      phone: phone,
-      email: email,
-      paymentMethod,
-      paymentStatus: "pending",
-    });
+    // ============================================================
+    // CRITICAL: Dùng MongoDB transaction để tránh race condition
+    // khi nhiều user đặt cùng site cùng lúc (double-booking)
+    // ============================================================
+    const session = await mongoose.startSession();
+    let booking: BookingDocument;
 
-    // Calculate total
-    await booking.calculateTotal();
-    // Block dates in availability calendar
-    // NOTE: Only block for DESIGNATED sites (maxConcurrentBookings = 1)
-    // Undesignated sites handle availability through concurrent booking count
-    if (siteId) {
-      const maxConcurrent = site!.capacity.maxConcurrentBookings || 1;
-      if (maxConcurrent === 1) {
-        // Designated site: Block dates in availability calendar
-        await this.blockDatesForBooking(siteId, checkInDate, checkOutDate);
-      }
-      // For undesignated sites (maxConcurrent > 1), availability is managed
-      // by counting bookings in getBlockedDates(), not by Availability records
-    }
-    // Auto-confirm if instant book
-    if (site!.bookingSettings.instantBook) {
-      await booking.confirm();
+    try {
+      await session.withTransaction(async () => {
+        // Re-check availability BÊN TRONG transaction (atomic)
+        const isAvailable = await this.checkAvailabilityInSession(
+          siteId,
+          checkIn,
+          checkOut,
+          session
+        );
+        appAssert(isAvailable, ErrorFactory.conflict("Site không có sẵn trong thời gian này (đã được đặt trước)"));
+
+        // Create booking trong cùng transaction
+        const [newBooking] = await BookingModel.create(
+          [
+            {
+              code,
+              payOSOrderCode,
+              payOSCheckoutUrl,
+              property: propertyId,
+              site: siteId,
+              guest: guestId,
+              host: property.host,
+              checkIn: checkInDate,
+              checkOut: checkOutDate,
+              nights,
+              numberOfGuests,
+              numberOfPets,
+              numberOfVehicles,
+              pricing,
+              guestMessage,
+              fullnameGuest: fullnameGuest,
+              phone: phone,
+              email: email,
+              paymentMethod,
+              paymentStatus: "pending",
+            },
+          ],
+          { session }
+        );
+
+        appAssert(newBooking, ErrorFactory.internalError("Không thể tạo booking"));
+        booking = newBooking;
+
+        // Calculate total (trong transaction)
+        await booking.calculateTotal();
+
+        // Block dates cho designated sites (trong transaction)
+        if (siteId) {
+          const maxConcurrent = site!.capacity.maxConcurrentBookings || 1;
+          if (maxConcurrent === 1) {
+            await this.blockDatesForBooking(siteId, checkInDate, checkOutDate, session);
+          }
+        }
+
+        // Auto-confirm nếu instant book
+        if (site!.bookingSettings.instantBook) {
+          await booking.confirm();
+        }
+      });
+    } finally {
+      await session.endSession();
     }
 
-    // Send notification to host about new booking
+    // Send notification NGOÀI transaction (non-critical, không cần rollback)
     try {
       const notificationService = container.resolve<NotificationService>(TOKENS.NotificationService);
       const UserModel = (await import("@/models/user.model")).default;
@@ -201,19 +223,18 @@ export class BookingService {
 
       await notificationService.createNewBookingForHost(
         property.host.toString(),
-        booking._id!.toString(),
-        booking.code!,
+        booking!._id!.toString(),
+        booking!.code!,
         guest?.username || fullnameGuest || "Khách",
         property.name,
         property._id!.toString()
       );
 
-      // If instant book, also notify guest
       if (site!.bookingSettings.instantBook) {
         await notificationService.createBookingNotification(
           guestId,
-          booking._id!.toString(),
-          booking.code!,
+          booking!._id!.toString(),
+          booking!.code!,
           "booking_confirmed"
         );
       }
@@ -221,7 +242,7 @@ export class BookingService {
       console.error("Failed to send booking notification:", error);
     }
 
-    return booking;
+    return booking!;
   }
 
   async getBookingByCode(code: string): Promise<BookingDocument> {
@@ -569,32 +590,48 @@ export class BookingService {
   }
 
   /**
-   * Check availability helper
+   * Check availability helper (dùng trong regular flow)
    */
   private async checkAvailability(
     siteId: string,
     checkIn: string,
     checkOut: string
   ): Promise<boolean> {
+    return this.checkAvailabilityInSession(siteId, checkIn, checkOut, null);
+  }
+
+  /**
+   * Check availability với optional session (dùng trong transaction để atomic)
+   */
+  private async checkAvailabilityInSession(
+    siteId: string,
+    checkIn: string,
+    checkOut: string,
+    session: mongoose.ClientSession | null
+  ): Promise<boolean> {
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
     // Check blocked dates
-    const blockedDates = await AvailabilityModel.countDocuments({
+    const blockedDatesQuery = AvailabilityModel.countDocuments({
       site: siteId,
       date: { $gte: checkInDate, $lt: checkOutDate },
       isAvailable: false,
     });
+    if (session) blockedDatesQuery.session(session);
+    const blockedDates = await blockedDatesQuery;
 
     if (blockedDates > 0) return false;
 
     // Determine concurrency rules for this site (designated vs undesignated)
-    const site = await SiteModel.findById(siteId).select("capacity");
+    const siteQuery = SiteModel.findById(siteId).select("capacity");
+    if (session) siteQuery.session(session);
+    const site = await siteQuery;
     const maxConcurrent = (site && site.capacity && site.capacity.maxConcurrentBookings) || 1;
 
     // For designated sites (maxConcurrent === 1) any overlapping booking blocks the slot
     if (maxConcurrent === 1) {
-      const overlappingBooking = await BookingModel.findOne({
+      const overlapQuery = BookingModel.findOne({
         site: siteId,
         status: { $in: ["pending", "confirmed"] },
         $or: [
@@ -604,12 +641,14 @@ export class BookingService {
           },
         ],
       });
+      if (session) overlapQuery.session(session);
+      const overlappingBooking = await overlapQuery;
 
       return !overlappingBooking;
     }
 
     // For undesignated sites (maxConcurrent > 1) allow bookings up to the concurrency limit
-    const overlappingCount = await BookingModel.countDocuments({
+    const countQuery = BookingModel.countDocuments({
       site: siteId,
       status: { $in: ["pending", "confirmed"] },
       $or: [
@@ -619,6 +658,8 @@ export class BookingService {
         },
       ],
     });
+    if (session) countQuery.session(session);
+    const overlappingCount = await countQuery;
 
     return overlappingCount < maxConcurrent;
   }
@@ -693,8 +734,14 @@ export class BookingService {
 
   /**
    * Block dates in availability calendar when booking is created
+   * Hỗ trợ optional MongoDB session để dùng trong transaction
    */
-  private async blockDatesForBooking(siteId: string, checkIn: Date, checkOut: Date): Promise<void> {
+  private async blockDatesForBooking(
+    siteId: string,
+    checkIn: Date,
+    checkOut: Date,
+    session: mongoose.ClientSession | null = null
+  ): Promise<void> {
     const dates: Date[] = [];
     const currentDate = new Date(checkIn);
 
@@ -724,7 +771,8 @@ export class BookingService {
     }));
 
     if (bulkOps.length > 0) {
-      await AvailabilityModel.bulkWrite(bulkOps);
+      const options = session ? { session } : {};
+      await AvailabilityModel.bulkWrite(bulkOps, options);
     }
   }
 
@@ -746,28 +794,36 @@ export class BookingService {
     });
   }
 
-  async getMyBookings(userId: string) {
+  async getMyBookings(userId: string, page: number = 1, limit: number = 20) {
     const query = {
       $or: [{ host: userId }],
     };
-    const bookings = await BookingModel.find(query)
-      .populate("property", "name slug location photos")
-      .populate("site", "name slug accommodationType photos pricing location")
-      .populate("guest", "name email avatar")
-      .populate("host", "name email avatar")
-      .sort({ createdAt: -1 })
-      .lean();
-    const total = await BookingModel.countDocuments(query);
+    // Đảm bảo limit hợp lý (tối đa 100 để tránh memory spike)
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const skip = (page - 1) * safeLimit;
+
+    const [bookings, total] = await Promise.all([
+      BookingModel.find(query)
+        .populate("property", "name slug location photos")
+        .populate("site", "name slug accommodationType photos pricing location")
+        .populate("guest", "name email avatar")
+        .populate("host", "name email avatar")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(safeLimit)
+        .lean(),
+      BookingModel.countDocuments(query),
+    ]);
 
     return {
       data: bookings,
       pagination: {
-        page: 1,
-        limit: total,
+        page,
+        limit: safeLimit,
         total,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false,
+        totalPages: Math.ceil(total / safeLimit),
+        hasNext: page < Math.ceil(total / safeLimit),
+        hasPrev: page > 1,
       },
     };
   }

@@ -52,8 +52,12 @@ export class PropertyService {
 
     appAssert(property, ErrorFactory.resourceNotFound("Property"));
 
-    // Increment view count
-    await property!.incrementViews();
+    // Increment view count bằng atomic $inc (tránh race condition + không cần read-modify-write)
+    PropertyModel.findByIdAndUpdate(
+      property._id,
+      { $inc: { "stats.viewCount": 1 } },
+      { timestamps: false } // Không cập nhật updatedAt khi chỉ đếm view
+    ).exec().catch(() => {}); // Fire-and-forget
 
     return property!;
   }
@@ -680,36 +684,64 @@ export class PropertyService {
     }
 
     // Standard query for non-price sorts
+    // Dùng aggregation $lookup để lấy minPrice trong 1 query (tránh N+1)
+    const pipeline: any[] = [
+      { $match: { ...query, isActive: true } },
+      {
+        $lookup: {
+          from: "sites",
+          let: { propertyId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$property", "$$propertyId"] },
+                isActive: true,
+              },
+            },
+            { $sort: { "pricing.basePrice": 1 } },
+            { $limit: 1 },
+            { $project: { "pricing.basePrice": 1 } },
+          ],
+          as: "cheapestSite",
+        },
+      },
+      {
+        $addFields: {
+          minPrice: {
+            $ifNull: [
+              { $arrayElemAt: ["$cheapestSite.pricing.basePrice", 0] },
+              0,
+            ],
+          },
+        },
+      },
+      { $project: { cheapestSite: 0 } }, // Xóa field tạm
+      { $sort: Object.keys(sort).length > 0 ? sort : { "stats.totalReviews": -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          localField: "host",
+          foreignField: "_id",
+          as: "hostData",
+        },
+      },
+      {
+        $addFields: {
+          host: { $arrayElemAt: ["$hostData", 0] },
+        },
+      },
+      { $project: { hostData: 0, "host.password": 0, "host.email": 0 } },
+    ];
+
     const [properties, total] = await Promise.all([
-      PropertyModel.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .populate("host", "name avatar")
-        .lean(),
-      PropertyModel.countDocuments(query),
+      PropertyModel.aggregate(pipeline),
+      PropertyModel.countDocuments({ ...query, isActive: true }),
     ]);
 
-    // Populate minPrice from sites for each property
-    const propertiesWithMinPrice = await Promise.all(
-      properties.map(async (property) => {
-        const minPriceSite = await SiteModel.findOne({
-          property: property._id,
-          isActive: true,
-        })
-          .sort({ "pricing.basePrice": 1 })
-          .select("pricing.basePrice")
-          .lean();
-
-        return {
-          ...property,
-          minPrice: minPriceSite?.pricing?.basePrice || 0,
-        };
-      })
-    );
-
     return {
-      properties: propertiesWithMinPrice,
+      properties,
       pagination: {
         page,
         limit,

@@ -16,7 +16,7 @@ import {
   Star,
   ThumbsUp,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface PropertySiteReviewsProps {
   reviews: Review[];
@@ -277,7 +277,7 @@ export default function PropertySiteReviews({
 // Individual Review Card Component
 interface ReviewCardProps {
   review: Review;
-  renderStars: (rating: number, size?: 'sm' | 'md' | 'lg') => JSX.Element;
+  renderStars: (rating: number, size?: 'sm' | 'md' | 'lg') => React.ReactElement;
   showBoth?: boolean;
   showPropertyOnly?: boolean;
   showSiteOnly?: boolean;
@@ -299,15 +299,15 @@ function ReviewCard({
         {/* Reviewer Info */}
         <div className="mb-4 flex items-start gap-4">
           <Avatar>
-            <AvatarImage src={review.user.avatar} />
+            <AvatarImage src={review.user?.avatar} />
             <AvatarFallback>
-              {review.user.fullName?.charAt(0) || 'U'}
+              {review.user?.fullName?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold">{review.user.fullName}</p>
+                <p className="font-semibold">{review.user?.fullName || 'Người dùng'}</p>
                 <p className="text-muted-foreground text-xs">
                   {format(new Date(review.createdAt), 'dd MMMM yyyy', {
                     locale: vi,

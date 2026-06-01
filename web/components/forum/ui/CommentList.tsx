@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import  Link  from 'next/link';
 import { MessageCircle, Reply, Trash2, MoreVertical, ArrowUp, ArrowDown, Search, Filter, Download, BarChart3, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 // import { useAuth } from '../../../hooks/useAuth';
 import { useCommentState } from "../../../hooks/useCommentState";
 import { useCommentActions } from '../../../hooks/useCommentActions';
@@ -1887,7 +1887,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                 {reply.replies.map((nestedReply: any) => (
                                   <div key={nestedReply._id} id={`comment-${nestedReply._id}`} className="nested-reply-item">
                                     <div className="nested-reply-avatar">
-                                      <Link to={`/profile/${nestedReply.userId.username || nestedReply.userId._id}`}>
+                                      <Link href={`/profile/${nestedReply.userId.username || nestedReply.userId._id}`}>
                                         <img 
                                           src={nestedReply.userId.avatarUrl || '/default-avatar.png'} 
                                           alt={nestedReply.userId.name}

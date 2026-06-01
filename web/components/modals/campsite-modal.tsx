@@ -16,7 +16,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Step, Stepper } from 'react-form-stepper';
 import { useFieldArray, useForm, type Resolver } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -26,7 +25,7 @@ import { Step2Images } from '@/components/host/campsite/Images';
 import { Step3PricingRules } from '@/components/host/campsite/PricingRules';
 import { Step4Amenities } from '@/components/host/campsite/aminites';
 import { uploadMedia } from '@/lib/client-actions';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const campsiteSchema = z.object({
     name: z.string().min(1, 'Tên địa điểm là bắt buộc'),
@@ -95,8 +94,8 @@ interface CampsiteFormModalProps {
     onClose: () => void;
     mode: 'create' | 'edit';
     initialData?: any;
-    onSubmit: (data: any); // Change from FormData to any
-    amenities?: Amenity[];
+  onSubmit: (data: unknown) => void;
+  amenities?: Amenity[];
 }
 
 export default function CampsiteFormModal({
@@ -114,8 +113,8 @@ export default function CampsiteFormModal({
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
-    const form = useForm<CampsiteFormValues>({
-        resolver: zodResolver(campsiteSchema) as Resolver<CampsiteFormValues>,
+    const form = useForm<any>({
+        resolver: zodResolver(campsiteSchema) as Resolver<any>,
         defaultValues: {
             name: '',
             tagline: '',
@@ -253,7 +252,6 @@ export default function CampsiteFormModal({
             // Upload images
             let uploadedImageUrls: string[] = [];
             if (newImages.length > 0) {
-                console.log('📤 Uploading images:', newImages.length);
                 const imageFormData = new FormData();
                 newImages.forEach(file => imageFormData.append('files', file));
                 const uploadRes = await uploadMedia(imageFormData);
@@ -325,11 +323,7 @@ export default function CampsiteFormModal({
                 payload._id = initialData._id;
             }
 
-            console.log('📤 Submitting payload:', JSON.stringify(payload, null, 2));
-
             await onSubmit(payload);
-
-            console.log('✅ onSubmit completed');
 
         } catch (error: any) {
             console.error('❌ Error:', error);
@@ -360,13 +354,43 @@ export default function CampsiteFormModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="mb-6">
-                    <Stepper activeStep={currentStep - 1}>
-                        <Step label="Thông tin cơ bản" />
-                        <Step label="Hình ảnh" />
-                        <Step label="Giá & Quy định" />
-                        <Step label="Tiện nghi" />
-                    </Stepper>
+                <div className="flex items-center justify-between w-full relative mb-8 px-4 mt-4">
+                    {[
+                        { number: 1, label: "Thông tin cơ bản" },
+                        { number: 2, label: "Hình ảnh" },
+                        { number: 3, label: "Giá & Quy định" },
+                        { number: 4, label: "Tiện nghi" },
+                    ].map((step, idx, arr) => {
+                        const isCompleted = currentStep > step.number;
+                        const isActive = currentStep === step.number;
+                        return (
+                            <div key={step.number} className="flex flex-col items-center flex-1 relative z-10">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                                    isCompleted ? 'bg-primary border-primary text-primary-foreground' :
+                                    isActive ? 'bg-background border-primary text-primary font-semibold shadow-md ring-2 ring-primary/20' :
+                                    'bg-muted border-muted-foreground/30 text-muted-foreground'
+                                }`}>
+                                    {isCompleted ? (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : step.number}
+                                </div>
+                                <span className={`mt-2 text-xs text-center font-medium transition-all duration-300 ${
+                                    isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
+                                }`}>
+                                    {step.label}
+                                </span>
+                                {idx < arr.length - 1 && (
+                                    <div className="absolute top-5 left-[50%] right-[-50%] h-[2px] bg-muted -z-10">
+                                        <div className="h-full bg-primary transition-all duration-500" style={{
+                                            width: currentStep > step.number ? '100%' : '0%'
+                                        }} />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
 
                 <Form {...form}>
@@ -394,7 +418,6 @@ export default function CampsiteFormModal({
                         )}
                         {currentStep === 4 && (
                             <Step4Amenities
-                                amenities={amenities}
                                 amenities={amenities}
                                 selectedAmenities={selectedAmenities}
                                 setSelectedAmenities={setSelectedAmenities}
@@ -430,7 +453,6 @@ export default function CampsiteFormModal({
                                                 return;
                                             }
                                         }
-
                                         if (currentStep === 2) {
                                             if (previewUrls.length === 0) {
                                                 toast.warning('Vui lòng thêm ít nhất 1 ảnh');
@@ -438,7 +460,6 @@ export default function CampsiteFormModal({
                                             }
                                         }
 
-                                        console.log('✅ Moving to step:', currentStep + 1);
                                         setCurrentStep(prev => prev + 1);
                                     }}
                                     disabled={form.formState.isSubmitting}
@@ -452,8 +473,7 @@ export default function CampsiteFormModal({
                                     size="lg"
                                     disabled={form.formState.isSubmitting}
                                     onClick={() => {
-                                        console.log('🔘 Submit button clicked at step 4');
-                                        console.log('📝 Form errors:', form.formState.errors);
+                                        // debug removed
                                     }}
                                 >
                                     {form.formState.isSubmitting

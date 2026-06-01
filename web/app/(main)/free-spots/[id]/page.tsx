@@ -12,7 +12,7 @@ import { getFreeSpotById, toggleLike, deleteFreeSpot, type FreeSpot } from '@/li
 import TerrainBadge from '@/components/free-spots/TerrainBadge';
 import FreeSpotComments from '@/components/free-spots/FreeSpotComments';
 import { useAuthStore } from '@/store/auth.store';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import ReportButton from '@/components/forum/ui/ReportButton';

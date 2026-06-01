@@ -78,6 +78,7 @@ export interface Property {
     city: string;
     state: string;
     country: string;
+    zipCode?: string;
     coordinates: {
       type: 'Point';
       coordinates: [number, number]; // [lng, lat]
@@ -115,11 +116,6 @@ export interface Property {
   childrenPolicy?: {
     allowed: boolean;
     minAge?: number;
-  };
-
-  cancellationPolicy?: {
-    type: 'flexible' | 'moderate' | 'strict';
-    description?: string;
   };
 
   nearbyAttractions?: Array<{
@@ -219,7 +215,6 @@ export interface SiteRating {
 
 export interface Site {
   [x: string]: any;
-  [x: string]: string;
   _id: string;
   property: string | Property;
   name: string;
@@ -429,6 +424,7 @@ export interface PropertySearchFilters {
 
 export interface SiteSearchFilters {
   query?: string;
+  city?: string;
   propertyId?: string;
   accommodationType?: AccommodationType[];
   minPrice?: number;
@@ -469,7 +465,6 @@ export interface PropertyListResponse {
 }
 
 export interface SiteListResponse {
-  [x: string]: any;
   [x: string]: any;
   sites: Site[];
   pagination: {

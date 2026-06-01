@@ -1,37 +1,43 @@
+/**
+ * useRequireRole
+ * Redirects to sign-in if user does not have the required role.
+ * Uses Zustand auth store instead of Redux (which is not set up in this project).
+ */
 'use client';
+import { useAuthStore } from '@/store/auth.store';
 import { getUser } from '@/lib/client-actions';
-import { RootState } from '@/store';
-import { setUser } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
-export const useRequireRole = (requiredRole: 'admin' | 'user') => {
+export const useRequireRole = (requiredRole: 'admin' | 'host' | 'user') => {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const role = useSelector((state: RootState) => state.auth.role);
+  const { user, setUser } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const checkRole = async () => {
       try {
-        const res = await getUser(); // gọi server
-        const userRole = res.data.role;
-        if (!userRole || userRole !== requiredRole) {
-          router.push('/home'); // role sai
+        const res = await getUser();
+        const fetchedUser = (res as ApiResponse<User>).data;
+        if (!fetchedUser?.role || fetchedUser.role !== requiredRole) {
+          router.push('/');
           return;
         }
-        dispatch(setUser(res.data)); // lưu tạm
+        setUser(fetchedUser);
         setIsChecking(false);
       } catch {
-        router.push('/login'); // token hết hạn hoặc không hợp lệ
+        router.push('/sign-in');
       }
     };
 
-    if (!role) checkRole();
-    else if (role !== requiredRole) router.push('/home');
-    else setIsChecking(false);
-  }, [role, requiredRole, router, dispatch]);
+    if (!user) {
+      checkRole();
+    } else if (user.role !== requiredRole) {
+      router.push('/');
+    } else {
+      setIsChecking(false);
+    }
+  }, [user, requiredRole, router, setUser]);
 
   return { isChecking };
 };

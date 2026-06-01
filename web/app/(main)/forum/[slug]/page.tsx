@@ -12,12 +12,10 @@ import { forumApi } from '../../../../lib/forumApi';
 // import { userApi } from '../../services/api/user';
 import  formatDistanceToNow  from 'date-fns/formatDistanceToNow';
 import  vi  from 'date-fns/locale/vi';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Loader from "../../../../components/forum/ui/Loader";
 import ReportButton  from '../../../../components/forum/ui/ReportButton';
 import CommentList from '../../../../components/forum/ui/CommentList';
-
-// import styled from 'styled-components';
 import "../../../../components/forum/style/ForumPostDetail.css";
 import { ConfirmDialog } from '../../../../components/forum/ui/ConfirmDialog';
 import RichTextEditor from '../../../../components/forum/ui/RichTextEditor';

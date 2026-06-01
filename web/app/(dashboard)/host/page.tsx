@@ -488,7 +488,7 @@ export default function HostDashboard() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
                       <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                       <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
                       <Bar dataKey="revenue" fill="#6366f1" name="Doanh thu" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>

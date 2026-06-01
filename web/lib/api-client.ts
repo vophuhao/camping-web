@@ -26,7 +26,7 @@ apiClient.interceptors.response.use(
 
     if (
       status === UNAUTHORIZED &&
-      ['INVALID_ACCESS_TOKEN', 'TOKEN_EXPIRED'].includes(data?.code)
+      ['INVALID_ACCESS_TOKEN', 'TOKEN_EXPIRED'].includes(data?.code || '')
     ) {
       try {
         // refresh access token xong retry request cũ

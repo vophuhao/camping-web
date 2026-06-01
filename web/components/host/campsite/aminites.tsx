@@ -14,10 +14,22 @@ interface Amenity {
   isActive: boolean;
 }
 
+interface Activity {
+  _id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  isActive: boolean;
+}
+
 interface Step4Props {
   amenities: Amenity[];
   selectedAmenities: string[];
   setSelectedAmenities: (ids: string[]) => void;
+  activities?: Activity[];
+  selectedActivities?: string[];
+  setSelectedActivities?: (ids: string[]) => void;
 }
 
 const amenityCategoryLabels: Record<string, string> = {
@@ -26,6 +38,16 @@ const amenityCategoryLabels: Record<string, string> = {
   safety: 'An toàn & Bảo mật',
   outdoor: 'Ngoài trời',
   special: 'Đặc biệt',
+};
+
+const activityCategoryLabels: Record<string, string> = {
+  water: 'Hoạt động dưới nước',
+  hiking: 'Leo núi & Đi bộ',
+  wildlife: 'Dã ngoại & Động vật',
+  winter: 'Hoạt động mùa đông',
+  adventure: 'Trải nghiệm mạo hiểm',
+  relaxation: 'Thư giãn & Nghỉ dưỡng',
+  other: 'Hoạt động khác',
 };
 
 const categoryIcons: Record<string, string> = {
@@ -44,12 +66,12 @@ const categoryIcons: Record<string, string> = {
 };
 
 export function Step4Amenities({
-  amenities,
-  activities,
-  selectedAmenities,
-  setSelectedAmenities,
-  selectedActivities,
-  setSelectedActivities,
+  amenities = [],
+  activities = [],
+  selectedAmenities = [],
+  setSelectedAmenities = () => {},
+  selectedActivities = [],
+  setSelectedActivities = () => {},
 }: Step4Props) {
   const toggleAmenity = (id: string) => {
     setSelectedAmenities(
@@ -101,7 +123,7 @@ export function Step4Amenities({
     }
   };
 
-  const amenitiesByCategory = amenities.reduce(
+  const amenitiesByCategory = amenities.reduce<Record<string, Amenity[]>>(
     (acc, amenity) => {
       if (!acc[amenity.category]) {
         acc[amenity.category] = [];
@@ -109,10 +131,10 @@ export function Step4Amenities({
       acc[amenity.category].push(amenity);
       return acc;
     },
-    {} as Record<string, Amenity[]>,
+    {},
   );
 
-  const activitiesByCategory = activities.reduce(
+  const activitiesByCategory = activities.reduce<Record<string, Activity[]>>(
     (acc, activity) => {
       if (!acc[activity.category]) {
         acc[activity.category] = [];
@@ -120,7 +142,7 @@ export function Step4Amenities({
       acc[activity.category].push(activity);
       return acc;
     },
-    {} as Record<string, Activity[]>,
+    {},
   );
 
   return (

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { getFreeSpotById, updateFreeSpot } from '@/lib/free-spot-api';
 import { useAuthStore } from '@/store/auth.store';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 

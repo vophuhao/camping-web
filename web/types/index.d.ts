@@ -6,22 +6,14 @@ declare interface ApiResponse<T = unknown> {
 }
 
 declare interface ErrorResponse extends ApiResponse<never> {
-  code?: AppErrorCode;
+  code?: string;
   errors?: string[];
   details?: Record<string, unknown>;
   stack?: string;
 }
 
-declare interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
+// PaginatedResponse is declared below (standalone, not extending ApiResponse)
+// to avoid shape conflicts across API responses.
 
 declare interface User {
   _id: string;
@@ -381,4 +373,24 @@ declare interface RatingStats {
     2: number;
     1: number;
   };
+}
+
+declare interface Tour {
+  _id: string;
+  name: string;
+  slug: string;
+  images: string[];
+  isActive: boolean;
+  durationDays: number;
+  durationNights: number;
+  departurePoint: string;
+  rating?: {
+    average: number;
+    count: number;
+  };
+  priceOptions?: Array<{
+    name: string;
+    price: number;
+  }>;
+  [key: string]: any;
 }

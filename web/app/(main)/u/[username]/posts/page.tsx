@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { forumApi } from '@/lib/forumApi';
 import API from '@/lib/api-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import {
   MessageSquare, Eye, Heart, Edit3, Trash2,

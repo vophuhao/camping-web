@@ -19,45 +19,25 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     const s = io(url, {
       path: '/socket.io',
       transports: ['websocket'],
-      withCredentials: true, // ✅ Gửi cookie (accessToken phải là httpOnly cookie)
+      withCredentials: true,
       autoConnect: true,
     });
 
-    console.log('[SocketProvider] 🔌 Connecting to', url);
-    
     let isMounted = true;
-    let connectTimer: ReturnType<typeof setTimeout> | null = null;
-    connectTimer = setTimeout(() => {
+    const connectTimer = setTimeout(() => {
       if (isMounted) setSocket(s);
     }, 0);
 
-    s.on('connect', () => {
-      console.log('[SocketProvider] ✅ Connected:', s.id);
-      setIsConnected(true);
-    });
-    
-    s.on('disconnect', (reason) => {
-      console.log('[SocketProvider] ❌ Disconnected:', reason);
-      setIsConnected(false);
-    });
-    
-    s.on('connect_error', (err) => {
-      console.error('[SocketProvider] 🚨 Connection error:', err.message);
-    });
-
-    // ✅ Debug: Listen all events
-    s.onAny((eventName, ...args) => {
-      console.log('[SocketProvider] 📨 Event received:', eventName, args);
-    });
+    s.on('connect', () => setIsConnected(true));
+    s.on('disconnect', () => setIsConnected(false));
 
     return () => {
-      if (connectTimer) clearTimeout(connectTimer);
+      clearTimeout(connectTimer);
       isMounted = false;
       s.removeAllListeners();
       s.disconnect();
       setSocket(null);
       setIsConnected(false);
-      console.log('[SocketProvider] 🔌 Cleanup socket');
     };
   }, []);
 

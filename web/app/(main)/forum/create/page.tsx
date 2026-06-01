@@ -9,7 +9,7 @@ import { generatePostContent, generatePostSummary,
     getImageSuggestions, generateImage, 
     UnsplashImage } from '../../../../lib/ai';
 
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import {
   Upload,
   Eye,

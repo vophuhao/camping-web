@@ -90,11 +90,12 @@ export async function searchProperties(
 
   // Backend returns: { success, message, data: Property[], pagination: {...} }
   // We need to transform to: { properties: Property[], pagination: {...} }
-  const response = await apiClient.get(
+  const response = (await apiClient.get(
     `/properties/search?${params.toString()}`,
-  );
+  )) as any;
 
   return {
+    data: response.data || [],
     properties: response.data || [],
     pagination: response.pagination || {
       page: 1,
@@ -324,7 +325,7 @@ export async function searchSites(
 
   // Backend returns: { success, message, data: Site[], pagination: {...} }
   // We need to transform to: { sites: Site[], pagination: {...} }
-  const response = await apiClient.get(`/sites/search?${params.toString()}`);
+  const response = (await apiClient.get(`/sites/search?${params.toString()}`)) as any;
 
   return {
     sites: response.data || [],

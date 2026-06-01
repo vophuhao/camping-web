@@ -110,7 +110,7 @@ export const columns: ColumnDef<Site>[] = [
         <div className="flex items-center gap-2">
           <Users className="text-muted-foreground h-4 w-4" />
           <span>
-            {site.capacity.minGuests} - {site.capacity.maxGuests} khách
+            {((site.capacity as any).minGuests !== undefined && (site.capacity as any).minGuests !== null) ? `${(site.capacity as any).minGuests} - ` : ''}{site.capacity.maxGuests} khách
           </span>
         </div>
       );

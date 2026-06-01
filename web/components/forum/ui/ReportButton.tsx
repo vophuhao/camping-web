@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Flag, X, AlertCircle } from 'lucide-react';
 import { createReport } from '@/lib/reportApi';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth.store';
 import '../style/ReportButton.css';
 

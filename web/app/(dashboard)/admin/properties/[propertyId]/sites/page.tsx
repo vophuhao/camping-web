@@ -60,7 +60,7 @@ export default function PropertySitesPage() {
   const handleConfirmDelete = async () => {
     if (!selectedSite) return;
 
-    const res = await deleteSite(selectedSite._id);
+    const res: any = await deleteSite(selectedSite._id);
 
     if (!res.success) {
       toast.error(res.message || 'Xóa site thất bại');

@@ -42,7 +42,7 @@ export default function FeaturedTours() {
 
         {tours.length > 0 ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {tours.slice(0, 6).map(tour => (
+            {tours.slice(0, 6).map((tour: Tour) => (
               <Card
                 key={tour._id}
                 className="group overflow-hidden border-0 shadow-lg transition-all hover:-translate-y-2 hover:shadow-2xl"

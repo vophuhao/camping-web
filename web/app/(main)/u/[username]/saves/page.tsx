@@ -134,9 +134,9 @@ export default function SavesPage() {
 
                         <Image
                           src={getCoverPhoto(
-                            isProperty
+                            (isProperty
                               ? favorite.property?.photos
-                              : [favorite.site?.photos?.[0]],
+                              : [favorite.site?.photos?.[0]]) as any,
                           )}
                           alt={item?.name || ''}
                           fill

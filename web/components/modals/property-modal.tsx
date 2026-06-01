@@ -77,7 +77,7 @@ export function PropertyModal({
 }: PropertyModalProps) {
   const isEditMode = !!property;
 
-  const form = useForm<PropertyFormValues>({
+  const form = useForm<any>({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: {
       name: '',
@@ -107,11 +107,11 @@ export function PropertyModal({
         state: property.location.state || '',
         country: property.location.country || 'Vietnam',
         zipCode: property.location.zipCode || '',
-        latitude: property.location.coordinates[1] || 0,
-        longitude: property.location.coordinates[0] || 0,
+        latitude: property.location.coordinates?.coordinates[1] || 0,
+        longitude: property.location.coordinates?.coordinates[0] || 0,
         contactPhone: property.contactInfo?.phone || '',
         contactEmail: property.contactInfo?.email || '',
-        propertyType: property.propertyType || 'campground',
+        propertyType: (property.propertyType as any) || 'campground',
         isActive: property.isActive !== false,
       });
     } else {
@@ -141,9 +141,9 @@ export function PropertyModal({
         location: {
           address: data.address,
           city: data.city,
-          state: data.state,
+          state: data.state || '',
           country: data.country,
-          zipCode: data.zipCode,
+          zipCode: data.zipCode || '',
           coordinates: [data.longitude, data.latitude],
         },
         contactInfo: {
@@ -156,9 +156,9 @@ export function PropertyModal({
 
       let res;
       if (isEditMode && property) {
-        res = await updateProperty(property._id, payload);
+        res = await updateProperty(property._id, payload as any);
       } else {
-        res = await createProperty(payload);
+        res = await createProperty(payload as any);
       }
 
       if (!res.success) {

@@ -519,7 +519,7 @@ export default function CampsitePage() {
                           size="sm"
                           className="flex-1"
                           onClick={() =>
-                            window.open(`/campsites/${campsite.slug}`, '_blank')
+                            window.open(`/land/${campsite.slug}`, '_blank')
                           }
                         >
                           <Eye className="mr-2 h-4 w-4" />

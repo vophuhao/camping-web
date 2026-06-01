@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { getFreeSpots, deleteFreeSpot } from '@/lib/free-spot-api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import {
   MapPin, Eye, Heart, Edit3, Trash2, Loader2,

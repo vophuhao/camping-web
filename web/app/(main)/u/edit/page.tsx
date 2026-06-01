@@ -102,7 +102,7 @@ export default function EditProfilePage() {
     try {
       const formData = new FormData();
       formData.append('files', file);
-      const response = await uploadMedia(formData);
+      const response: any = await uploadMedia(formData);
       console.log("Upload media response:", response); 
       if (response.success)  {
         

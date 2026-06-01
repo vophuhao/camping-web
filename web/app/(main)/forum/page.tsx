@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef, useCallback, use } from 'react';
 import { forumApi } from '../../../lib/forumApi';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { ForumPost, ForumListResponse } from '../../../types/forum';
 import ScrollToTop from '../../../components/forum/ui/ScrollToTop';
 import ForumPostItem from '../../../components/forum/ui/ForumPostItem';

@@ -147,7 +147,7 @@ export default function AdminTourBooking() {
     queryFn: async () => {
       const res = await getAllBookings();
       if (!res.success) throw new Error('Failed to fetch');
-      return (await res.data) as TourBooking[];
+      return (res.data as unknown) as TourBooking[];
     },
   });
 

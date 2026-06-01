@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Loader2, Send, User } from 'lucide-react';
 import { getComments, addComment, type FreeSpotComment } from '@/lib/free-spot-api';
 import { useAuthStore } from '@/store/auth.store';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Link from 'next/link';
 
 interface Props {

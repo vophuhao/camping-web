@@ -128,7 +128,7 @@ export const columns: ColumnDef<Property>[] = [
     cell: ({ row }) => {
       const property = row.original;
       const host =
-        typeof property.host === 'object' ? property.host : undefined;
+        typeof property.host === 'object' ? (property.host as any) : undefined;
 
       return host ? (
         <div className="flex items-center gap-2">

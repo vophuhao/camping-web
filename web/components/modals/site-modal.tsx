@@ -86,7 +86,7 @@ export function SiteModal({
 }: SiteModalProps) {
   const isEditMode = !!site;
 
-  const form = useForm<SiteFormValues>({
+  const form = useForm<any>({
     resolver: zodResolver(siteFormSchema),
     defaultValues: {
       name: '',
@@ -114,6 +114,7 @@ export function SiteModal({
   // Reset form when site changes or modal opens
   useEffect(() => {
     if (site) {
+      const siteAmenities = (site.amenities || {}) as any;
       form.reset({
         name: site.name || '',
         description: site.description || '',
@@ -128,11 +129,11 @@ export function SiteModal({
         vehicleFee: site.pricing?.vehicleFee || 0,
         minimumNights: site.bookingSettings?.minimumNights || 1,
         instantBook: site.bookingSettings?.instantBook || false,
-        firePit: site.amenities?.firePit || false,
-        picnicTable: site.amenities?.picnicTable || false,
-        electricalAvailable: site.amenities?.electrical?.available || false,
-        electricalAmperage: site.amenities?.electrical?.amperage || 0,
-        waterHookup: site.amenities?.water?.hookup || false,
+        firePit: siteAmenities.firePit || false,
+        picnicTable: siteAmenities.picnicTable || false,
+        electricalAvailable: siteAmenities.electrical?.available || false,
+        electricalAmperage: siteAmenities.electrical?.amperage || 0,
+        waterHookup: siteAmenities.water?.hookup || false,
         isActive: site.isActive !== false,
       });
     } else {
@@ -204,9 +205,9 @@ export function SiteModal({
 
       let res;
       if (isEditMode && site) {
-        res = await updateSite(site._id, payload);
+        res = await updateSite(site._id, payload as any);
       } else {
-        res = await createSite(payload);
+        res = await createSite(payload as any);
       }
 
       if (!res.success) {

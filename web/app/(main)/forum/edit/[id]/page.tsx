@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 
 import '../../../../../components/forum/style/CreatePostPage.css';
 import { forumApi } from '../../../../../lib/forumApi';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import {
   Upload,
   Eye,

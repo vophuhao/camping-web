@@ -3,7 +3,7 @@
 import { register, sendEmailVerification } from '@/lib/actions/auth.actions';
 import { login } from '@/lib/client-actions';
 import { useAuthStore } from '@/store/auth.store';
-import { authFormSchema } from '@/validations/auth.schema';
+import { authFormSchema } from '@/schemas/auth.schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';

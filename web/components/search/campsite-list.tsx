@@ -81,7 +81,7 @@ export function CampsiteList({
               onMouseEnter={() => setHoveredCampsite(campsite)}
               onMouseLeave={() => setHoveredCampsite(null)}
             >
-              <Link href={`/campsites/${campsite.slug}`}>
+              <Link href={`/land/${campsite.slug}`}>
                 <div className="relative h-48 w-full">
                   <Image
                     src={campsite.images[0] || '/placeholder-campsite.jpg'}

@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-overview"],
     queryFn: async () => {
       const response = await getDashboardStats("overview");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -55,7 +55,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-revenue"],
     queryFn: async () => {
       const response = await getDashboardStats("revenue");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -63,7 +63,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-bookings"],
     queryFn: async () => {
       const response = await getDashboardStats("bookings");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-orders"],
     queryFn: async () => {
       const response = await getDashboardStats("orders");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-top-properties"],
     queryFn: async () => {
       const response = await getDashboardStats("top-properties");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -87,7 +87,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-top-products"],
     queryFn: async () => {
       const response = await getDashboardStats("top-products");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -95,7 +95,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-top-hosts"],
     queryFn: async () => {
       const response = await getDashboardStats("top-hosts");
-      return response.data;
+      return response.data as any;
     },
   });
 
@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-dashboard-growth"],
     queryFn: async () => {
       const response = await getDashboardStats("growth");
-      return response.data;
+      return response.data as any;
     },
   });
 

@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, MapPin, Navigation, Plus, X, ChevronLeft, ChevronRight, Filter, Loader2 } from 'lucide-react';
 import { getFreeSpots, getNearbySpots, type FreeSpot } from '@/lib/free-spot-api';
 import FreeSpotCard from '@/components/free-spots/FreeSpotCard';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';

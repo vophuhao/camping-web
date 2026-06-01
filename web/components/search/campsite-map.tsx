@@ -240,7 +240,7 @@ export function CampsiteMap({
           className="campsite-popup overflow-hidden rounded-xl"
         >
           <div className="w-64 overflow-hidden">
-            <Link href={`/campsites/${popupInfo.slug}`}>
+            <Link href={`/land/${popupInfo.slug}`}>
               <div className="relative h-40 w-full overflow-hidden rounded-lg">
                 <Image
                   src={popupInfo.images[0] || '/placeholder.jpg'}
@@ -280,7 +280,7 @@ export function CampsiteMap({
                   <span className="text-muted-foreground text-xs"> / đêm</span>
                 </div>
                 <Button asChild size="sm">
-                  <Link href={`/campsites/${popupInfo.slug}`}>Xem</Link>
+                  <Link href={`/land/${popupInfo.slug}`}>Xem</Link>
                 </Button>
               </div>
             </div>

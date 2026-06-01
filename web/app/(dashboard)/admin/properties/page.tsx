@@ -22,7 +22,7 @@ export default function PropertiesPage() {
 
   const { data: properties = [], refetch } = useQuery({
     queryKey: ['admin-properties'],
-    queryFn: () => getPropertiesForAdmin().then(res => res.data || []),
+    queryFn: () => getPropertiesForAdmin().then(res => (res.data || []) as Property[]),
   });
 
   const handleCreate = () => {
@@ -112,7 +112,6 @@ export default function PropertiesPage() {
         }}
       />
 
-      {/* Delete Dialog */}
       <DeleteAlertDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
@@ -121,5 +120,7 @@ export default function PropertiesPage() {
         onConfirm={handleConfirmDelete}
       />
     </div>
+    </div>
   );
 }
+

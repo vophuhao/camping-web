@@ -216,8 +216,9 @@ export default function EditSitePage() {
         amenities: Array.isArray(form.amenities) ? form.amenities : undefined,
         guestsShouldBring: Array.isArray(form.rules?.guestsShouldBring) ? form.rules.guestsShouldBring : undefined,
         siteSpecificRules: Array.isArray(form.rules?.siteSpecificRules) ? form.rules.siteSpecificRules : undefined,
-        isActive: form.bookingSettings?.status !== "unavailable",
-        isAvailableForBooking: form.bookingSettings?.status !== "unavailable",
+        status: publish ? "active" : "inactive",
+        isActive: publish,
+        isAvailableForBooking: publish,
         publish,
       };
       const res = await updateSite(siteId, payload);

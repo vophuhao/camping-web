@@ -135,7 +135,7 @@ export interface SiteDocument extends mongoose.Document {
   };
 
   // Status
-  status: "active" | "inactive" | "maintenance" | "suspended";
+  status: "active" | "inactive" | "blocked";
   isActive: boolean;
   isAvailableForBooking: boolean;
   unavailableReason?: string;
@@ -319,7 +319,7 @@ const siteSchema = new mongoose.Schema<SiteDocument>(
     // Status
     status: {
       type: String,
-      enum: ["active", "inactive", "maintenance", "suspended"],
+      enum: ["active", "inactive", "blocked"],
       default: "active",
       index: true,
     },

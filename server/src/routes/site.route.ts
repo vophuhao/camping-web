@@ -49,4 +49,8 @@ siteRoutes.delete("/:id", authenticate, siteController.deleteSite);
 siteRoutes.post("/:id/activate", authenticate, siteController.activateSite);
 siteRoutes.post("/:id/deactivate", authenticate, siteController.deactivateSite);
 
+// Admin-only routes
+siteRoutes.post("/:id/admin-lock", authenticate, siteController.adminLockSite);
+siteRoutes.post("/:id/admin-unlock", authenticate, siteController.adminUnlockSite);
+
 export default siteRoutes;

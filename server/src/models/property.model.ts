@@ -96,7 +96,7 @@ export interface PropertyDocument extends mongoose.Document {
   };
 
   // Status
-  status: "active" | "inactive" | "pending_approval" | "suspended";
+  status: "active" | "inactive" | "blocked";
   isActive: boolean;
   isFeatured: boolean;
   featuredUntil?: Date;
@@ -252,7 +252,7 @@ const propertySchema = new mongoose.Schema<PropertyDocument>(
     // Status
     status: {
       type: String,
-      enum: ["active", "inactive", "pending_approval", "suspended"],
+      enum: ["active", "inactive", "blocked"],
       default: "active",
       index: true,
     },

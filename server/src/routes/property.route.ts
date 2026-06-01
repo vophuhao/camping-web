@@ -30,6 +30,9 @@ propertyRoutes.get("/recommendations/list", authenticate, propertyController.get
 // My properties (must be before /:idOrSlug to avoid matching "my" as ID)
 propertyRoutes.get("/my/list", authenticate, propertyController.getMyProperties);
 
+// Admin: get host's properties with sites (must be before /:idOrSlug)
+propertyRoutes.get("/host/:hostId", authenticate, propertyController.getHostPropertiesWithSites);
+
 // Property reviews routes (must be before /:idOrSlug)
 propertyRoutes.get("/:propertyId/reviews", reviewController.getPropertyReviews);
 propertyRoutes.get("/:propertyId/reviews/stats", reviewController.getPropertyReviewStats);
@@ -88,5 +91,10 @@ propertyRoutes.patch("/:id", authenticate, propertyController.updateProperty);
 propertyRoutes.delete("/:id", authenticate, propertyController.deleteProperty);
 propertyRoutes.post("/:id/activate", authenticate, propertyController.activateProperty);
 propertyRoutes.post("/:id/deactivate", authenticate, propertyController.deactivateProperty);
+
+// Admin-only routes
+propertyRoutes.post("/:id/admin-lock", authenticate, propertyController.adminLockProperty);
+propertyRoutes.post("/:id/admin-unlock", authenticate, propertyController.adminUnlockProperty);
+propertyRoutes.post("/:id/admin-approve", authenticate, propertyController.adminApproveProperty);
 
 export default propertyRoutes;

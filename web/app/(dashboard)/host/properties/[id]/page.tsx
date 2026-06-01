@@ -55,8 +55,8 @@ export default function EditPropertyPage() {
           terrain: propertyData.terrain || "",
           landSize: propertyData.landSize || { value: 0, unit: "square_meters" as const },
           nearbyAttractions: propertyData.nearbyAttractions || [],
-          status: propertyData.status || "pending_approval",
-          isActive: propertyData.isActive ?? false,
+          status: propertyData.status || "active",
+          isActive: propertyData.isActive ?? true,
           isFeatured: propertyData.isFeatured ?? false,
         },
         location: {
@@ -282,8 +282,8 @@ export default function EditPropertyPage() {
         },
         checkInInstructions: undefined,
         checkOutInstructions: undefined,
-        status: b.status ?? "pending_approval",
-        isActive: !!b.isActive,
+        status: b.status ?? "active",
+        isActive: b.isActive !== undefined ? !!b.isActive : true,
         isFeatured: !!b.isFeatured,
       };
 

@@ -6,14 +6,16 @@ import API from '@/lib/api-client';
 import { toast } from 'sonner';
 import {
   Send, Bell, Users, Trash2, Search, RefreshCw,
-  CheckCircle2, ChevronLeft, ChevronRight, X, Plus,
-  Clock, ExternalLink, AlertCircle, Check,
+  CheckCircle2, ChevronLeft, ChevronRight, X,
+  Clock, ExternalLink, AlertCircle, Check, History
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AdminNotifications } from '@/components/admin/AdminNotifications';
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Thấp', color: '#6b7280', bg: '#f3f4f6' },
-  { value: 'medium', label: 'Trung bình', color: '#b45309', bg: '#fef3c7' },
-  { value: 'high', label: 'Cao', color: '#dc2626', bg: '#fef2f2' },
+  { value: 'low', label: 'Thấp', color: 'text-slate-500 border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800', activeClass: 'border-slate-500 bg-slate-50 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold' },
+  { value: 'medium', label: 'Trung bình', color: 'text-amber-600 border-slate-200 hover:bg-amber-50/30 dark:border-slate-800 dark:hover:bg-amber-950/20', activeClass: 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-500 font-bold' },
+  { value: 'high', label: 'Cao', color: 'text-red-600 border-slate-200 hover:bg-red-50/30 dark:border-slate-800 dark:hover:bg-red-950/20', activeClass: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-500 font-bold' },
 ];
 
 // ── Compose Form ──────────────────────────────────────────────────────────────
@@ -40,7 +42,9 @@ function ComposeTab() {
     }
   }, []);
 
-  useEffect(() => { fetchHosts(); }, [fetchHosts]);
+  useEffect(() => {
+    fetchHosts();
+  }, [fetchHosts]);
 
   const toggleHost = (hostId: string) => {
     setSelectedHosts(prev =>
@@ -85,84 +89,84 @@ function ComposeTab() {
   );
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
-      {/* Left: Compose */}
-      <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', padding: 24 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 20px', color: 'var(--foreground)' }}>
-          ✍️ Soạn thông báo
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      {/* Left: Compose Form */}
+      <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-5 flex items-center gap-2">
+          <span>✍️</span> Soạn thông báo mới
         </h2>
 
         {result && (
-          <div style={{
-            padding: '14px 18px', borderRadius: 12, background: '#f0fdf4', border: '1px solid #86efac',
-            marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <CheckCircle2 size={18} color="#16a34a" />
-            <div>
-              <div style={{ fontWeight: 700, color: '#15803d', fontSize: 14 }}>Gửi thành công!</div>
-              <div style={{ fontSize: 12, color: '#166534' }}>Đã gửi đến <strong>{result.sent}</strong> host</div>
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 mb-5 flex items-center gap-3">
+            <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+            <div className="flex-1">
+              <div className="font-semibold text-emerald-800 dark:text-emerald-400 text-sm">Gửi thành công!</div>
+              <div className="text-xs text-emerald-600 dark:text-emerald-500">Đã gửi đến <strong>{result.sent}</strong> host</div>
             </div>
-            <button onClick={() => setResult(null)} style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: '#166534' }}>
-              <X size={14} />
+            <button onClick={() => setResult(null)} className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
+              <X size={16} />
             </button>
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="space-y-4">
           <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-              Tiêu đề <span style={{ color: '#ef4444' }}>*</span>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Tiêu đề <span className="text-red-500">*</span>
             </label>
             <input
               value={form.title}
               onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-              placeholder="Tiêu đề thông báo..."
+              placeholder="Nhập tiêu đề thông báo..."
               maxLength={100}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             />
-            <div style={{ fontSize: 11, color: '#9ca3af', textAlign: 'right', marginTop: 4 }}>{form.title.length}/100</div>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 text-right mt-1">{form.title.length}/100</div>
           </div>
 
           <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-              Nội dung <span style={{ color: '#ef4444' }}>*</span>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Nội dung <span className="text-red-500">*</span>
             </label>
             <textarea
               value={form.message}
               onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
-              placeholder="Nội dung thông báo chi tiết..."
+              placeholder="Nhập nội dung thông báo chi tiết..."
               rows={4}
               maxLength={500}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
             />
-            <div style={{ fontSize: 11, color: '#9ca3af', textAlign: 'right', marginTop: 4 }}>{form.message.length}/500</div>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 text-right mt-1">{form.message.length}/500</div>
           </div>
 
           <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-              Link (tùy chọn)
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Link đi kèm (tùy chọn)
             </label>
-            <div style={{ position: 'relative' }}>
-              <ExternalLink size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+            <div className="relative">
+              <ExternalLink size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={form.link}
                 onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
-                placeholder="/host/properties hoặc URL..."
-                style={{ width: '100%', padding: '10px 14px 10px 34px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                placeholder="Ví dụ: /host/properties hoặc URL khác..."
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 8 }}>Mức độ ưu tiên</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-2">Mức độ ưu tiên</label>
+            <div className="grid grid-cols-3 gap-2">
               {PRIORITY_OPTIONS.map(opt => (
-                <button key={opt.value} onClick={() => setForm(p => ({ ...p, priority: opt.value }))}
-                  style={{
-                    flex: 1, padding: '8px 0', borderRadius: 10, border: `2px solid ${form.priority === opt.value ? opt.color : 'var(--border)'}`,
-                    background: form.priority === opt.value ? opt.bg : 'var(--card)', color: form.priority === opt.value ? opt.color : 'var(--muted-foreground)',
-                    fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                  }}>
+                <button
+                  key={opt.value}
+                  onClick={() => setForm(p => ({ ...p, priority: opt.value }))}
+                  className={`py-2 rounded-xl border text-xs font-semibold transition-all ${
+                    form.priority === opt.value
+                      ? opt.activeClass
+                      : `${opt.color} bg-white dark:bg-slate-900`
+                  }`}
+                >
                   {opt.label}
                 </button>
               ))}
@@ -171,84 +175,109 @@ function ComposeTab() {
 
           <button
             onClick={handleSend}
-            disabled={sending || !form.title || !form.message}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: '12px 0', borderRadius: 12, border: 'none',
-              background: sending || !form.title || !form.message ? '#d1d5db' : '#2563eb',
-              color: '#fff', fontSize: 15, fontWeight: 800, cursor: sending ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s', marginTop: 4,
-            }}
+            disabled={sending || !form.title.trim() || !form.message.trim()}
+            className={`w-full py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all mt-6 shadow-sm ${
+              sending || !form.title.trim() || !form.message.trim()
+                ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
+            }`}
           >
-            {sending ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={16} />}
-            {sending ? 'Đang gửi...' : `Gửi thông báo${sendToAll ? ' đến tất cả host' : ` (${selectedHosts.length} host)`}`}
+            {sending ? (
+              <RefreshCw size={16} className="animate-spin" />
+            ) : (
+              <Send size={15} />
+            )}
+            {sending ? 'Đang gửi...' : `Gửi thông báo${sendToAll ? ' đến tất cả host' : ` (${selectedHosts.length} host được chọn)`}`}
           </button>
         </div>
       </div>
 
       {/* Right: Recipient Picker */}
-      <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', padding: 20 }}>
-        <div style={{ marginBottom: 14 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 12px' }}>Người nhận</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5">
+        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4">Người nhận thông báo</h3>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, border: `2px solid ${sendToAll ? '#2563eb' : 'var(--border)'}`, background: sendToAll ? '#eff6ff' : 'var(--card)', cursor: 'pointer', marginBottom: 10 }}>
-            <input type="checkbox" checked={sendToAll} onChange={e => { setSendToAll(e.target.checked); setSelectedHosts([]); }} style={{ width: 16, height: 16, accentColor: '#2563eb' }} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: sendToAll ? '#1d4ed8' : 'var(--foreground)' }}>Tất cả host</div>
-              <div style={{ fontSize: 11, color: '#9ca3af' }}>{hosts.length} host đang hoạt động</div>
+        <div className="space-y-4">
+          <label className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+            sendToAll
+              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20'
+              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+          }`}>
+            <input
+              type="checkbox"
+              checked={sendToAll}
+              onChange={e => { setSendToAll(e.target.checked); setSelectedHosts([]); }}
+              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+            />
+            <div className="flex-1">
+              <div className={`font-bold text-sm ${sendToAll ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>Tất cả host</div>
+              <div className="text-[11px] text-slate-400 dark:text-slate-500">{hosts.length} host đang hoạt động</div>
             </div>
-            {sendToAll && <Check size={16} style={{ marginLeft: 'auto', color: '#2563eb' }} />}
+            {sendToAll && <Check size={16} className="text-indigo-600 dark:text-indigo-400 ml-auto" />}
           </label>
 
           {!sendToAll && (
-            <>
-              <div style={{ position: 'relative', marginBottom: 10 }}>
-                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+            <div className="space-y-3">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   value={hostSearch}
                   onChange={e => setHostSearch(e.target.value)}
-                  placeholder="Tìm host..."
-                  style={{ width: '100%', padding: '8px 12px 8px 30px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="Tìm kiếm host..."
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
               </div>
 
               {selectedHosts.length > 0 && (
-                <div style={{ padding: '6px 10px', borderRadius: 8, background: '#eff6ff', marginBottom: 8, fontSize: 12, color: '#1d4ed8', fontWeight: 700 }}>
-                  Đã chọn {selectedHosts.length} host
-                  <button onClick={() => setSelectedHosts([])} style={{ marginLeft: 8, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Bỏ chọn tất cả</button>
+                <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                  <span>Đã chọn: {selectedHosts.length} host</span>
+                  <button onClick={() => setSelectedHosts([])} className="text-[10px] text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-all">
+                    Bỏ chọn tất cả
+                  </button>
                 </div>
               )}
 
-              <div style={{ maxHeight: 340, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div className="max-h-[350px] overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-50 dark:divide-slate-800/50">
                 {hostsLoading ? (
-                  <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Đang tải...</div>
+                  <div className="py-8 text-center text-xs text-slate-400">Đang tải danh sách...</div>
                 ) : filteredHosts.length === 0 ? (
-                  <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Không có host nào</div>
-                ) : filteredHosts.map(host => {
-                  const selected = selectedHosts.includes(host._id);
-                  return (
-                    <label key={host._id} style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                      background: selected ? '#eff6ff' : 'transparent', border: `1px solid ${selected ? '#93c5fd' : 'transparent'}`,
-                      transition: 'all 0.1s',
-                    }}>
-                      <input type="checkbox" checked={selected} onChange={() => toggleHost(host._id)} style={{ width: 14, height: 14, accentColor: '#2563eb' }} />
-                      {host.avatarUrl && <img src={host.avatarUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{host.username}</div>
-                        <div style={{ fontSize: 11, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{host.email}</div>
-                      </div>
-                      {host.isVerified && <CheckCircle2 size={13} color="#10b981" />}
-                    </label>
-                  );
-                })}
+                  <div className="py-8 text-center text-xs text-slate-400">Không tìm thấy host nào</div>
+                ) : (
+                  filteredHosts.map(host => {
+                    const selected = selectedHosts.includes(host._id);
+                    return (
+                      <label
+                        key={host._id}
+                        className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/40 ${
+                          selected ? 'bg-indigo-50/40 dark:bg-indigo-950/10 border-l-2 border-indigo-500 pl-2' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleHost(host._id)}
+                          className="w-3.5 h-3.5 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+                        />
+                        {host.avatarUrl ? (
+                          <img src={host.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
+                            {host.username?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{host.username}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{host.email}</div>
+                        </div>
+                        {host.isVerified && <CheckCircle2 size={13} className="text-emerald-500 ml-auto flex-shrink-0" />}
+                      </label>
+                    );
+                  })
+                )}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -279,7 +308,9 @@ function SentHistoryTab() {
     }
   }, [page]);
 
-  useEffect(() => { fetchSent(); }, [fetchSent]);
+  useEffect(() => {
+    fetchSent();
+  }, [fetchSent]);
 
   const handleDeleteOne = async (notificationId: string) => {
     setDeletingId(notificationId);
@@ -309,79 +340,90 @@ function SentHistoryTab() {
     }
   };
 
-  const PRIORITY_BADGE: Record<string, { label: string; color: string; bg: string }> = {
-    low: { label: 'Thấp', color: '#6b7280', bg: '#f3f4f6' },
-    medium: { label: 'Trung bình', color: '#b45309', bg: '#fef3c7' },
-    high: { label: 'Cao', color: '#dc2626', bg: '#fef2f2' },
+  const PRIORITY_BADGE: Record<string, { label: string; color: string }> = {
+    low: { label: 'Thấp', color: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/80 dark:text-slate-400 dark:border-slate-800' },
+    medium: { label: 'Trung bình', color: 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30' },
+    high: { label: 'Cao', color: 'bg-red-50 text-red-600 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30' },
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>Lịch sử thông báo đã gửi</h2>
-          <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>Tổng {total} thông báo đã gửi</p>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Lịch sử thông báo đã gửi</h2>
+          <p className="text-xs text-slate-400 mt-1">Tổng cộng {total} thông báo đã được gửi đi</p>
         </div>
-        <button onClick={fetchSent} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', fontSize: 13, cursor: 'pointer' }}>
-          <RefreshCw size={14} /> Làm mới
+        <button
+          onClick={fetchSent}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+        >
+          <RefreshCw size={12} /> Làm mới
         </button>
       </div>
 
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted-foreground)' }}>
-          <RefreshCw size={28} style={{ animation: 'spin 1s linear infinite' }} />
-          <div style={{ marginTop: 10 }}>Đang tải...</div>
+        <div className="py-16 text-center text-slate-400 dark:text-slate-500">
+          <RefreshCw size={24} className="animate-spin mx-auto mb-3" />
+          <p className="text-xs">Đang tải lịch sử thông báo...</p>
         </div>
       ) : notifications.length === 0 ? (
-        <div style={{ padding: 60, textAlign: 'center', background: 'var(--card)', borderRadius: 14, border: '1px solid var(--border)' }}>
-          <Bell size={40} style={{ color: '#d1d5db', margin: '0 auto 12px' }} />
-          <div style={{ fontSize: 16, fontWeight: 700 }}>Chưa có thông báo nào đã gửi</div>
-          <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginTop: 6 }}>Hãy gửi thông báo đầu tiên từ tab "Gửi thông báo"</div>
+        <div className="py-16 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl max-w-md mx-auto">
+          <Bell size={36} className="text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+          <h4 className="font-bold text-sm text-slate-700 dark:text-slate-300">Chưa gửi thông báo nào</h4>
+          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Hãy soạn và phát đi thông báo đầu tiên của bạn đến các host ở tab "Gửi thông báo".</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="space-y-3">
           {notifications.map((notif: any) => {
             const badge = PRIORITY_BADGE[notif.priority] ?? PRIORITY_BADGE.medium;
             return (
-              <div key={notif._id} style={{
-                background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)',
-                padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start',
-              }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{notif.title}</span>
-                    <span style={{ padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: badge.bg, color: badge.color }}>
+              <div
+                key={notif._id}
+                className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex gap-4 items-start hover:shadow-md transition-all duration-200"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{notif.title}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badge.color}`}>
                       {badge.label}
                     </span>
                   </div>
-                  <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 8px', lineHeight: 1.5 }}>{notif.message}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-3">{notif.message}</p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                    {/* Recipient */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {notif.recipient?.avatarUrl && <img src={notif.recipient.avatarUrl} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />}
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>→ <strong>{notif.recipient?.username ?? '—'}</strong></span>
+                  <div className="flex items-center gap-4 flex-wrap text-[10px] text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800/80">
+                      {notif.recipient?.avatarUrl && (
+                        <img src={notif.recipient.avatarUrl} alt="" className="w-4.5 h-4.5 rounded-full object-cover" />
+                      )}
+                      <span className="font-semibold text-slate-600 dark:text-slate-400">→ {notif.recipient?.username ?? 'Tất cả host'}</span>
                     </div>
+
                     {notif.link && (
-                      <a href={notif.link} style={{ fontSize: 12, color: '#2563eb', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <ExternalLink size={11} /> {notif.link}
+                      <a href={notif.link} className="flex items-center gap-1 text-indigo-500 hover:text-indigo-600 font-semibold">
+                        <ExternalLink size={10} /> {notif.link}
                       </a>
                     )}
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#9ca3af' }}>
-                      <Clock size={11} /> {new Date(notif.createdAt).toLocaleString('vi-VN')}
-                    </span>
-                    {notif.isRead && <span style={{ fontSize: 11, color: '#10b981', fontWeight: 700 }}>✓ Đã đọc</span>}
+
+                    <div className="flex items-center gap-1">
+                      <Clock size={10} />
+                      {new Date(notif.createdAt).toLocaleString('vi-VN')}
+                    </div>
+
+                    {notif.isRead && (
+                      <span className="text-emerald-500 font-bold flex items-center gap-0.5">
+                        <Check size={10} /> Đã đọc
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setConfirmDelete({ type: 'one', id: notif._id })}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 8, border: '1px solid #ef4444', background: '#fef2f2', color: '#dc2626', fontSize: 12, cursor: 'pointer' }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setConfirmDelete({ type: 'one', id: notif._id })}
+                  className="p-1.5 rounded-lg border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-600 transition-all dark:border-red-950/20 dark:bg-red-950/10 dark:hover:bg-red-950/30 flex-shrink-0"
+                  title="Xóa thông báo này"
+                >
+                  <Trash2 size={13} />
+                </button>
               </div>
             );
           })}
@@ -389,43 +431,59 @@ function SentHistoryTab() {
       )}
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20 }}>
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1, fontSize: 13 }}>
-            <ChevronLeft size={14} /> Trước
+        <div className="flex justify-center items-center gap-3 mt-6">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-semibold bg-white dark:bg-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+          >
+            <ChevronLeft size={12} /> Trước
           </button>
-          <span style={{ fontSize: 13 }}>Trang <strong>{page}</strong> / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1, fontSize: 13 }}>
-            Sau <ChevronRight size={14} />
+          <span className="text-xs text-slate-500">Trang <strong>{page}</strong> / {totalPages}</span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-semibold bg-white dark:bg-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+          >
+            Sau <ChevronRight size={12} />
           </button>
         </div>
       )}
 
       {/* Confirm Delete Modal */}
       {confirmDelete && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-          onClick={e => e.target === e.currentTarget && setConfirmDelete(null)}>
-          <div style={{ background: 'var(--card)', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <h3 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 700 }}>Xóa thông báo?</h3>
-            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--muted-foreground)' }}>
-              Thông báo sẽ bị xóa vĩnh viễn khỏi hộp thư của host.
+        <div
+          className="fixed inset-0 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={e => e.target === e.currentTarget && setConfirmDelete(null)}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-2">Xóa thông báo?</h3>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">
+              Thông báo này sẽ bị xóa vĩnh viễn khỏi lịch sử hệ thống và hộp thư nhận của host. Hành động này không thể hoàn tác.
             </p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '9px 20px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)', fontSize: 14, cursor: 'pointer' }}>Hủy</button>
+            <div className="flex justify-end gap-2.5">
               <button
-                onClick={() => confirmDelete.type === 'one'
-                  ? handleDeleteOne(confirmDelete.id)
-                  : handleDeleteBroadcast(confirmDelete.title, confirmDelete.createdAt)}
+                onClick={() => setConfirmDelete(null)}
+                className="px-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={() => handleDeleteOne(confirmDelete.id)}
                 disabled={!!deletingId}
-                style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: '#ef4444', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                {deletingId ? 'Đang xóa...' : 'Xóa'}
+                className="px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {deletingId ? (
+                  <RefreshCw size={12} className="animate-spin" />
+                ) : (
+                  <Trash2 size={12} />
+                )}
+                {deletingId ? 'Đang xóa...' : 'Xác nhận xóa'}
               </button>
             </div>
           </div>
         </div>
       )}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -433,45 +491,44 @@ function SentHistoryTab() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AdminNotificationsPage() {
-  const [tab, setTab] = useState<'compose' | 'sent'>('compose');
-
-  const TABS = [
-    { key: 'compose', label: 'Gửi thông báo', icon: Send },
-    { key: 'sent', label: 'Đã gửi', icon: Bell },
-  ];
-
   return (
-    <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="h-[calc(100vh-2rem)] flex flex-col gap-4">
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 6px', color: 'var(--foreground)' }}>
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 bg-clip-text text-transparent">
           Quản lý thông báo
         </h1>
-
+        <p className="text-sm text-slate-500 mt-0.5">
+          Xem các thông báo nhận được từ hệ thống hoặc gửi thông báo mới cho các host.
+        </p>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid var(--border)' }}>
-        {TABS.map(t => {
-          const Icon = t.icon;
-          return (
-            <button key={t.key} onClick={() => setTab(t.key as any)} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px',
-              borderRadius: '10px 10px 0 0', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700,
-              transition: 'all 0.15s',
-              background: tab === t.key ? 'var(--foreground)' : 'transparent',
-              color: tab === t.key ? 'var(--background)' : 'var(--muted-foreground)',
-              borderBottom: tab === t.key ? '2px solid var(--foreground)' : '2px solid transparent',
-              marginBottom: -2,
-            }}>
-              <Icon size={15} /> {t.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Tabs Layout */}
+      <Tabs defaultValue="received" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="w-fit mb-4">
+          <TabsTrigger value="received" className="gap-1.5 text-xs">
+            <Bell className="w-3.5 h-3.5" /> Thông báo nhận
+          </TabsTrigger>
+          <TabsTrigger value="compose" className="gap-1.5 text-xs">
+            <Send className="w-3.5 h-3.5" /> Gửi thông báo
+          </TabsTrigger>
+          <TabsTrigger value="sent" className="gap-1.5 text-xs">
+            <History className="w-3.5 h-3.5" /> Lịch sử đã gửi
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tab content */}
-      {tab === 'compose' ? <ComposeTab /> : <SentHistoryTab />}
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+          <TabsContent value="received" className="m-0 h-full">
+            <AdminNotifications />
+          </TabsContent>
+          <TabsContent value="compose" className="m-0">
+            <ComposeTab />
+          </TabsContent>
+          <TabsContent value="sent" className="m-0">
+            <SentHistoryTab />
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

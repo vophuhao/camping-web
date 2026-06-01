@@ -17,6 +17,8 @@ bookingRoutes.get("/admin/all", requireAdmin, bookingController.getAdminBookings
 bookingRoutes.get("/admin/stats", requireAdmin, bookingController.getAdminBookingStats);
 bookingRoutes.post("/admin/:id/refund", requireAdmin, bookingController.adminProcessRefund);
 bookingRoutes.post("/admin/:id/cancel", requireAdmin, bookingController.adminCancelBooking);
+bookingRoutes.post("/admin/:id/process-cannot-attend", requireAdmin, bookingController.adminProcessCannotAttend);
+
 
 // Host routes
 bookingRoutes.get("/host/list", authenticate, bookingController.getHostBookingsList);

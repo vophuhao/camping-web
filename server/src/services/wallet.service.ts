@@ -21,8 +21,15 @@ export default class WalletService {
     const platformFee = Math.round(grossAmount * PLATFORM_FEE_RATE);
     const netAmount = grossAmount - platformFee;
 
-    // Tìm host record theo user id
-    const hostRecord = await HostModel.findOne({ user: hostUserId });
+    // Tìm host record theo user id (booking.host = User._id)
+    let hostRecord = await HostModel.findOne({ user: hostUserId });
+
+    // Fallback: if not found by user field, try direct _id lookup
+    // (handles cases where booking.host stores the Host doc's _id instead)
+    if (!hostRecord && mongoose.Types.ObjectId.isValid(hostUserId)) {
+      hostRecord = await HostModel.findById(hostUserId);
+    }
+
     appAssert(hostRecord, ErrorFactory.resourceNotFound("Host"));
 
     const balanceBefore = hostRecord.walletBalance;
@@ -66,17 +73,21 @@ export default class WalletService {
   }
 
   /**
-   * Cộng tiền vào ví host khi khách không đến (host nhận 30%)
+   * Cộng tiền vào ví host khi khách không đến (host nhận 20%)
    */
   async creditHostWalletCannotAttend(
     hostUserId: string,
     bookingId: string,
-    grossAmount: number
+    grossAmount: number,
+    hostRate: number = 0.2
   ) {
-    const hostAmount = Math.round(grossAmount * 0.3);
+    const hostAmount = Math.round(grossAmount * hostRate);
     const platformFee = Math.round(grossAmount * PLATFORM_FEE_RATE);
 
-    const hostRecord = await HostModel.findOne({ user: hostUserId });
+    let hostRecord = await HostModel.findOne({ user: hostUserId });
+    if (!hostRecord && mongoose.Types.ObjectId.isValid(hostUserId)) {
+      hostRecord = await HostModel.findById(hostUserId);
+    }
     appAssert(hostRecord, ErrorFactory.resourceNotFound("Host"));
 
     const balanceBefore = hostRecord.walletBalance;
@@ -90,7 +101,7 @@ export default class WalletService {
       type: "credit",
       amount: hostAmount,
       bookingId: new mongoose.Types.ObjectId(bookingId),
-      description: `Khách báo không đến (30%) - Booking #${bookingId.slice(-6).toUpperCase()}`,
+      description: `Khách hủy phòng (${Math.round(hostRate * 100)}%) - Booking #${bookingId.slice(-6).toUpperCase()}`,
       balanceBefore,
       balanceAfter,
     });

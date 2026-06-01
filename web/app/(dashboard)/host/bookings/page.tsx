@@ -62,7 +62,7 @@ export default function BookingsPage() {
 
   async function fetchBookings() {
     try {
-      const res = await getMyBookings();
+      const res = await getMyBookings({ limit: 1000 });
       if (res.success) setBookings(res.data ?? []);
       setLoading(true);
       setTimeout(() => setLoading(false), 1000);

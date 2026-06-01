@@ -36,6 +36,12 @@ siteRoutes.get("/:idOrSlug/with-availability", siteController.getSiteWithAvailab
 // Site details (MUST BE LAST among GET routes)
 siteRoutes.get("/:idOrSlug", siteController.getSite);
 
+// Site availability and calendar endpoints for hosts
+siteRoutes.post("/:id/block-dates", authenticate, siteController.blockSiteDates);
+siteRoutes.delete("/:id/block-dates", authenticate, siteController.unblockSiteDates);
+siteRoutes.put("/:id/seasonal-pricing", authenticate, siteController.updateSeasonalPricing);
+siteRoutes.get("/:id/availability-calendar", authenticate, siteController.getAvailabilityCalendar);
+
 // Protected routes (host/admin)
 siteRoutes.post("/", authenticate, siteController.createSite);
 siteRoutes.patch("/:id", authenticate, siteController.updateSite);

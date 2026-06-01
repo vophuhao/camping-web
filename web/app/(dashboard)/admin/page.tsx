@@ -216,10 +216,7 @@ export default function AdminDashboardPage() {
       {/* Typography Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-            Hệ thống quản trị Campo
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-2xl text-slate-500 dark:text-slate-400 mt-1 text-bold">
             Báo cáo chi tiết hiệu suất kinh doanh, hoạt động booking và tổng số liệu vận hành.
           </p>
         </div>
@@ -328,7 +325,7 @@ export default function AdminDashboardPage() {
               <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {formatNumber(
                   (overviewStats?.properties?.total || 0) +
-                    (overviewStats?.products?.total || 0)
+                  (overviewStats?.products?.total || 0)
                 )}
               </p>
             </div>
@@ -403,8 +400,8 @@ export default function AdminDashboardPage() {
                 <LineChart data={revenueStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="totalRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
@@ -471,7 +468,7 @@ export default function AdminDashboardPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              
+
               {/* Stat breakdown list */}
               <div className="space-y-3 w-full max-w-sm">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Chi tiết phân bố</h4>

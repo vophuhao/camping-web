@@ -433,7 +433,7 @@ export default function HostRegisterPage() {
                     </div>
 
                     <div className="space-y-2">
-                      {!cameraActive && faceStatus !== "matched" && !selfieUrl && (
+                      {!cameraActive && !selfieUrl && (
                         <Button className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-semibold" onClick={startCamera}>
                           <Camera className="mr-2 h-4 w-4" /> Bật camera và chụp ảnh
                         </Button>
@@ -448,7 +448,7 @@ export default function HostRegisterPage() {
                           <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
                         </Button>
                       )}
-                      {!cameraActive && faceStatus !== "matched" && (
+                      {!cameraActive && (
                         <Button variant="outline" className="w-full h-11" onClick={() => { setCaptureMode("choose"); stopCamera(); }}>
                           ← Chọn cách khác
                         </Button>

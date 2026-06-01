@@ -21,7 +21,6 @@ const STEPS = [
   { label: "Cơ bản", description: "Thông tin property" },
   { label: "Vị trí", description: "Địa chỉ và bản đồ" },
   { label: "Hình ảnh", description: "Ảnh property" },
-  { label: "Quy định", description: "Nội quy lưu trú" },
 ];
 
 export default function NewPropertyPage() {
@@ -245,7 +244,7 @@ export default function NewPropertyPage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900/50 pb-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-4 shadow-sm mb-8">
-          <button 
+          <button
             type="button"
             onClick={() => router.push("/host/properties")}
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
@@ -267,10 +266,10 @@ export default function NewPropertyPage() {
         </div>
 
         <div className="flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-md border border-slate-200/50 dark:border-slate-800/50 p-4">
-          <Button 
-            variant="outline" 
-            onClick={prev} 
-            disabled={currentStep === 0} 
+          <Button
+            variant="outline"
+            onClick={prev}
+            disabled={currentStep === 0}
             className="gap-2 rounded-xl px-5 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -278,9 +277,9 @@ export default function NewPropertyPage() {
           </Button>
 
           {currentStep === STEPS.length - 1 ? (
-            <Button 
-              onClick={handleSubmit} 
-              disabled={createMutation.isPending || uploading} 
+            <Button
+              onClick={handleSubmit}
+              disabled={createMutation.isPending || uploading}
               className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-6 gap-2 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
             >
               {uploading || createMutation.isPending ? (
@@ -295,8 +294,8 @@ export default function NewPropertyPage() {
               )}
             </Button>
           ) : (
-            <Button 
-              onClick={next} 
+            <Button
+              onClick={next}
               className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-6 gap-2 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
             >
               Tiếp theo

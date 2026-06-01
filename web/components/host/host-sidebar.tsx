@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from 'next-themes';
@@ -51,6 +51,12 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
   const { data: unreadMessagesData } = useUnreadMessagesCount();
   const unreadMessagesCount = unreadMessagesData?.unreadCount || 0;
 
+  const [sidebarMounted, setSidebarMounted] = useState(false);
+
+  useEffect(() => {
+    setSidebarMounted(true);
+  }, []);
+
   const handleLogout = async () => {
     const response = await logout();
     if (response.success) {
@@ -67,6 +73,7 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
   const mainMenuItems: MenuItem[] = [
     { name: 'Dashboard', href: '/host', icon: Home, group: 'main' },
     { name: 'Booking & Lịch', href: '/host/bookings', icon: Calendar, group: 'main' },
+    { name: 'Lịch & Giá mùa', href: '/host/calendar', icon: Calendar, group: 'main' },
     { name: 'Khu đất', href: '/host/properties', icon: Tent, group: 'main' },
     { name: 'Thông báo', href: '/host/notifications', icon: Bell, group: 'main' },
     { name: 'Đánh giá', href: '/host/reviews', icon: Star, group: 'main' },
@@ -80,28 +87,25 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed top-0 left-0 h-screen bg-slate-900 border-r border-slate-800/80 shadow-2xl flex flex-col transition-all duration-300 z-50',
+        'fixed top-0 left-0 h-screen bg-slate-900 border-r border-slate-800 shadow-2xl flex flex-col transition-all duration-300 z-50',
         collapsed ? 'w-16' : 'w-56',
       )}
     >
       {/* ── Logo + Brand ── */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800/50">
-        <div className={cn('flex items-center gap-2 overflow-hidden transition-all duration-300', collapsed ? 'w-0 opacity-0' : 'w-full opacity-100')}>
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-600 shadow-md shadow-indigo-600/30">
-            <Tent className="h-4.5 w-4.5 text-white" />
+      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800/60">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
+            <Home className="h-4.5 w-4.5 text-sky-400" />
           </div>
-          <Link href="/" className="min-w-0 cursor-pointer">
-            <span className="text-md font-extrabold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent tracking-wide truncate block">
-              Campo Host
+          {!collapsed && (
+            <span className="text-sm font-bold text-white tracking-wide truncate">
+              HDCAMPING
             </span>
-          </Link>
+          )}
         </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            'flex-shrink-0 rounded-lg p-1.5 transition-colors',
-            'text-slate-400 hover:bg-slate-800 hover:text-slate-105',
-          )}
+          className="flex-shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
           title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
         >
           <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsed && "rotate-180")} />
@@ -120,15 +124,15 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
               href={item.href!}
               title={collapsed ? item.name : undefined}
               className={cn(
-                'group relative flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-sm font-medium transition-all duration-150',
+                'group relative flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-950/40'
-                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+                  ? 'bg-sky-500/15 text-sky-300'
+                  : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-100',
               )}
             >
               {/* Icon + badge */}
               <div className="relative flex-shrink-0">
-                <Icon className={cn("h-4.5 w-4.5", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200")} />
+                <Icon className={cn("h-4.5 w-4.5 transition-colors", isActive ? "text-sky-400" : "text-slate-500 group-hover:text-slate-200")} />
                 {item.name === 'Thông báo' && unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -153,7 +157,7 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
 
               {/* Active indicator bar */}
               {isActive && (
-                <div className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-indigo-300" />
+                <div className="absolute left-0 top-1/2 h-7 w-0.5 -translate-y-1/2 rounded-r bg-sky-400" />
               )}
             </Link>
           );
@@ -161,22 +165,22 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
       </nav>
 
       {/* ── Bottom Section ── */}
-      <div className="border-t border-slate-800/60 p-3 space-y-1.5 bg-slate-950/20">
+      <div className="border-t border-slate-800/60 p-3 space-y-1.5 bg-slate-950/30">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          title={theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+          title={sidebarMounted && theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
           className={cn(
             'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
             'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
           )}
         >
           <div className="relative flex-shrink-0 h-4 w-4">
-            <Sun className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', theme === 'dark' ? 'scale-0 opacity-0' : 'scale-100 opacity-100')} />
-            <Moon className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', theme === 'dark' ? 'scale-100 opacity-100' : 'scale-0 opacity-0')} />
+            <Sun className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', sidebarMounted && theme === 'dark' ? 'scale-0 opacity-0' : 'scale-100 opacity-100')} />
+            <Moon className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', sidebarMounted && theme === 'dark' ? 'scale-100 opacity-100' : 'scale-0 opacity-0')} />
           </div>
           <span className={cn('flex-1 truncate transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
-            {theme === 'dark' ? 'Giao diện tối' : 'Giao diện sáng'}
+            {sidebarMounted && theme === 'dark' ? 'Giao diện tối' : 'Giao diện sáng'}
           </span>
         </button>
 
@@ -198,17 +202,17 @@ export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
         {/* User Info */}
         <div
           className={cn(
-            'flex items-center gap-3 rounded-lg p-2 border border-slate-800/40 bg-slate-950/40 transition-all duration-200',
+            'flex items-center gap-3 rounded-lg p-2 border border-slate-800/40 bg-slate-950/30 transition-all duration-200',
             collapsed ? 'justify-center' : '',
           )}
         >
           {/* Avatar */}
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 text-sm font-bold ring-2 ring-emerald-100 dark:ring-emerald-900/40">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700 text-slate-200 text-sm font-bold ring-2 ring-slate-700">
             {userInitial}
           </div>
           <div className={cn('min-w-0 transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
-            <p className="text-xs font-semibold text-slate-200 truncate">{user?.username || 'Host'}</p>
-            <p className="text-[10px] text-slate-500 truncate">{user?.email || 'host@campo.vn'}</p>
+            <p className="text-xs font-bold text-white truncate">{user?.username || 'Host'}</p>
+            <p className="text-[10px] text-slate-400 truncate">{user?.email || 'host@campo.vn'}</p>
           </div>
         </div>
       </div>

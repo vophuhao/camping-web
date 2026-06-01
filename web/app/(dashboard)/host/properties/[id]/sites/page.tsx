@@ -233,16 +233,17 @@ export default function PropertySitesPage() {
 
   // Full site card for list view
   const renderFullSiteCard = (site: any) => {
-    const statusKey = (site.bookingSettings?.status ??
-      'available') as keyof typeof statusConfig;
+    const statusKey = (site.bookingSettings?.status ?? 'available') as keyof typeof statusConfig;
     const status = statusConfig[statusKey] || statusConfig.available;
+
+    const isPremiumType = ['glamping', 'cabin', 'yurt', 'treehouse'].includes(site.accommodationType);
+    const isHighPriced = (site.pricing?.basePrice ?? 0) >= 1000000;
+    const isVip = isPremiumType || isHighPriced;
 
     return (
       <Card
         key={site._id}
-        className={`overflow-hidden rounded-2xl transition-all duration-300 border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md ${selectedSite?._id === site._id
-          ? 'shadow-lg ring-2 ring-emerald-500 translate-y-0'
-          : 'shadow-sm hover:shadow-xl hover:-translate-y-1'
+        className={`group overflow-hidden rounded-2xl transition-all duration-300 border-stone-200/80 bg-white shadow-sm hover:shadow-md ${selectedSite?._id === site._id ? 'ring-2 ring-emerald-800 border-transparent shadow-md' : ''
           }`}
         onMouseEnter={() => setHoveredSite(site)}
         onMouseLeave={() => setHoveredSite(null)}
@@ -250,209 +251,149 @@ export default function PropertySitesPage() {
       >
         <div className="flex flex-col lg:flex-row">
           {/* Image */}
-          <div className="relative h-56 w-full flex-shrink-0 bg-gray-100 lg:h-auto lg:w-80">
+          <div className="relative h-56 w-full flex-shrink-0 bg-stone-100 lg:h-auto lg:w-80 overflow-hidden">
             <Image
               src={site.photos?.[0]?.url || '/placeholder.jpg'}
               alt={site.name}
               fill
-              className="object-cover"
+              className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
               unoptimized
             />
 
             {/* Badges on Image */}
             <div className="absolute left-3 top-3 flex flex-col gap-2">
-              <Badge variant="secondary" className="shadow-lg">
-                {siteTypeLabels[site.accommodationType] ??
-                  site.accommodationType ??
-                  'Site'}
-              </Badge>
-              {site.bookingSettings?.instantBook && (
-                <Badge className="bg-orange-600 shadow-lg">
-                  ⚡ Instant Book
+              {isVip ? (
+                <Badge className="bg-amber-50 border border-amber-300 text-amber-900 font-serif font-bold italic tracking-wide px-2.5 py-1 rounded-full shadow-sm">
+                  VIP
+                </Badge>
+              ) : (
+                <Badge className="bg-stone-100/90 border border-stone-200/50 text-stone-850 font-medium px-2.5 py-1 rounded-full shadow-sm backdrop-blur-sm">
+                  Thường
                 </Badge>
               )}
+
             </div>
 
-            <div className="absolute right-3 top-3">
-              <Badge className={`${status.color} border shadow-lg`}>
-                <div
-                  className={`mr-1.5 h-2 w-2 rounded-full ${status.dot}`}
-                />
-                {status.label}
-              </Badge>
-            </div>
+
 
             {site.photos && site.photos.length > 1 && (
-              <div className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-sm">
+              <div className="absolute bottom-3 right-3 rounded-full bg-stone-900/75 px-3 py-1.5 text-xs text-white backdrop-blur-sm font-medium">
                 +{site.photos.length - 1} ảnh
               </div>
             )}
           </div>
 
           {/* Content */}
-          <div className="flex flex-1 flex-col justify-between p-6">
+          <div className="flex flex-1 flex-col justify-between p-6 bg-white">
             <div>
-              {/* Title & Stats Row */}
-              <div className="mb-3 flex items-start justify-between gap-4">
+              {/* Title Row */}
+              <div className="mb-2 flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl md:text-2xl font-serif font-bold text-stone-900 leading-snug group-hover:text-emerald-850 transition-colors">
                     {site.name}
                   </h3>
-                  {/* {site.stats?.averageRating && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">
-                          {site.stats.averageRating.toFixed(1)}
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        ({site.stats.totalReviews || 0} đánh giá)
-                      </span>
-                    </div>
-                  )} */}
                 </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={e => {
-                        e.stopPropagation();
-                        router.push(
-                          `/host/properties/${propertyId}/sites/${site._id}`,
-                        );
-                      }}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Xem chi tiết
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={e => {
-                        e.stopPropagation();
-                        router.push(
-                          `/host/properties/${propertyId}/sites/${site._id}/edit`,
-                        );
-                      }}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Chỉnh sửa
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={e => {
-                        e.stopPropagation();
-                        setSiteToDelete({
-                          id: site._id,
-                          name: site.name,
-                        });
-                        setDeleteDialogOpen(true);
-                      }}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Xóa site
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
 
               {/* Description */}
-              <p className="mb-4 line-clamp-2 text-sm text-gray-600">
-                {site.description}
+              <p className="mb-5 line-clamp-2 text-sm text-stone-500 leading-relaxed">
+                {site.description || 'Chưa có mô tả chi tiết cho vị trí cắm trại này.'}
               </p>
 
-              {/* Capacity Grid */}
-              <div className="mb-4 grid grid-cols-4 gap-3">
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <Users className="mx-auto mb-1 h-4 w-4 text-gray-600" />
-                  <p className="text-xs text-gray-600">Khách</p>
-                  <p className="font-semibold text-gray-900">
-                    {site.capacity?.maxGuests || 0}
+              {/* Capacity Grid: rounded boxes of soft sand/emerald colors */}
+              <div className="mb-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-xl bg-stone-50/70 border border-stone-200/30 p-3 text-center">
+                  <Users className="mx-auto mb-1 h-4 w-4 text-emerald-700" />
+                  <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Khách tối đa</p>
+                  <p className="font-bold text-stone-800 mt-0.5">
+                    {site.capacity?.maxGuests || 0} người
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <Car className="mx-auto mb-1 h-4 w-4 text-gray-600" />
-                  <p className="text-xs text-gray-600">Xe</p>
-                  <p className="font-semibold text-gray-900">
-                    {site.capacity?.maxVehicles || 0}
+                <div className="rounded-xl bg-stone-50/70 border border-stone-200/30 p-3 text-center">
+                  <Car className="mx-auto mb-1 h-4 w-4 text-stone-600" />
+                  <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Xe tối đa</p>
+                  <p className="font-bold text-stone-800 mt-0.5">
+                    {site.capacity?.maxVehicles || 0} xe
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <Tent className="mx-auto mb-1 h-4 w-4 text-gray-600" />
-                  <p className="text-xs text-gray-600">Lều</p>
-                  <p className="font-semibold text-gray-900">
-                    {site.capacity?.maxTents ?? '-'}
+                <div className="rounded-xl bg-stone-50/70 border border-stone-200/30 p-3 text-center">
+                  <Tent className="mx-auto mb-1 h-4 w-4 text-stone-600" />
+                  <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Sức chứa lều</p>
+                  <p className="font-bold text-stone-800 mt-0.5">
+                    {site.capacity?.maxTents ?? '-'} lều
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <Calendar className="mx-auto mb-1 h-4 w-4 text-gray-600" />
-                  <p className="text-xs text-gray-600">Bookings</p>
-                  <p className="font-semibold text-gray-900">
-                    {site.stats?.totalBookings || 0}
+                <div className="rounded-xl bg-stone-50/70 border border-stone-200/30 p-3 text-center">
+                  <Calendar className="mx-auto mb-1 h-4 w-4 text-blue-600" />
+                  <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Bookings</p>
+                  <p className="font-bold text-stone-800 mt-0.5">
+                    {site.stats?.totalBookings || 0} lượt
                   </p>
                 </div>
               </div>
-
-              {/* Stats Row */}
-              {/* {site.stats && (
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="font-medium">
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                        notation: 'compact',
-                      }).format(site.stats.totalRevenue || 0)}
-                    </span>
-                  </div>
-                  <span>•</span>
-                  <span>
-                    {site.stats.upcomingBookings || 0} booking sắp tới
-                  </span>
-                </div>
-              )} */}
             </div>
 
-            <Separator className="my-4" />
+            <Separator className="my-2 bg-stone-100" />
 
-            {/* Footer */}
-            <div className="flex items-center justify-between">
+            {/* Footer with Price and Exposed Buttons */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3">
               <div>
-                <p className="text-sm text-gray-500">Giá/đêm</p>
-                <p className="text-2xl font-bold text-emerald-600">
+                <p className="text-xs text-stone-400 uppercase tracking-wider">Giá mỗi đêm</p>
+                <p className="text-2xl font-bold text-emerald-850 mt-0.5">
                   {new Intl.NumberFormat('vi-VN', {
                     style: 'currency',
                     currency: 'VND',
                   }).format(site.pricing?.basePrice || 0)}
+                  <span className="text-sm text-stone-500 font-sans ml-1">/ đêm</span>
                 </p>
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link
-                    href={`/host/properties/${propertyId}/sites/${site._id}`}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Chi tiết
-                  </Link>
+              {/* Direct buttons exposed side-by-side */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-stone-200 text-stone-700 hover:bg-stone-50 rounded-xl px-4 h-10 gap-1.5 text-xs font-medium"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/host/properties/${propertyId}/sites/${site._id}`);
+                  }}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Chi tiết
                 </Button>
 
-                <Button size="sm" asChild>
-                  <Link
-                    href={`/host/properties/${propertyId}/sites/${site._id}`}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Chỉnh sửa
-                  </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-stone-200 text-stone-700 hover:bg-stone-50 rounded-xl px-4 h-10 gap-1.5 text-xs font-medium bg-stone-50/30"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/host/properties/${propertyId}/sites/${site._id}/edit`);
+                  }}
+                >
+                  <Settings className="h-3.5 w-3.5 text-stone-500" />
+                  Chỉnh sửa
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-xl px-3 h-10 gap-1.5 text-xs font-medium"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSiteToDelete({
+                      id: site._id,
+                      name: site.name,
+                    });
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Xóa site
                 </Button>
               </div>
             </div>
@@ -464,16 +405,13 @@ export default function PropertySitesPage() {
 
   // Compact site card for map view
   const renderCompactSiteCard = (site: any) => {
-    const statusKey = (site.bookingSettings?.status ??
-      'available') as keyof typeof statusConfig;
+    const statusKey = (site.bookingSettings?.status ?? 'available') as keyof typeof statusConfig;
     const status = statusConfig[statusKey] || statusConfig.available;
 
     return (
       <Card
         key={site._id}
-        className={`group cursor-pointer overflow-hidden rounded-xl transition-all duration-300 border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md ${selectedSite?._id === site._id
-          ? 'shadow-md ring-2 ring-emerald-500 translate-y-0'
-          : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'
+        className={`group cursor-pointer overflow-hidden rounded-2xl transition-all duration-300 border-stone-200/80 bg-white ${selectedSite?._id === site._id ? 'ring-2 ring-emerald-800 border-transparent shadow-md' : 'shadow-sm'
           }`}
         onMouseEnter={() => setHoveredSite(site)}
         onMouseLeave={() => setHoveredSite(null)}
@@ -481,74 +419,60 @@ export default function PropertySitesPage() {
       >
         <div className="flex gap-3 p-3">
           {/* Compact Image */}
-          <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+          <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-xl bg-stone-100">
             <Image
               src={site.photos?.[0]?.url || '/placeholder.jpg'}
               alt={site.name}
               fill
-              className="object-cover transition-transform duration-200 group-hover:scale-105"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               unoptimized
             />
             {site.photos && site.photos.length > 1 && (
-              <div className="absolute bottom-1 right-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
+              <div className="absolute bottom-1 right-1 rounded-full bg-stone-900/75 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm font-medium">
                 +{site.photos.length - 1}
               </div>
             )}
           </div>
 
           {/* Compact Content */}
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <h4 className="truncate font-semibold text-gray-900">
+          <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+            <div className="min-w-0">
+              <div className="flex items-start justify-between gap-1.5">
+                <h4 className="truncate font-serif font-bold text-stone-900 group-hover:text-emerald-800 transition-colors text-sm">
                   {site.name}
                 </h4>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-600">
-                  <Badge variant="secondary" className="text-xs">
-                    {siteTypeLabels[site.accommodationType] ??
-                      site.accommodationType}
-                  </Badge>
-                  <Badge className={`${status.color} border text-xs`}>
-                    <div
-                      className={`mr-1 h-1.5 w-1.5 rounded-full ${status.dot}`}
-                    />
-                    {status.label}
-                  </Badge>
-                </div>
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
+                {/* Exposed quick small icon actions instead of vertical dots */}
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 rounded-lg text-stone-500 hover:text-stone-900"
+                    title="Chi tiết"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/host/properties/${propertyId}/sites/${site._id}`);
+                    }}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={e => {
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 rounded-lg text-stone-500 hover:text-stone-900"
+                    title="Chỉnh sửa"
+                    onClick={(e) => {
                       e.stopPropagation();
-                      router.push(
-                        `/host/properties/${propertyId}/sites/${site._id}`,
-                      );
+                      router.push(`/host/properties/${propertyId}/sites/${site._id}/edit`);
                     }}
                   >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Xem chi tiết
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={e => {
-                      e.stopPropagation();
-                      router.push(
-                        `/host/properties/${propertyId}/sites/${site._id}/edit`,
-                      );
-                    }}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Chỉnh sửa
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={e => {
+                    <Settings className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 rounded-lg text-rose-600 hover:bg-rose-50"
+                    title="Xóa site"
+                    onClick={(e) => {
                       e.stopPropagation();
                       setSiteToDelete({
                         id: site._id,
@@ -556,34 +480,36 @@ export default function PropertySitesPage() {
                       });
                       setDeleteDialogOpen(true);
                     }}
-                    className="text-red-600"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Xóa site
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                <Badge className="bg-stone-50 border border-stone-200/50 text-stone-600 text-[10px] px-1.5 py-0 rounded-full font-medium shadow-none">
+                  {siteTypeLabels[site.accommodationType] ?? site.accommodationType}
+                </Badge>
+                <Badge className={`${status.color} border text-[10px] px-1.5 py-0 rounded-full shadow-none`}>
+                  <div className={`mr-1 h-1 w-1 rounded-full ${status.dot}`} />
+                  {status.label}
+                </Badge>
+              </div>
             </div>
 
             {/* Compact Stats */}
-            <div className="mt-auto flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3 text-gray-600">
-                <span className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
+            <div className="mt-1.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-stone-500">
+                <span className="flex items-center gap-0.5">
+                  <Users className="h-3 w-3 text-emerald-700" />
                   {site.capacity?.maxGuests || 0}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Car className="h-3 w-3" />
+                <span className="flex items-center gap-0.5">
+                  <Car className="h-3 w-3 text-stone-400" />
                   {site.capacity?.maxVehicles || 0}
                 </span>
-                {site.stats?.averageRating && (
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    {site.stats.averageRating.toFixed(1)}
-                  </span>
-                )}
               </div>
-              <div className="font-semibold text-emerald-600">
+              <div className="font-serif font-bold text-emerald-800 text-sm">
                 {new Intl.NumberFormat('vi-VN', {
                   style: 'currency',
                   currency: 'VND',
@@ -599,101 +525,77 @@ export default function PropertySitesPage() {
 
   if (loading && sites === null) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center bg-[#FAF9F5]">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-          <p className="mt-4 text-gray-600">Đang tải...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#1B4332] border-t-transparent" />
+          <p className="mt-4 text-stone-600 font-serif font-medium">Đang tải...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900/50 pb-12">
+    <div className="min-h-screen text-stone-900 pb-12">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
+      <div className="sticky top-0 z-10  backdrop-blur-md border-b border-stone-200/80">
+        <div className="mx-auto max-w-7xl px-6 py-6 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
               <Link
                 href="/host/properties"
-                className="mb-4 inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                className="mb-3 inline-flex items-center text-sm font-medium text-stone-500 hover:text-stone-950 transition-colors"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Quay lại danh sách
+                <ArrowLeft className="mr-2 h-4 w-4 text-stone-400" />
+                Quay lại danh sách khu cắm trại
               </Link>
 
               {property && (
-                <>
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/30 p-2.5">
-                      <Home className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                      <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        {property.name}
-                      </h1>
-                      {/* <div className="mt-1.5 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                        <MapPin className="h-4 w-4" />
-                        <span>
-                          {property.location?.city}, {property.location?.state}
-                        </span>
-                        {property.stats?.averageRating && (
-                          <>
-                            <span>•</span>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="font-medium">
-                                {property.stats.averageRating.toFixed(1)}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div> */}
-                    </div>
+                <div className="flex items-center gap-3 mt-1">
+
+                  <div className="min-w-0">
+                    <h1 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 tracking-tight truncate">
+                      {property.name}
+                    </h1>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
             <Button
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-5 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+              className="bg-[#1B4332] hover:bg-[#122c21] text-white font-medium rounded-xl px-5 py-5 text-sm transition-all flex-shrink-0 gap-2"
               onClick={() =>
                 router.push(`/host/properties/${propertyId}/sites/new`)
               }
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4" />
               Thêm Site mới
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Stats Cards */}
-
-
+      <div className="mx-auto max-w-7xl px-6 py-8 sm:px-6 lg:px-8">
         {/* Filters */}
-        <Card className="mb-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
+        <Card className="mb-6 bg-white border-stone-200/80 rounded-2xl shadow-sm overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-1 gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <div className="flex flex-1 flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <Input
                     placeholder="Tìm kiếm theo tên site..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 border-stone-200 focus:ring-2 focus:ring-emerald-800/20 focus:border-[#1B4332] rounded-xl h-10 text-sm"
                   />
                 </div>
 
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <Tent className="mr-2 h-4 w-4" />
+                  <SelectTrigger className="w-[160px] border-stone-200 rounded-xl h-10 text-sm focus:ring-emerald-800/20">
+                    <Tent className="mr-2 h-4 w-4 text-stone-400" />
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="all">Tất cả loại</SelectItem>
                     <SelectItem value="tent">Tent Site</SelectItem>
                     <SelectItem value="rv">RV Site</SelectItem>
@@ -704,11 +606,11 @@ export default function PropertySitesPage() {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <Filter className="mr-2 h-4 w-4" />
+                  <SelectTrigger className="w-[160px] border-stone-200 rounded-xl h-10 text-sm focus:ring-emerald-800/20">
+                    <Filter className="mr-2 h-4 w-4 text-stone-400" />
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     <SelectItem value="available">Sẵn sàng</SelectItem>
                     <SelectItem value="unavailable">Không khả dụng</SelectItem>
@@ -718,14 +620,14 @@ export default function PropertySitesPage() {
               </div>
 
               {/* View Mode Toggle */}
-              <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-                <TabsList>
-                  <TabsTrigger value="list" className="gap-2">
-                    <Tent className="h-4 w-4" />
+              <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)} className="flex-shrink-0">
+                <TabsList className="bg-stone-100 rounded-xl p-1">
+                  <TabsTrigger value="list" className="gap-2 rounded-lg text-xs font-semibold text-stone-600 data-[state=active]:bg-white data-[state=active]:text-stone-900">
+                    <Tent className="h-3.5 w-3.5" />
                     Danh sách
                   </TabsTrigger>
-                  <TabsTrigger value="map" className="gap-2">
-                    <MapIcon className="h-4 w-4" />
+                  <TabsTrigger value="map" className="gap-2 rounded-lg text-xs font-semibold text-stone-600 data-[state=active]:bg-white data-[state=active]:text-stone-900">
+                    <MapIcon className="h-3.5 w-3.5" />
                     Bản đồ
                   </TabsTrigger>
                 </TabsList>
@@ -738,61 +640,53 @@ export default function PropertySitesPage() {
         {viewMode === 'list' ? (
           // List View - Full cards
           filteredSites && filteredSites.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {filteredSites.map(site => renderFullSiteCard(site))}
             </div>
           ) : (
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
-              <CardContent className="py-16 text-center">
-                <Tent className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                  {searchQuery ||
-                    statusFilter !== 'all' ||
-                    typeFilter !== 'all'
+            <Card className="bg-white border-stone-200/80 rounded-2xl shadow-sm px-6 py-16 text-center">
+              <CardContent className="py-6 flex flex-col items-center">
+                <div className="w-16 h-16 bg-stone-50 border border-stone-100 rounded-full flex items-center justify-center mb-4">
+                  <Tent className="h-8 w-8 text-stone-400" />
+                </div>
+                <h3 className="mb-1 text-lg font-serif font-bold text-stone-900">
+                  {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
                     ? 'Không tìm thấy site nào'
                     : 'Chưa có site nào'}
                 </h3>
-                <p className="mb-6 text-sm text-gray-600">
-                  {searchQuery ||
-                    statusFilter !== 'all' ||
-                    typeFilter !== 'all'
-                    ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
-                    : 'Bắt đầu bằng cách tạo site đầu tiên cho property này'}
+                <p className="mb-6 text-sm text-stone-500 max-w-sm">
+                  {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
+                    ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm để xem các kết quả khác.'
+                    : 'Bắt đầu bằng cách tạo site đầu tiên cho property này để khách hàng có thể đặt chỗ.'}
                 </p>
-                {!searchQuery &&
-                  statusFilter === 'all' &&
-                  typeFilter === 'all' && (
-                    <Button
-                      className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl px-5 shadow-md shadow-emerald-500/20 dark:shadow-none hover:shadow-lg hover:shadow-emerald-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
-                      onClick={() =>
-                        router.push(`/host/properties/${propertyId}/sites/new`)
-                      }
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Tạo Site mới
-                    </Button>
-                  )}
+                {!searchQuery && statusFilter === 'all' && typeFilter === 'all' && (
+                  <Button
+                    className="bg-[#1B4332] hover:bg-[#122c21] text-white font-medium rounded-xl px-5 py-5 text-sm transition-all"
+                    onClick={() =>
+                      router.push(`/host/properties/${propertyId}/sites/new`)
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tạo Site mới
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )
         ) : (
           // Map View - Split layout with compact cards
-          <div className="flex min-h-0 gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Sites List - Scrollable with compact cards */}
-            <div className="w-2/5 min-w-0">
-              <div className="h-[calc(100vh-400px)] min-h-[600px] space-y-3 overflow-y-auto pr-4">
+            <div className="w-full lg:w-2/5 min-w-0 flex flex-col">
+              <div className="h-[calc(100vh-280px)] min-h-[500px] lg:h-[650px] space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-stone-200">
                 {filteredSites && filteredSites.length > 0 ? (
                   filteredSites.map(site => renderCompactSiteCard(site))
                 ) : (
-                  <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
-                    <CardContent className="py-16 text-center">
-                      <Tent className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-                      <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                        Không tìm thấy site nào
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
-                      </p>
+                  <Card className="bg-white border-stone-200/80 rounded-2xl shadow-sm py-12 px-4 text-center">
+                    <CardContent className="py-6 flex flex-col items-center">
+                      <Tent className="mb-3 h-8 w-8 text-stone-400" />
+                      <h4 className="font-bold text-stone-850 text-sm">Không tìm thấy site nào</h4>
+                      <p className="text-xs text-stone-500 mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
                     </CardContent>
                   </Card>
                 )}
@@ -800,8 +694,8 @@ export default function PropertySitesPage() {
             </div>
 
             {/* Map - Fixed */}
-            <div className="w-3/5 min-w-0">
-              <div className="sticky top-24 h-[calc(100vh-400px)] min-h-[600px] overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
+            <div className="w-full lg:w-3/5 min-w-0">
+              <div className="sticky top-28 h-[400px] lg:h-[650px] overflow-hidden rounded-2xl border border-stone-200 shadow-sm bg-stone-100">
                 {property && filteredSites && (
                   <SiteMap
                     sites={filteredSites}
@@ -819,23 +713,22 @@ export default function PropertySitesPage() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-stone-200">
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa site</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="font-serif text-xl font-bold">Xác nhận xóa site</AlertDialogTitle>
+            <AlertDialogDescription className="text-stone-500 text-sm">
               Bạn có chắc chắn muốn xóa site{' '}
-              <span className="font-semibold">
+              <span className="font-semibold text-stone-850">
                 &quot;{siteToDelete?.name}&quot;
               </span>
-              ? Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu liên
-              quan (bookings, reviews, ...).
+              ? Hành động này không thể hoàn tác và sẽ xóa tất cả các dữ liệu liên quan (bookings, lịch sử, ...).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-stone-200">Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteSite}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
             >
               Xóa site
             </AlertDialogAction>

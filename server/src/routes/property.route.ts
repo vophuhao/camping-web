@@ -37,6 +37,36 @@ propertyRoutes.get("/:propertyId/reviews/stats", reviewController.getPropertyRev
 // Property stats (must be before /:idOrSlug)
 propertyRoutes.get("/:id/stats", authenticate, propertyController.getPropertyStats);
 
+// Superhost status (public — used by host dashboard and property detail page)
+propertyRoutes.get("/:id/superhost-status", authenticate, async (req, res) => {
+  try {
+    const { SuperhostService } = await import("@/services/superhost.service");
+    const property = await (await import("@/models")).PropertyModel.findOne({
+      $or: [{ _id: req.params.id }, { slug: req.params.id }],
+    }).select("host isSuperhost superhostSince superhostEvaluatedAt");
+
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    const superhostService = new SuperhostService();
+    const status = await superhostService.getSuperhostStatus(property.host.toString());
+
+    return res.json({
+      success: true,
+      data: {
+        isSuperhost: property.isSuperhost,
+        superhostSince: property.superhostSince,
+        superhostEvaluatedAt: property.superhostEvaluatedAt,
+        criteria: status.criteria,
+        isEligible: status.isEligible,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Property with sites (must be before /:idOrSlug)
 propertyRoutes.get("/:idOrSlug/with-sites", propertyController.getPropertyWithSites);
 

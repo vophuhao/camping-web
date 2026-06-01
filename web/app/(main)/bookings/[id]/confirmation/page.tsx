@@ -608,7 +608,7 @@ export default function ConfirmationPage() {
               {booking.status === 'confirmed' &&
                 booking.paymentStatus === 'paid' &&
                 !booking.cannotAttendRequest &&
-                !booking.dissatisfactionRequest && (
+                !booking.dissatisfactionRequest?.requestedAt && (
                   <Button
                     variant="outline"
                     className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50"
@@ -622,7 +622,7 @@ export default function ConfirmationPage() {
               {/* Nút Không hài lòng - chỉ hiển thị trong 12h sau check-in */}
               {booking.status === 'confirmed' &&
                 booking.paymentStatus === 'paid' &&
-                !booking.dissatisfactionRequest &&
+                !booking.dissatisfactionRequest?.requestedAt &&
                 (() => {
                   const now = new Date();
                   const checkIn = new Date(booking.checkIn);
@@ -634,9 +634,26 @@ export default function ConfirmationPage() {
                     onClick={() => setIsDissatisfactionOpen(true)}
                   >
                     <AlertCircle className="mr-2 h-4 w-4" />
-                    Không hài lòng (hoàn 100%)
+                    Không hài lòng
                   </Button>
                 )}
+
+              {/* Debug info để kiểm tra trên web */}
+              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 space-y-1">
+                <p className="font-semibold text-slate-900">🔍 Thông tin kiểm tra nút Không hài lòng:</p>
+                <p>• Trạng thái booking: <span className="font-mono bg-white px-1 py-0.5 rounded border">{booking.status}</span> (Yêu cầu: confirmed)</p>
+                <p>• Thanh toán: <span className="font-mono bg-white px-1 py-0.5 rounded border">{booking.paymentStatus}</span> (Yêu cầu: paid)</p>
+                <p>• Đã gửi yêu cầu KHL chưa: <span className="font-mono bg-white px-1 py-0.5 rounded border">{booking.dissatisfactionRequest?.requestedAt ? 'Đã gửi' : 'Chưa gửi'}</span> (Yêu cầu: Chưa gửi)</p>
+                <p>• Thời gian hiện tại (Server/Client): <span className="font-mono bg-white px-1 py-0.5 rounded border">{new Date().toLocaleString('vi-VN')}</span></p>
+                <p>• Thời gian Check-in: <span className="font-mono bg-white px-1 py-0.5 rounded border">{new Date(booking.checkIn).toLocaleString('vi-VN')}</span></p>
+                <p>• Hạn chót 12h sau Check-in: <span className="font-mono bg-white px-1 py-0.5 rounded border">{new Date(new Date(booking.checkIn).getTime() + 12 * 60 * 60 * 1000).toLocaleString('vi-VN')}</span></p>
+                <p>• Đang trong khung 12h: <span className="font-mono bg-white px-1 py-0.5 rounded border">{(() => {
+                  const now = new Date();
+                  const checkIn = new Date(booking.checkIn);
+                  const limit = new Date(checkIn.getTime() + 12 * 60 * 60 * 1000);
+                  return (now >= checkIn && now <= limit) ? 'ĐÚNG' : 'SAI';
+                })()}</span></p>
+              </div>
 
               {/* Trạng thái đang chờ xét duyệt hoàn tiền */}
               {booking.dissatisfactionRequest?.status === 'pending' && (
@@ -647,8 +664,8 @@ export default function ConfirmationPage() {
 
               {/* Show Complete Trip button for confirmed bookings after checkout */}
               {booking.status === 'confirmed' && booking.paymentStatus === "paid" &&
-                new Date(booking.checkOut) < new Date() &&
-                !booking.reviewed && (
+                (new Date(booking.checkIn) <= new Date() && new Date() <= new Date(new Date(booking.checkOut).getTime() + 3 * 24 * 60 * 60 * 1000)) &&
+                (
                   <Button
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                     onClick={() => completeMutation.mutate()}
@@ -667,7 +684,6 @@ export default function ConfirmationPage() {
                     )}
                   </Button>
                 )}
-
               {/* Show Review button for completed bookings without review */}
               {booking.status === 'completed' && !booking.reviewed && (
                 <Button
@@ -894,10 +910,10 @@ export default function ConfirmationPage() {
                 </p>
                 <p
                   className={`text-xs ${cancellationReason.length < 10
-                      ? 'text-red-600'
-                      : cancellationReason.length > 450
-                        ? 'text-orange-600'
-                        : 'text-muted-foreground'
+                    ? 'text-red-600'
+                    : cancellationReason.length > 450
+                      ? 'text-orange-600'
+                      : 'text-muted-foreground'
                     }`}
                 >
                   {cancellationReason.length}/500
@@ -1131,7 +1147,7 @@ export default function ConfirmationPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[640px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="h-5 w-5" />
+              {/* <AlertCircle className="h-5 w-5" /> */}
               Yêu cầu hoàn tiền - Không hài lòng
             </DialogTitle>
             <DialogDescription className="text-left">
@@ -1143,14 +1159,14 @@ export default function ConfirmationPage() {
           <div className="space-y-4 py-2">
             {/* Lý do */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">
+              <label className="text-sm font-medium ">
                 Lý do không hài lòng <span className="text-red-500">*</span>
               </label>
               <Textarea
                 placeholder="Mô tả chi tiết vấn đề: cơ sở vật chất không đúng mô tả, hình ảnh sai thực tế... (tối thiểu 10 ký tự)"
                 value={dissatisfactionForm.reason}
                 onChange={e => setDissatisfactionForm(f => ({ ...f, reason: e.target.value }))}
-                className="min-h-[100px] resize-none"
+                className="mt-3 min-h-[100px] resize-none"
                 maxLength={2000}
               />
               <p className="text-xs text-gray-500">{dissatisfactionForm.reason.length}/2000</p>
@@ -1240,9 +1256,8 @@ export default function ConfirmationPage() {
                   setDissatisfactionImages(prev => [...prev, ...files].slice(0, 20));
                 }}
               />
-              <p className={`text-xs ${
-                dissatisfactionImages.length < 5 ? 'text-red-600' : 'text-green-600'
-              }`}>
+              <p className={`text-xs ${dissatisfactionImages.length < 5 ? 'text-red-600' : 'text-green-600'
+                }`}>
                 {dissatisfactionImages.length} ảnh đã chọn{dissatisfactionImages.length < 5 && ` (cần thêm ${5 - dissatisfactionImages.length} ảnh)`}
               </p>
               {dissatisfactionImages.length > 0 && (
@@ -1271,7 +1286,7 @@ export default function ConfirmationPage() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 border-t pt-4">
+          <DialogFooter className="gap-2  pt-4">
             <Button
               variant="outline"
               onClick={() => setIsDissatisfactionOpen(false)}

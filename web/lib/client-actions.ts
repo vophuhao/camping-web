@@ -187,8 +187,8 @@ export async function getAllAmenities(): Promise<ApiResponse<Amenity[]>> {
 //   return apiClient.get('/activities');
 // }
 
-export async function getMyBookings(): Promise<ApiResponse<Booking[]>> {
-  return apiClient.get('/bookings/my/list');
+export async function getMyBookings(params?: { page?: number; limit?: number }): Promise<ApiResponse<Booking[]>> {
+  return apiClient.get('/bookings/my/list', { params });
 }
 
 // ================== AVAILABILITY API ==================

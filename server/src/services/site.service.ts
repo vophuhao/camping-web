@@ -508,6 +508,7 @@ export class SiteService {
     );
 
     const basePrice = site!.pricing.basePrice;
+    const weekendPrice = site!.pricing.weekendPrice;
     let subtotal = 0;
 
     // Calculate nightly rates (can be weekend/seasonal pricing)
@@ -518,22 +519,35 @@ export class SiteService {
       const dayOfWeek = currentDate.getDay();
       const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
 
-      // Check seasonal pricing
       let nightPrice = basePrice;
-      if (site!.pricing.seasonalPricing) {
-        const seasonalRate = site!.pricing.seasonalPricing.find((season) => {
+      let isSeasonal = false;
+
+      // Seasonal price has highest priority
+      if (site!.pricing.seasonalPricing && site!.pricing.seasonalPricing.length > 0) {
+        const seasonalRate = site!.pricing.seasonalPricing.find((season: any) => {
           const seasonStart = new Date(season.startDate);
           const seasonEnd = new Date(season.endDate);
-          return currentDate >= seasonStart && currentDate <= seasonEnd;
+          
+          // Compare dates without time
+          const currentZero = new Date(currentDate);
+          currentZero.setHours(0, 0, 0, 0);
+          const startZero = new Date(seasonStart);
+          startZero.setHours(0, 0, 0, 0);
+          const endZero = new Date(seasonEnd);
+          endZero.setHours(0, 0, 0, 0);
+
+          return currentZero >= startZero && currentZero <= endZero;
         });
+
         if (seasonalRate) {
           nightPrice = seasonalRate.price;
+          isSeasonal = true;
         }
       }
 
-      // Apply weekend pricing if applicable
-      if (isWeekend && site!.pricing.weekendPrice) {
-        nightPrice = site!.pricing.weekendPrice;
+      // Weekend price applied if not overridden by seasonal price
+      if (!isSeasonal && isWeekend && weekendPrice !== null && weekendPrice > 0) {
+        nightPrice = weekendPrice;
       }
 
       subtotal += nightPrice;
@@ -669,6 +683,152 @@ export class SiteService {
         total,
         pages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  /**
+   * Block multiple dates for a site
+   */
+  async blockSiteDates(siteId: string, hostId: string, dates: string[], reason?: string): Promise<void> {
+    const site = await SiteModel.findById(siteId).populate("property");
+    appAssert(site, ErrorFactory.resourceNotFound("Site"));
+    const property = site.property as any;
+    appAssert(
+      property.host.toString() === hostId,
+      ErrorFactory.forbidden("Bạn không có quyền chỉnh sửa site này")
+    );
+
+    // Create bulk operations to write to AvailabilityModel
+    const ops = dates.map((dateStr) => {
+      const date = new Date(dateStr);
+      // set to midnight UTC for clean matching
+      date.setUTCHours(0, 0, 0, 0);
+
+      return {
+        updateOne: {
+          filter: { site: siteId, date },
+          update: {
+            $set: {
+              isAvailable: false,
+              blockType: "blocked",
+              reason: reason || "Manual block",
+            },
+          },
+          upsert: true,
+        },
+      };
+    });
+
+    if (ops.length > 0) {
+      await AvailabilityModel.bulkWrite(ops);
+    }
+  }
+
+  /**
+   * Unblock multiple dates for a site
+   */
+  async unblockSiteDates(siteId: string, hostId: string, dates: string[]): Promise<void> {
+    const site = await SiteModel.findById(siteId).populate("property");
+    appAssert(site, ErrorFactory.resourceNotFound("Site"));
+    const property = site.property as any;
+    appAssert(
+      property.host.toString() === hostId,
+      ErrorFactory.forbidden("Bạn không có quyền chỉnh sửa site này")
+    );
+
+    const dateObjects = dates.map((d) => {
+      const date = new Date(d);
+      date.setUTCHours(0, 0, 0, 0);
+      return date;
+    });
+
+    // Delete or update Availability records to be isAvailable = true
+    await AvailabilityModel.deleteMany({
+      site: siteId,
+      date: { $in: dateObjects },
+      blockType: { $ne: "booked" }, // Do not delete actual guest bookings!
+    });
+  }
+
+  /**
+   * Update seasonal pricing for a site
+   */
+  async updateSeasonalPricing(
+    siteId: string,
+    hostId: string,
+    seasonalPricing: Array<{ name: string; startDate: string; endDate: string; price: number }>
+  ): Promise<SiteDocument> {
+    const site = await SiteModel.findById(siteId).populate("property");
+    appAssert(site, ErrorFactory.resourceNotFound("Site"));
+    const property = site.property as any;
+    appAssert(
+      property.host.toString() === hostId,
+      ErrorFactory.forbidden("Bạn không có quyền chỉnh sửa site này")
+    );
+
+    // Validate date formatting and map
+    const formattedSeasonalPricing = seasonalPricing.map((item) => ({
+      name: item.name,
+      startDate: new Date(item.startDate),
+      endDate: new Date(item.endDate),
+      price: item.price,
+    }));
+
+    site.pricing.seasonalPricing = formattedSeasonalPricing as any;
+    await site.save();
+    return site;
+  }
+
+  /**
+   * Get availability status of all dates in a month (blocked/booked/available)
+   */
+  async getAvailabilityCalendar(siteId: string, hostId: string, monthStr: string) {
+    const site = await SiteModel.findById(siteId).populate("property");
+    appAssert(site, ErrorFactory.resourceNotFound("Site"));
+    const property = site.property as any;
+    appAssert(
+      property.host.toString() === hostId,
+      ErrorFactory.forbidden("Bạn không có quyền xem thông tin site này")
+    );
+
+    // Parse month date range
+    const [year, month] = monthStr.split("-").map(Number); // e.g. "2026-06"
+    const startDate = new Date(Date.UTC(year, month - 1, 1));
+    const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+    // Get bookings
+    const bookings = await BookingModel.find({
+      site: siteId,
+      status: { $in: ["pending", "confirmed", "completed"] },
+      checkIn: { $lte: endDate },
+      checkOut: { $gte: startDate },
+    }).populate("guest", "username email");
+
+    // Get manual availability blocks
+    const blocks = await AvailabilityModel.find({
+      site: siteId,
+      date: { $gte: startDate, $lte: endDate },
+    }).lean();
+
+    return {
+      siteId,
+      startDate,
+      endDate,
+      bookings: bookings.map((b) => ({
+        id: b._id,
+        checkIn: b.checkIn,
+        checkOut: b.checkOut,
+        status: b.status,
+        guestName: (b.guest as any)?.username || "Guest",
+        totalPrice: b.totalPrice,
+      })),
+      blocks: blocks.map((bl) => ({
+        date: bl.date,
+        isAvailable: bl.isAvailable,
+        blockType: bl.blockType,
+        reason: bl.reason,
+        price: bl.price,
+      })),
     };
   }
 }

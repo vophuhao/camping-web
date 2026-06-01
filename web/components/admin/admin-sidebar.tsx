@@ -105,12 +105,12 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       {/* Logo + Toggle */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800/50">
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-900/40">
-            <Tent className="h-4.5 w-4.5 text-white" />
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
+            <Home className="h-4.5 w-4.5 text-sky-400" />
           </div>
           {!collapsed && (
-            <span className="text-md font-extrabold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent tracking-wide truncate">
-              Campo Admin
+            <span className="text-sm font-bold text-white tracking-wide truncate">
+              HDCamping
             </span>
           )}
         </div>
@@ -137,16 +137,16 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           const isSubmenuActive = hasSubmenu && item.subMenu!.some(sub => pathname.startsWith(sub.href));
 
           const finalClasses = cn(
-            'group relative flex items-center gap-3 px-3.5 py-3 rounded-lg text-sm font-medium transition-all duration-150 w-full justify-between cursor-pointer',
+            'group relative flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 w-full justify-between cursor-pointer',
             isActive || isSubmenuActive
-              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-950/40'
-              : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+              ? 'bg-sky-500/15 text-sky-300'
+              : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-100'
           );
 
           const mainContent = (
             <div className="flex items-center gap-3 w-full min-w-0">
               <div className="relative flex-shrink-0">
-                <Icon className={cn("h-4.5 w-4.5 transition-colors", (isActive || isSubmenuActive) ? "text-white" : "group-hover:text-slate-200")} />
+                <Icon className={cn("h-4.5 w-4.5 transition-colors", (isActive || isSubmenuActive) ? "text-sky-400" : "text-slate-500 group-hover:text-slate-200")} />
                 {item.name === 'Thông báo' && unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -170,7 +170,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
 
           // Active indicator pill on left edge
           const activeIndicator = (isActive || isSubmenuActive) && (
-            <div className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-indigo-300" />
+            <div className="absolute left-0 top-1/2 h-7 w-0.5 -translate-y-1/2 rounded-r bg-sky-400" />
           );
 
           if (hasSubmenu) {
@@ -198,8 +198,8 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
                           className={cn(
                             'px-3 py-1.5 rounded-md text-xs font-medium transition-colors truncate',
                             subActive
-                              ? 'text-indigo-400 bg-indigo-950/30'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
+                              ? 'text-sky-400 bg-sky-500/10'
+                              : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/30'
                           )}
                         >
                           {sub.name}
@@ -286,7 +286,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           )}
         >
           {/* Avatar */}
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 text-sm font-bold ring-2 ring-indigo-100 dark:ring-indigo-900/40">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700 text-slate-200 text-sm font-bold ring-2 ring-slate-700">
             {userInitial}
           </div>
           <div className={cn('min-w-0 transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>

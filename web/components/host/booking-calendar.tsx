@@ -5,6 +5,13 @@ import { cn } from '@/lib/utils';
 import type { Booking } from '@/types/property-site';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface BookingCalendarProps {
   bookings: Booking[];
@@ -33,6 +40,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function BookingCalendar({ bookings, onBookingClick }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
 
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
@@ -159,6 +167,11 @@ export function BookingCalendar({ bookings, onBookingClick }: BookingCalendarPro
                   day.isToday && 'bg-emerald-50/60 dark:bg-emerald-950/30',
                   hasBookings && 'cursor-pointer hover:bg-accent/50',
                 )}
+                onClick={() => {
+                  if (hasBookings) {
+                    setSelectedDay(day);
+                  }
+                }}
               >
                 {/* Day number */}
                 <div className={cn(
@@ -179,7 +192,10 @@ export function BookingCalendar({ bookings, onBookingClick }: BookingCalendarPro
                     return (
                       <button
                         key={booking._id}
-                        onClick={() => onBookingClick(booking)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onBookingClick(booking);
+                        }}
                         className="w-full text-left group"
                       >
                         <div className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium group-hover:opacity-80 transition-opacity', colors.bg, colors.text)}>
@@ -190,10 +206,17 @@ export function BookingCalendar({ bookings, onBookingClick }: BookingCalendarPro
                     );
                   })}
                   {day.bookings.length > 2 && (
-                    <div className="text-center">
-                      <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded px-1">
+                    <div className="text-center mt-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDay(day);
+                        }}
+                        className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-250/30 rounded px-1.5 py-0.5 transition-all shadow-sm"
+                      >
                         +{day.bookings.length - 2} thêm
-                      </span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -213,6 +236,57 @@ export function BookingCalendar({ bookings, onBookingClick }: BookingCalendarPro
           </div>
         ))}
       </div>
+
+      {/* Daily bookings popup dialog */}
+      <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl border-stone-200">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-lg font-bold text-stone-900">
+              Đặt chỗ ngày {selectedDay?.date.toLocaleDateString('vi-VN')}
+            </DialogTitle>
+            <DialogDescription className="text-stone-500 text-xs">
+              Có {selectedDay?.bookings.length} lượt đặt chỗ trong ngày này
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
+            {selectedDay?.bookings.map((booking) => {
+              const colors = STATUS_COLORS[booking.status] || STATUS_COLORS.pending;
+              const label = STATUS_LABELS[booking.status] || 'Chờ xác nhận';
+              const guest = typeof booking.guest === 'object' ? booking.guest : null;
+              const site = typeof booking.site === 'object' ? booking.site : null;
+              
+              return (
+                <div
+                  key={booking._id}
+                  onClick={() => {
+                    onBookingClick(booking);
+                    setSelectedDay(null);
+                  }}
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-stone-200 hover:border-stone-300 bg-stone-50/50 hover:bg-stone-50 cursor-pointer transition-all duration-200 group"
+                >
+                  <div className="min-w-0 flex-1 pr-3">
+                    <p className="font-semibold text-sm text-stone-950 truncate group-hover:text-emerald-800 transition-colors">
+                      {(guest as any)?.name || (booking as any).fullnameGuest || '—'}
+                    </p>
+                    <p className="text-xs text-stone-500 truncate mt-0.5">
+                      {site?.name || 'Vị trí cắm trại'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white', colors.bg)}>
+                      <span className={cn('h-1.5 w-1.5 rounded-full', colors.dot)} />
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-stone-400">
+                      {new Date(booking.checkIn).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} - {new Date(booking.checkOut).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

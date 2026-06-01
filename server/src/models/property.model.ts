@@ -103,6 +103,11 @@ export interface PropertyDocument extends mongoose.Document {
   isVerified: boolean;
   verifiedAt?: Date;
 
+  // Superhost
+  isSuperhost: boolean;
+  superhostSince?: Date;
+  superhostEvaluatedAt?: Date;
+
   // Settings
   settings: {
     instantBookEnabled: boolean; // Apply to all sites
@@ -256,6 +261,11 @@ const propertySchema = new mongoose.Schema<PropertyDocument>(
     featuredUntil: { type: Date },
     isVerified: { type: Boolean, default: false },
     verifiedAt: { type: Date },
+
+    // Superhost
+    isSuperhost: { type: Boolean, default: false, index: true },
+    superhostSince: { type: Date },
+    superhostEvaluatedAt: { type: Date },
 
     // Settings
     settings: {

@@ -12,7 +12,9 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Trophy,
 } from 'lucide-react';
+import { SuperhostWidget } from '@/components/host/SuperhostWidget';
 import {
   Select,
   SelectContent,
@@ -328,6 +330,9 @@ export default function HostDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Superhost Progress Widget */}
+      <SuperhostWidget stats={stats} />
 
       {/* Donut Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">

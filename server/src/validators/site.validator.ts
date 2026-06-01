@@ -180,6 +180,7 @@ export const createSiteSchema = z.object({
   isActive: z.boolean().default(true),
   isAvailableForBooking: z.boolean().default(true),
   unavailableReason: z.string().max(500).optional(),
+  siteClass: z.enum(["basic", "vip"]).default("basic").optional(),
 });
 
 

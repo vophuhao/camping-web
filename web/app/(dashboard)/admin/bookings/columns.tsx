@@ -78,7 +78,7 @@ export const columns: ColumnDef<TourBooking>[] = [
     accessorKey: 'customers',
     header: 'Khách',
     cell: ({ row }) => {
-      const raw = row.original.customers ?? [];
+      const raw = (row.original.customers ?? []) as any;
 
       // normalize to array: already array | { groups: [...] } | single customer object
       const customers = Array.isArray(raw)

@@ -132,8 +132,10 @@ export default class BookingController {
 
   getMyBookings = catchErrors(async (req, res) => {
     const userId = mongoIdSchema.parse(req.userId);
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
 
-    const { data, pagination } = await this.bookingService.getMyBookings(userId);
+    const { data, pagination } = await this.bookingService.getMyBookings(userId, page, limit);
     return ResponseUtil.paginated(
       res,
       data,
@@ -224,7 +226,7 @@ export default class BookingController {
 
   // Admin xem tất cả booking
   getAdminBookings = catchErrors(async (req, res) => {
-    const { status, paymentStatus, hostId, search, startDate, endDate, page, limit } = req.query;
+    const { status, paymentStatus, hostId, search, startDate, endDate, page, limit, cannotAttendStatus } = req.query;
     const result = await this.bookingService.getAdminBookings({
       status: status as string,
       paymentStatus: paymentStatus as string,
@@ -232,6 +234,7 @@ export default class BookingController {
       search: search as string,
       startDate: startDate as string,
       endDate: endDate as string,
+      cannotAttendStatus: cannotAttendStatus as string,
       page: parseInt(page as string) || 1,
       limit: parseInt(limit as string) || 20,
     });
@@ -242,6 +245,7 @@ export default class BookingController {
       "Lấy danh sách booking thành công"
     );
   });
+
 
   // Admin thống kê
   getAdminBookingStats = catchErrors(async (_req, res) => {
@@ -257,6 +261,25 @@ export default class BookingController {
 
     const booking = await this.bookingService.adminCancelBooking(id || "", adminId, reason);
     return ResponseUtil.success(res, booking, "Đã hủy booking");
+  });
+
+  // Admin xử lý yêu cầu khách không đến (cannot attend)
+  adminProcessCannotAttend = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const adminId = req.userId.toString();
+    const { approved, adminNote } = req.body;
+
+    const booking = await this.bookingService.adminProcessCannotAttend(
+      id || "",
+      adminId,
+      Boolean(approved),
+      adminNote
+    );
+    return ResponseUtil.success(
+      res,
+      booking,
+      approved ? "Đã xác nhận hoàn tiền, ví host đã được cộng 20%" : "Đã từ chối yêu cầu"
+    );
   });
 
   // Host xem booking của mình (read-only)

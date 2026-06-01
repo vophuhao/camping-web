@@ -137,6 +137,18 @@ cron.schedule("0 1 * * *", async () => {
   }
 });
 
+// Cron: Đánh giá và cập nhật trạng thái Superhost cho tất cả hosts (mỗi ngày lúc 3:00 AM)
+cron.schedule("0 3 * * *", async () => {
+  console.log("🏅 Running Superhost daily evaluation job...");
+  try {
+    const { SuperhostService } = await import("@/services/superhost.service");
+    const superhostService = new SuperhostService();
+    await superhostService.runDailyEvaluation();
+  } catch (err) {
+    console.error("❌ Superhost evaluation job failed:", err);
+  }
+});
+
 // ============================================================
 // Health check
 // ============================================================

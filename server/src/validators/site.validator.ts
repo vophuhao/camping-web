@@ -176,7 +176,7 @@ export const createSiteSchema = z.object({
   siteSpecificRules: z.array(z.string().max(500)).optional(),
 
   // Status
-  status: z.enum(["active", "inactive", "maintenance", "suspended"]).default("active"),
+  status: z.enum(["active", "inactive", "blocked"]).default("active"),
   isActive: z.boolean().default(true),
   isAvailableForBooking: z.boolean().default(true),
   unavailableReason: z.string().max(500).optional(),

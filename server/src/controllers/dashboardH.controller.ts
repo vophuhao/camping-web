@@ -64,8 +64,8 @@ export const getHostStats = catchErrors(async (req: Request, res: Response) => {
     total: properties.length,
     active: properties.filter((p) => p.status === "active").length,
     inactive: properties.filter((p) => p.status === "inactive").length,
-    pending_approval: properties.filter((p) => p.status === "pending_approval").length,
-    suspended: properties.filter((p) => p.status === "suspended").length,
+    pending_approval: 0,
+    suspended: properties.filter((p) => p.status === "blocked").length,
   };
 
   // Bookings stats

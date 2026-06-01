@@ -204,7 +204,7 @@ export default class PropertyController {
    * @route POST /api/properties/:id/block-dates
    */
   blockPropertyDates = catchErrors(async (req, res) => {
-    const { id } = req.params;
+    const id = mongoIdSchema.parse(req.params.id);
     const hostId = mongoIdSchema.parse(req.userId);
     const { startDate, endDate, reason } = req.body;
 
@@ -224,7 +224,7 @@ export default class PropertyController {
    * @route DELETE /api/properties/blocked-dates/:blockId
    */
   unblockPropertyDates = catchErrors(async (req, res) => {
-    const { blockId } = req.params;
+    const blockId = mongoIdSchema.parse(req.params.blockId);
     const hostId = mongoIdSchema.parse(req.userId);
 
     await this.propertyService.unblockPropertyDates(blockId, hostId);
@@ -237,10 +237,59 @@ export default class PropertyController {
    * @route GET /api/properties/:id/blocked-dates
    */
   getPropertyBlockedDates = catchErrors(async (req, res) => {
-    const { id } = req.params;
+    const id = mongoIdSchema.parse(req.params.id);
 
     const blockedDates = await this.propertyService.getPropertyBlockedDates(id);
 
     return ResponseUtil.success(res, blockedDates, "Lấy danh sách blocked dates thành công");
+  });
+
+  /**
+   * Admin lock property (set to suspended)
+   * @route POST /api/properties/:id/admin-lock
+   */
+  adminLockProperty = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const property = await this.propertyService.adminLockProperty(id || "", reason || "Vi phạm quy định");
+
+    return ResponseUtil.success(res, property, "Đã khóa property thành công");
+  });
+
+  /**
+   * Admin unlock property (set to active)
+   * @route POST /api/properties/:id/admin-unlock
+   */
+  adminUnlockProperty = catchErrors(async (req, res) => {
+    const { id } = req.params;
+
+    const property = await this.propertyService.adminUnlockProperty(id || "");
+
+    return ResponseUtil.success(res, property, "Đã mở khóa property thành công");
+  });
+
+  /**
+   * Admin approve property update (pending_approval → active)
+   * @route POST /api/properties/:id/admin-approve
+   */
+  adminApproveProperty = catchErrors(async (req, res) => {
+    const { id } = req.params;
+
+    const property = await this.propertyService.adminApproveProperty(id || "");
+
+    return ResponseUtil.success(res, property, "Đã duyệt và mở khóa property thành công");
+  });
+
+  /**
+   * Get host properties with sites (for admin)
+   * @route GET /api/properties/host/:hostId
+   */
+  getHostPropertiesWithSites = catchErrors(async (req, res) => {
+    const { hostId } = req.params;
+
+    const data = await this.propertyService.getHostPropertiesWithSites(hostId || "");
+
+    return ResponseUtil.success(res, data, "Lấy danh sách property của host thành công");
   });
 }

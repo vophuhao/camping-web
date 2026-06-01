@@ -33,7 +33,8 @@ export class PropertyService {
       ...input,
       slug,
       host: hostId,
-      isActive: false, // Start inactive until sites are added
+      isActive: true,
+      status: "active",
     });
 
     return property;
@@ -57,7 +58,7 @@ export class PropertyService {
       property._id,
       { $inc: { "stats.viewCount": 1 } },
       { timestamps: false } // Không cập nhật updatedAt khi chỉ đếm view
-    ).exec().catch(() => {}); // Fire-and-forget
+    ).exec().catch(() => { }); // Fire-and-forget
 
     return property!;
   }
@@ -94,24 +95,132 @@ export class PropertyService {
   ): Promise<PropertyDocument> {
     const property = await PropertyModel.findById(propertyId);
     appAssert(property, ErrorFactory.resourceNotFound("Property"));
-    console.log(input);
+
     // Check ownership unless admin
     if (!isAdmin) {
       appAssert(
         property!.host.toString() === hostId,
         ErrorFactory.forbidden("Bạn không có quyền chỉnh sửa property này")
       );
+
+      if (property!.status === "blocked") {
+        input.status = "blocked";
+        input.isActive = false;
+      } else if (input.isActive !== undefined) {
+        input.status = input.isActive ? "active" : "inactive";
+      }
+    } else {
+      if (input.isActive !== undefined && input.status === undefined) {
+        input.status = input.isActive ? "active" : "inactive";
+      }
     }
 
     // Update slug if name changed
     if (input.name && input.name !== property!.name) {
-      input.slug = this.generateSlug(input.name);
+      (input as any).slug = this.generateSlug(input.name);
     }
 
     Object.assign(property, input);
     await property!.save();
 
     return property;
+  }
+
+  /**
+   * Admin lock property (blocked)
+   */
+  async adminLockProperty(propertyId: string, reason: string): Promise<PropertyDocument> {
+    const property = await PropertyModel.findById(propertyId);
+    appAssert(property, ErrorFactory.resourceNotFound("Property"));
+
+    property.status = "blocked";
+    property.isActive = false;
+    await property.save();
+
+    // Notify host
+    try {
+      const NotificationServiceClass = (await import("@/services/notification.service")).default;
+      const notificationService = new NotificationServiceClass();
+      const hostId = property.host.toString();
+      await notificationService.createPropertyLockedForHost(hostId, propertyId, property.name, reason);
+    } catch (err) {
+      console.error("Failed to notify host about property lock:", err);
+    }
+
+    return property;
+  }
+
+  /**
+   * Admin unlock property (active)
+   */
+  async adminUnlockProperty(propertyId: string): Promise<PropertyDocument> {
+    const property = await PropertyModel.findById(propertyId);
+    appAssert(property, ErrorFactory.resourceNotFound("Property"));
+
+    property.status = "active";
+    property.isActive = true;
+    await property.save();
+
+    // Notify host
+    try {
+      const NotificationServiceClass = (await import("@/services/notification.service")).default;
+      const notificationService = new NotificationServiceClass();
+      const hostId = property.host.toString();
+      await notificationService.createPropertyUnlockedForHost(hostId, propertyId, property.name);
+    } catch (err) {
+      console.error("Failed to notify host about property unlock:", err);
+    }
+
+    return property;
+  }
+
+  /**
+   * Admin approve property update (blocked → active)
+   */
+  async adminApproveProperty(propertyId: string): Promise<PropertyDocument> {
+    const property = await PropertyModel.findById(propertyId);
+    appAssert(property, ErrorFactory.resourceNotFound("Property"));
+    appAssert(
+      property.status === "blocked",
+      ErrorFactory.badRequest("Property không ở trạng thái bị khóa")
+    );
+
+    property.status = "active";
+    property.isActive = true;
+    await property.save();
+
+    // Notify host
+    try {
+      const NotificationServiceClass = (await import("@/services/notification.service")).default;
+      const notificationService = new NotificationServiceClass();
+      const hostId = property.host.toString();
+      await notificationService.createPropertyUnlockedForHost(hostId, propertyId, property.name);
+    } catch (err) {
+      console.error("Failed to notify host about property approval:", err);
+    }
+
+    return property;
+  }
+
+  /**
+   * Get properties and sites of a host (for admin view)
+   */
+  async getHostPropertiesWithSites(hostId: string): Promise<any[]> {
+    const properties = await PropertyModel.find({ host: hostId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const propertiesWithSites = await Promise.all(
+      properties.map(async (property) => {
+        const sites = await SiteModel.find({ property: property._id })
+          .select("name slug status isActive pricing.basePrice accommodationType stats photos capacity")
+          .sort({ createdAt: -1 })
+          .lean();
+        return { ...property, sites };
+      })
+    );
+
+    return propertiesWithSites;
   }
 
   /**
@@ -150,6 +259,10 @@ export class PropertyService {
       appAssert(
         property.host.toString() === hostId,
         ErrorFactory.forbidden("Bạn không có quyền kích hoạt property này")
+      );
+      appAssert(
+        property.status !== "blocked",
+        ErrorFactory.forbidden("Property đang bị khóa bởi Admin. Vui lòng liên hệ Admin để mở khóa.")
       );
     }
 

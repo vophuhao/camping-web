@@ -5,6 +5,7 @@ import {
   PropertyModel,
   ReviewModel,
   SiteModel,
+  UserModel,
   type SiteDocument,
 } from "@/models";
 import appAssert from "@/utils/app-assert";
@@ -109,6 +110,20 @@ export class SiteService {
         property.host.toString() === hostId,
         ErrorFactory.forbidden("Bạn không có quyền chỉnh sửa site này")
       );
+
+      if (site.status === "blocked") {
+        input.status = "blocked";
+        input.isActive = false;
+        input.isAvailableForBooking = false;
+      } else if (input.isActive !== undefined) {
+        input.status = input.isActive ? "active" : "inactive";
+        input.isAvailableForBooking = input.isActive;
+      }
+    } else {
+      if (input.isActive !== undefined && input.status === undefined) {
+        input.status = input.isActive ? "active" : "inactive";
+        input.isAvailableForBooking = input.isActive;
+      }
     }
 
     // Update slug if name changed
@@ -117,6 +132,62 @@ export class SiteService {
     }
     Object.assign(site, input);
     await site.save();
+
+    return site;
+  }
+
+  /**
+   * Admin lock site (blocked)
+   */
+  async adminLockSite(siteId: string, reason: string, propertyName?: string): Promise<SiteDocument> {
+    const site = await SiteModel.findById(siteId).populate("property");
+    appAssert(site, ErrorFactory.resourceNotFound("Site"));
+
+    const property = site.property as any;
+    site.status = "blocked";
+    site.isActive = false;
+    site.isAvailableForBooking = false;
+    await site.save();
+
+    // Notify host
+    try {
+      const NotificationServiceClass = (await import("@/services/notification.service")).default;
+      const notificationService = new NotificationServiceClass();
+      const hostId = property.host.toString();
+      await notificationService.createSiteLockedForHost(
+        hostId, siteId, site.name, propertyName || property.name || "Property", reason
+      );
+    } catch (err) {
+      console.error("Failed to notify host about site lock:", err);
+    }
+
+    return site;
+  }
+
+  /**
+   * Admin unlock site (active)
+   */
+  async adminUnlockSite(siteId: string, propertyName?: string): Promise<SiteDocument> {
+    const site = await SiteModel.findById(siteId).populate("property");
+    appAssert(site, ErrorFactory.resourceNotFound("Site"));
+
+    const property = site.property as any;
+    site.status = "active";
+    site.isActive = true;
+    site.isAvailableForBooking = true;
+    await site.save();
+
+    // Notify host
+    try {
+      const NotificationServiceClass = (await import("@/services/notification.service")).default;
+      const notificationService = new NotificationServiceClass();
+      const hostId = property.host.toString();
+      await notificationService.createSiteUnlockedForHost(
+        hostId, siteId, site.name, propertyName || property.name || "Property"
+      );
+    } catch (err) {
+      console.error("Failed to notify host about site unlock:", err);
+    }
 
     return site;
   }
@@ -160,6 +231,10 @@ export class SiteService {
       appAssert(
         property.host.toString() === hostId,
         ErrorFactory.forbidden("Bạn không có quyền kích hoạt site này")
+      );
+      appAssert(
+        site.status !== "blocked",
+        ErrorFactory.forbidden("Site đang bị khóa bởi Admin. Vui lòng liên hệ Admin để mở khóa.")
       );
     }
 
@@ -527,7 +602,7 @@ export class SiteService {
         const seasonalRate = site!.pricing.seasonalPricing.find((season: any) => {
           const seasonStart = new Date(season.startDate);
           const seasonEnd = new Date(season.endDate);
-          
+
           // Compare dates without time
           const currentZero = new Date(currentDate);
           currentZero.setHours(0, 0, 0, 0);
@@ -546,7 +621,7 @@ export class SiteService {
       }
 
       // Weekend price applied if not overridden by seasonal price
-      if (!isSeasonal && isWeekend && weekendPrice !== null && weekendPrice > 0) {
+      if (!isSeasonal && isWeekend && weekendPrice && weekendPrice > 0) {
         nightPrice = weekendPrice;
       }
 
@@ -710,7 +785,7 @@ export class SiteService {
           update: {
             $set: {
               isAvailable: false,
-              blockType: "blocked",
+              blockType: "blocked" as const,
               reason: reason || "Manual block",
             },
           },
@@ -792,7 +867,9 @@ export class SiteService {
     );
 
     // Parse month date range
-    const [year, month] = monthStr.split("-").map(Number); // e.g. "2026-06"
+    const parts = monthStr.split("-").map(Number); // e.g. "2026-06"
+    const year = parts[0] ?? new Date().getFullYear();
+    const month = parts[1] ?? (new Date().getMonth() + 1);
     const startDate = new Date(Date.UTC(year, month - 1, 1));
     const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
@@ -820,7 +897,7 @@ export class SiteService {
         checkOut: b.checkOut,
         status: b.status,
         guestName: (b.guest as any)?.username || "Guest",
-        totalPrice: b.totalPrice,
+        totalPrice: b.pricing.total,
       })),
       blocks: blocks.map((bl) => ({
         date: bl.date,

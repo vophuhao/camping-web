@@ -606,6 +606,111 @@ export default class NotificationService {
     });
   }
 
+  // Thông báo property bị admin khóa
+  async createPropertyLockedForHost(
+    hostId: string,
+    propertyId: string,
+    propertyName: string,
+    reason: string
+  ) {
+    return this.createNotification({
+      recipient: hostId,
+      type: "property_rejected",
+      title: "🔒 Property của bạn đã bị khóa",
+      message: `${propertyName} đã bị admin khóa. Lý do: ${reason}. Vui lòng chỉnh sửa lại và gửi yêu cầu mở khóa.`,
+      property: propertyId,
+      link: `/host/locations`,
+      actionType: "view_property",
+      priority: "high",
+      role: "host",
+      metadata: { propertyId, propertyName, reason, action: "locked" },
+    });
+  }
+
+  // Thông báo property được admin mở khóa
+  async createPropertyUnlockedForHost(
+    hostId: string,
+    propertyId: string,
+    propertyName: string
+  ) {
+    return this.createNotification({
+      recipient: hostId,
+      type: "property_approved",
+      title: "✅ Property của bạn đã được mở khóa",
+      message: `${propertyName} đã được admin duyệt và mở khóa thành công. Property của bạn hiện đang hoạt động.`,
+      property: propertyId,
+      link: `/host/locations`,
+      actionType: "view_property",
+      priority: "high",
+      role: "host",
+      metadata: { propertyId, propertyName, action: "unlocked" },
+    });
+  }
+
+  // Thông báo site bị admin khóa
+  async createSiteLockedForHost(
+    hostId: string,
+    siteId: string,
+    siteName: string,
+    propertyName: string,
+    reason: string
+  ) {
+    return this.createNotification({
+      recipient: hostId,
+      type: "property_rejected",
+      title: "🔒 Site của bạn đã bị khóa",
+      message: `Site "${siteName}" tại ${propertyName} đã bị admin khóa. Lý do: ${reason}.`,
+      link: `/host/locations`,
+      actionType: "view_property",
+      priority: "high",
+      role: "host",
+      metadata: { siteId, siteName, propertyName, reason, action: "site_locked" },
+    });
+  }
+
+  // Thông báo site được admin mở khóa
+  async createSiteUnlockedForHost(
+    hostId: string,
+    siteId: string,
+    siteName: string,
+    propertyName: string
+  ) {
+    return this.createNotification({
+      recipient: hostId,
+      type: "property_approved",
+      title: "✅ Site của bạn đã được mở khóa",
+      message: `Site "${siteName}" tại ${propertyName} đã được admin duyệt và mở khóa thành công.`,
+      link: `/host/locations`,
+      actionType: "view_property",
+      priority: "high",
+      role: "host",
+      metadata: { siteId, siteName, propertyName, action: "site_unlocked" },
+    });
+  }
+
+  // Thông báo host đã sửa property/site cần admin duyệt
+  async createPendingApprovalForAdmin(
+    adminId: string,
+    resourceType: "property" | "site",
+    resourceId: string,
+    resourceName: string,
+    hostName: string,
+    propertyId?: string
+  ) {
+    return this.createNotification({
+      recipient: adminId,
+      type: "system",
+      title: `⏳ ${resourceType === "property" ? "Property" : "Site"} cần duyệt`,
+      message: `Host ${hostName} đã cập nhật "${resourceName}" (đang bị khóa) và đang chờ admin duyệt mở khóa.`,
+      property: propertyId || resourceId,
+      link: `/admin/hosts`,
+      actionType: "view_property",
+      priority: "high",
+      role: "admin",
+      metadata: { resourceType, resourceId, resourceName, hostName },
+    });
+  }
+
   // Thông báo property mới cần duyệt
   async createNewPropertyForAdmin(
     adminId: string,

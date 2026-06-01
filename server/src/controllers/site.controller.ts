@@ -241,4 +241,30 @@ export default class SiteController {
 
     return ResponseUtil.success(res, result, "Lấy lịch khả dụng thành công");
   });
+
+  /**
+   * Admin lock site (set to suspended)
+   * @route POST /api/sites/:id/admin-lock
+   */
+  adminLockSite = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { reason, propertyName } = req.body;
+
+    const site = await this.siteService.adminLockSite(id || "", reason || "Vi phạm quy định", propertyName);
+
+    return ResponseUtil.success(res, site, "Đã khóa site thành công");
+  });
+
+  /**
+   * Admin unlock site (set to active)
+   * @route POST /api/sites/:id/admin-unlock
+   */
+  adminUnlockSite = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { propertyName } = req.body;
+
+    const site = await this.siteService.adminUnlockSite(id || "", propertyName);
+
+    return ResponseUtil.success(res, site, "Đã mở khóa site thành công");
+  });
 }

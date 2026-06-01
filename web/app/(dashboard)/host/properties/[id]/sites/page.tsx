@@ -169,7 +169,7 @@ export default function PropertySitesPage() {
           .includes(searchQuery.toLowerCase());
       const matchesStatus =
         statusFilter === 'all' ||
-        site.bookingSettings?.status === statusFilter;
+        site.status === statusFilter;
       const matchesType =
         typeFilter === 'all' || site.accommodationType === typeFilter;
       return matchesSearch && matchesStatus && matchesType;
@@ -177,20 +177,25 @@ export default function PropertySitesPage() {
   }, [sites, searchQuery, statusFilter, typeFilter]);
 
   const statusConfig = {
-    available: {
+    active: {
       label: 'Sẵn sàng',
       color: 'bg-green-100 text-green-800 border-green-200',
       dot: 'bg-green-500',
     },
-    unavailable: {
-      label: 'Không khả dụng',
+    inactive: {
+      label: 'Tạm ẩn',
+      color: 'bg-slate-100 text-slate-800 border-slate-200',
+      dot: 'bg-slate-500',
+    },
+    blocked: {
+      label: 'Bị khóa',
       color: 'bg-red-100 text-red-800 border-red-200',
       dot: 'bg-red-500',
     },
-    maintenance: {
-      label: 'Bảo trì',
-      color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      dot: 'bg-yellow-500',
+    suspended: {
+      label: 'Bị khóa',
+      color: 'bg-red-100 text-red-800 border-red-200',
+      dot: 'bg-red-500',
     },
   };
 
@@ -211,7 +216,7 @@ export default function PropertySitesPage() {
     const totalSites = sites.length;
     const activeSites = sites.filter(s => s.isActive).length;
     const availableSites = sites.filter(
-      s => s.bookingSettings?.status === 'available',
+      s => s.status === 'active',
     ).length;
     const totalRevenue = sites.reduce(
       (sum, s) => sum + (s.stats?.totalRevenue || 0),
@@ -233,8 +238,8 @@ export default function PropertySitesPage() {
 
   // Full site card for list view
   const renderFullSiteCard = (site: any) => {
-    const statusKey = (site.bookingSettings?.status ?? 'available') as keyof typeof statusConfig;
-    const status = statusConfig[statusKey] || statusConfig.available;
+    const statusKey = (site.status ?? 'active') as keyof typeof statusConfig;
+    const status = statusConfig[statusKey] || statusConfig.active;
 
     const isPremiumType = ['glamping', 'cabin', 'yurt', 'treehouse'].includes(site.accommodationType);
     const isHighPriced = (site.pricing?.basePrice ?? 0) >= 1000000;
@@ -405,8 +410,8 @@ export default function PropertySitesPage() {
 
   // Compact site card for map view
   const renderCompactSiteCard = (site: any) => {
-    const statusKey = (site.bookingSettings?.status ?? 'available') as keyof typeof statusConfig;
-    const status = statusConfig[statusKey] || statusConfig.available;
+    const statusKey = (site.status ?? 'active') as keyof typeof statusConfig;
+    const status = statusConfig[statusKey] || statusConfig.active;
 
     return (
       <Card
@@ -612,9 +617,9 @@ export default function PropertySitesPage() {
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="available">Sẵn sàng</SelectItem>
-                    <SelectItem value="unavailable">Không khả dụng</SelectItem>
-                    <SelectItem value="maintenance">Bảo trì</SelectItem>
+                    <SelectItem value="active">Sẵn sàng</SelectItem>
+                    <SelectItem value="inactive">Tạm ẩn</SelectItem>
+                    <SelectItem value="blocked">Bị khóa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

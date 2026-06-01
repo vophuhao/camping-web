@@ -59,8 +59,8 @@ export default function NewPropertyPage() {
       propertyType: "campground" as "private_land" | "farm" | "ranch" | "campground",
       landSize: { value: 0, unit: "square_meters" as "square_meters" | "hectares" | "acres" },
       nearbyAttractions: [] as { name: string; distance?: number; type?: string }[],
-      status: "pending_approval" as "active" | "inactive" | "pending_approval" | "suspended",
-      isActive: false,
+      status: "active" as "active" | "inactive" | "blocked" | "suspended",
+      isActive: true,
       isFeatured: false,
     },
     location: {
@@ -210,8 +210,8 @@ export default function NewPropertyPage() {
           bookingWindow: 365,
           allowWholePropertyBooking: false,
         },
-        status: formData.basicInfo.status ?? "pending_approval",
-        isActive: !!formData.basicInfo.isActive,
+        status: formData.basicInfo.status ?? "active",
+        isActive: formData.basicInfo.isActive !== undefined ? !!formData.basicInfo.isActive : true,
         isFeatured: !!formData.basicInfo.isFeatured,
         isVerified: false,
       };

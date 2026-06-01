@@ -102,8 +102,8 @@ export default function PropertiesPage() {
   const statusConfig: any = {
     active: { label: 'Hoạt động', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: '✓' },
     inactive: { label: 'Không hoạt động', color: 'bg-slate-100 text-slate-800 border-slate-300', icon: '◯' },
-    pending_approval: { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-800 border-amber-300', icon: '⏳' },
-    suspended: { label: 'Tạm ngưng', color: 'bg-red-100 text-red-800 border-red-300', icon: '⊗' },
+    blocked: { label: 'Bị khóa', color: 'bg-red-100 text-red-800 border-red-200', icon: '⊗' },
+    suspended: { label: 'Bị khóa', color: 'bg-red-100 text-red-800 border-red-200', icon: '⊗' },
   };
 
   if (isLoading) {
@@ -111,7 +111,7 @@ export default function PropertiesPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#FAF9F5]">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#1B4332] border-t-transparent" />
-          <p className="mt-4 text-stone-600 font-medium font-serif">Đang tải dữ liệu...</p>
+          <p className="mt-4 text-stone-600 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -120,11 +120,10 @@ export default function PropertiesPage() {
   return (
     <div className="min-h-screen text-stone-900 pb-12">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#FAF9F5]/90 backdrop-blur-md border-b border-stone-200/80">
+      <div className="sticky top-0 z-40  backdrop-blur-md  border-stone-200/80">
         <div className="px-8 py-5 max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-3xl  font-bold text-stone-900 tracking-tight">Khu cắm trại</h1>
-            <p className="text-sm text-stone-500 mt-1">Quản lý và thiết lập các khu cắm trại của bạn</p>
           </div>
           <Button
             className="bg-[#1B4332] hover:bg-[#122c21] text-white shadow-md hover:shadow-lg transition-all rounded-xl px-5 py-5 text-sm font-medium gap-2"
@@ -154,8 +153,7 @@ export default function PropertiesPage() {
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     <SelectItem value="active">Đang hoạt động</SelectItem>
                     <SelectItem value="inactive">Không hoạt động</SelectItem>
-                    <SelectItem value="pending_approval">Chờ duyệt</SelectItem>
-                    <SelectItem value="suspended">Tạm ngưng</SelectItem>
+                    <SelectItem value="blocked">Bị khóa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -223,7 +221,7 @@ export default function PropertiesPage() {
               <div className="w-16 h-16 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center mb-4">
                 <Home className="h-8 w-8 text-stone-400" />
               </div>
-              <h3 className="text-lg font-serif font-bold text-stone-900 mb-1">
+              <h3 className="text-lg  font-bold text-stone-900 mb-1">
                 {searchQuery || statusFilter !== 'all' ? 'Không tìm thấy khu nào' : 'Chưa có khu cắm trại nào'}
               </h3>
               <p className="text-sm text-stone-500 max-w-sm mb-6">
@@ -300,7 +298,7 @@ export default function PropertiesPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="rounded-2xl border-stone-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif text-xl font-bold">Xóa khu cắm trại?</AlertDialogTitle>
+            <AlertDialogTitle className=" text-xl font-bold">Xóa khu cắm trại?</AlertDialogTitle>
             <AlertDialogDescription className="text-stone-500 text-sm">
               Hành động này không thể hoàn tác. Khu cắm trại chỉ có thể xóa khi không còn vị trí (site) nào thuộc về khu này.
             </AlertDialogDescription>
@@ -345,7 +343,7 @@ function PropertyGridCard({ property, statusConfig, onEdit, onViewSites, onAddSi
       {/* Middle side: Main content details */}
       <div className="flex-1 p-6 flex flex-col justify-between">
         <div>
-          <h3 className="font-serif text-xl md:text-2xl text-stone-900 group-hover:text-emerald-800 transition-colors font-semibold leading-snug line-clamp-2 mb-2">
+          <h3 className=" text-xl md:text-2xl text-stone-900 group-hover:text-emerald-800 transition-colors font-semibold leading-snug line-clamp-2 mb-2">
             {property.name}
           </h3>
           <div className="flex items-center gap-1.5 text-stone-500 mb-4">
@@ -430,7 +428,7 @@ function PropertyListRow({ property, statusConfig, onEdit, onViewSites, onAddSit
             />
           </div>
           <div>
-            <p className="font-serif font-bold text-stone-900 text-sm md:text-base leading-tight">{property.name}</p>
+            <p className=" font-bold text-stone-900 text-sm md:text-base leading-tight">{property.name}</p>
           </div>
         </div>
       </td>

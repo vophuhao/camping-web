@@ -17,3 +17,7 @@ export interface ReactMessageData {
   emoji: string;
   partnerId: string;
 }
+
+export interface TypingData {
+  partnerId: string;
+}

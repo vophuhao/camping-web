@@ -80,8 +80,11 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
   cors({
-    // origin: APP_ORIGIN,
-    origin: "https://www.hdcamp.id.vn",
+    origin: [
+      APP_ORIGIN,
+      "https://www.hdcamp.id.vn",
+
+    ],
     credentials: true,
   })
 );

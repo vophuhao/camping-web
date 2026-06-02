@@ -25,12 +25,12 @@ import PreviewModal from './ui/PreviewModal';
 import './style/Dialog.css';
 
 const SUBJECTS = [
-  'Lập trình',
-  'Toán học',
-  'AI',
-  'Blog',
-  'Novel',
-  'Anime',
+  'Kinh nghiệm cắm trại',
+  'Đồ dùng dã ngoại',
+  'Địa điểm đẹp',
+  'Ẩm thực ngoài trời',
+  'Chia sẻ hành trình',
+  'Hỏi đáp & Hỗ trợ',
   'Khác',
 ];
 
@@ -239,35 +239,23 @@ const CreatePostPage = () => {
   };
 
   const handleSelectImage = async (image: UnsplashImage) => {
-    // try {
-    //   // Track download (required by Unsplash API Terms)
-    //   if (image.downloadLocation) {
-    //     try {
-    //       await api.post('/ai/track-download', {
-    //         downloadLocation: image.downloadLocation
-    //       });
-    //     } catch (trackError) {
-    //       // Don't fail if tracking fails
-    //       console.warn('Failed to track download:', trackError);
-    //     }
-    //   }
-
-    //   // Download image và convert to File
-    //   const response = await fetch(image.url);
-    //   const blob = await response.blob();
-    //   const file = new File([blob], `unsplash-${image.id}.jpg`, { type: 'image/jpeg' });
+    try {
+      // Download image và convert to File
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      const file = new File([blob], `unsplash-${image.id}.jpg`, { type: 'image/jpeg' });
       
-    //   setCoverImage(file);
-    //   setShowImageModal(false);
-    //   if (image.id === 'dalle-generated') {
-    //     toast.success('Đã chọn ảnh được tạo bằng AI (DALL-E 3)!');
-    //   } else {
-    //     toast.success(`Đã chọn ảnh từ Unsplash! Photo by ${image.author.name} on Unsplash`);
-    //   }
-    // } catch (error) {
-    //   console.error('Error downloading image:', error);
-    //   toast.error('Lỗi khi tải ảnh. Vui lòng thử lại.');
-    // }
+      setCoverImage(file);
+      setShowImageModal(false);
+      if (image.id === 'dalle-generated') {
+        toast.success('Đã chọn ảnh được tạo bằng AI (DALL-E 3)!');
+      } else {
+        toast.success(`Đã chọn ảnh từ Unsplash! Photo by ${image.author.name} on Unsplash`);
+      }
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast.error('Lỗi khi tải ảnh. Vui lòng thử lại.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

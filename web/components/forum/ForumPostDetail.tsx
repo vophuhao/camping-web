@@ -5,11 +5,11 @@ import { FaHeart, FaBookmark } from 'react-icons/fa';
 import { FiArrowLeft, FiMessageSquare } from 'react-icons/fi';
 import { forumApi } from '../../lib/forumApi';
 import { userApi } from '../../services/api/user';
-import  formatDistanceToNow  from 'date-fns/formatDistanceToNow';
-import  vi  from 'date-fns/locale/vi';
+import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+import vi from 'date-fns/locale/vi';
 import { toast } from 'react-toastify';
 import Loader from './ui/Loader';
-import ReportButton  from './ui/ReportButton';
+import ReportButton from './ui/ReportButton';
 import CommentList from './ui/CommentList';
 import { api } from '../../services/api/config';
 // import styled from 'styled-components';
@@ -36,27 +36,27 @@ const ForumPostDetail: React.FC = () => {
   const [editSubject, setEditSubject] = useState('');
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editCoverImage, setEditCoverImage] = useState<File | null>(null);
-     const [isFollowing, setIsFollowing] = useState(false);
-   const [followersCount, setFollowersCount] = useState(0);
-   const [authorStats, setAuthorStats] = useState<{
-     documentsCount: number;
-     postsCount: number;
-     points: number;
-     followersCount?: number;
-   } | null>(null);
-   const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
-   const [loadingRelated, setLoadingRelated] = useState(false);
-   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [authorStats, setAuthorStats] = useState<{
+    documentsCount: number;
+    postsCount: number;
+    points: number;
+    followersCount?: number;
+  } | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   // Thêm ref để track request đang chạy
   const fetchingRef = React.useRef(false);
-  
+
   // Thêm ref để track view đã được tăng cho post này
   const viewedPostsRef = React.useRef<Set<string>>(new Set());
   const hasScrolledToCommentRef = React.useRef(false);
 
   if (!slug) {
-    return <div style={{padding: 32, textAlign: 'center', color: '#ef4444', fontWeight: 600}}>Không tìm thấy bài viết hoặc đường dẫn không hợp lệ.</div>;
+    return <div style={{ padding: 32, textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>Không tìm thấy bài viết hoặc đường dẫn không hợp lệ.</div>;
   }
 
   // Helper function to get current user
@@ -65,23 +65,33 @@ const ForumPostDetail: React.FC = () => {
     if (userStr) {
       try {
         return JSON.parse(userStr);
-      } catch {}
+      } catch { }
     }
     return null;
   };
 
   // Helper function to get category name in Vietnamese
   const getCategoryName = (category: string) => {
+    if (!category) return 'Chủ đề khác';
     const names: { [key: string]: string } = {
-      'math': 'Toán học',
-      'programming': 'Lập trình',
-      'economics': 'Kinh tế',
-      'technology': 'Công nghệ',
-      'science': 'Khoa học',
-      'career': 'Nghề nghiệp',
+
+      'camping-experience': 'Kinh nghiệm cắm trại',
+      'camping-gear': 'Đồ dùng dã ngoại',
+      'beautiful-places': 'Địa điểm đẹp',
+      'outdoor-cuisine': 'Ẩm thực ngoài trời',
+      'trip-sharing': 'Chia sẻ hành trình',
+      'qna-support': 'Hỏi đáp & Hỗ trợ',
+      'other': 'Khác',
+      'kinh nghiệm cắm trại': 'Kinh nghiệm cắm trại',
+      'đồ dùng dã ngoại': 'Đồ dùng dã ngoại',
+      'địa điểm đẹp': 'Địa điểm đẹp',
+      'ẩm thực ngoài trời': 'Ẩm thực ngoài trời',
+      'chia sẻ hành trình': 'Chia sẻ hành trình',
+      'hỏi đáp & hỗ trợ': 'Hỏi đáp & Hỗ trợ',
+      'khác': 'Khác',
       'default': category
     };
-    return names[category?.toLowerCase()] || names.default;
+    return names[category.toLowerCase()] || names.default;
   };
 
   // Load related posts
@@ -90,16 +100,16 @@ const ForumPostDetail: React.FC = () => {
       setLoadingRelated(true);
       const category = currentPost.category || currentPost.subject;
       const currentPostId = currentPost._id;
-      
+
       // Get posts from same category/subject, excluding current post
       const response = await forumApi.getPosts(1, 5, '', category);
       const posts = response.data?.posts || response.data?.data || [];
-      
+
       // Filter out current post and limit to 4 posts
       const filtered = posts
         .filter((p: any) => p._id !== currentPostId && p.status === 'active')
         .slice(0, 4);
-      
+
       setRelatedPosts(filtered);
     } catch (error) {
       console.error('Error loading related posts:', error);
@@ -122,11 +132,11 @@ const ForumPostDetail: React.FC = () => {
       try {
         fetchingRef.current = true;
         setLoading(true);
-        
+
         const response = await forumApi.getPost(slug);
-        
+
         if (!isMounted) return; // Kiểm tra component còn mount không
-        
+
         if (!response.data) {
           throw new Error('Không tìm thấy bài viết');
         }
@@ -134,7 +144,7 @@ const ForumPostDetail: React.FC = () => {
         const postData = response.data;
         const currentUserId = localStorage.getItem('userId');
         const currentUser = getCurrentUser();
-        
+
         // Kiểm tra quyền xem bài viết
         if (postData.visibility === 'private') {
           // Nếu không phải người đăng bài
@@ -149,63 +159,63 @@ const ForumPostDetail: React.FC = () => {
         if (!viewedPostsRef.current.has(postData._id)) {
           viewedPostsRef.current.add(postData._id);
         }
-        
+
         setPost(postData);
         setIsLiked(postData.likes?.includes(currentUser?._id) || false);
         setIsBookmarked(postData.savedBy?.includes(currentUser?._id) || false);
         setLikeCount(postData.likes?.length || 0);
         setSaveCount(postData.savedBy?.length || 0);
-                 setCommentCount(postData.comments?.length || 0);
-         setViewCount(postData.viewCount || 0);
-         
-         // Kiểm tra follow status và lấy thông tin follow
-         if (postData.userId) {
-           try {
-             // Load author stats từ API (includes updated level)
-             const authorId = postData.userId._id || postData.userId;
-             const publicStats = await userApi.getUserPublicStats(authorId);
-             
-             // Update author object with latest level data
-             if (publicStats.level !== undefined && postData.userId) {
-               postData.userId.level = publicStats.level;
-               if (publicStats.levelTitle !== undefined) {
-                 postData.userId.levelTitle = publicStats.levelTitle;
-               }
-               // Update post state to reflect new level
-               setPost({ ...postData });
-             }
-             
-             setAuthorStats({
-               documentsCount: publicStats.documentsCount ?? 0,
-               postsCount: publicStats.postsCount ?? 0,
-               points: publicStats.points ?? 0,
-               followersCount: publicStats.followersCount ?? 0,
-             });
-             
-             // Lấy followers
-             const followersResponse = await api.get(`/users/${authorId}/followers`);
-             const followers = followersResponse.data.followers || [];
-             const actualFollowersCount = publicStats.followersCount ?? followers.length;
-             setFollowersCount(actualFollowersCount);
-             
-             // Kiểm tra currentUser có follow author không
-             if (currentUser && authorId !== currentUser._id) {
-               setIsFollowing(followers.some((follower: any) => follower._id === currentUser._id));
-             }
-           } catch (error) {
-             console.error('Error loading author stats:', error);
-             // Fallback nếu không load được stats
-             setAuthorStats({
-               documentsCount: postData.userId.stats?.documentsCount || 0,
-               postsCount: postData.userId.stats?.postsCount || 0,
-               points: postData.userId.points || 0,
-               followersCount: 0,
-             });
-           }
+        setCommentCount(postData.comments?.length || 0);
+        setViewCount(postData.viewCount || 0);
 
-           // Load related posts
-           loadRelatedPosts(postData);
-         }
+        // Kiểm tra follow status và lấy thông tin follow
+        if (postData.userId) {
+          try {
+            // Load author stats từ API (includes updated level)
+            const authorId = postData.userId._id || postData.userId;
+            const publicStats = await userApi.getUserPublicStats(authorId);
+
+            // Update author object with latest level data
+            if (publicStats.level !== undefined && postData.userId) {
+              postData.userId.level = publicStats.level;
+              if (publicStats.levelTitle !== undefined) {
+                postData.userId.levelTitle = publicStats.levelTitle;
+              }
+              // Update post state to reflect new level
+              setPost({ ...postData });
+            }
+
+            setAuthorStats({
+              documentsCount: publicStats.documentsCount ?? 0,
+              postsCount: publicStats.postsCount ?? 0,
+              points: publicStats.points ?? 0,
+              followersCount: publicStats.followersCount ?? 0,
+            });
+
+            // Lấy followers
+            const followersResponse = await api.get(`/users/${authorId}/followers`);
+            const followers = followersResponse.data.followers || [];
+            const actualFollowersCount = publicStats.followersCount ?? followers.length;
+            setFollowersCount(actualFollowersCount);
+
+            // Kiểm tra currentUser có follow author không
+            if (currentUser && authorId !== currentUser._id) {
+              setIsFollowing(followers.some((follower: any) => follower._id === currentUser._id));
+            }
+          } catch (error) {
+            console.error('Error loading author stats:', error);
+            // Fallback nếu không load được stats
+            setAuthorStats({
+              documentsCount: postData.userId.stats?.documentsCount || 0,
+              postsCount: postData.userId.stats?.postsCount || 0,
+              points: postData.userId.points || 0,
+              followersCount: 0,
+            });
+          }
+
+          // Load related posts
+          loadRelatedPosts(postData);
+        }
       } catch (error) {
         console.error('Error fetching post:', error);
         toast.error('Không thể tải bài viết');
@@ -296,7 +306,7 @@ const ForumPostDetail: React.FC = () => {
       // Optimistic update - cập nhật UI ngay lập tức
       const newIsLiked = !isLiked;
       const newLikeCount = newIsLiked ? likeCount + 1 : Math.max(0, likeCount - 1);
-      
+
       setIsLiked(newIsLiked);
       setLikeCount(newLikeCount);
 
@@ -326,7 +336,7 @@ const ForumPostDetail: React.FC = () => {
       setLikeCount(likeCount);
       console.error('Like error:', error);
       toast.error('Có lỗi khi thích bài viết');
-    } 
+    }
   };
 
   const handleFollow = async () => {
@@ -345,7 +355,7 @@ const ForumPostDetail: React.FC = () => {
       // Optimistic update
       const newIsFollowing = !isFollowing;
       const newFollowersCount = newIsFollowing ? followersCount + 1 : Math.max(0, followersCount - 1);
-      
+
       setIsFollowing(newIsFollowing);
       setFollowersCount(newFollowersCount);
 
@@ -388,7 +398,7 @@ const ForumPostDetail: React.FC = () => {
       // Optimistic update - cập nhật UI ngay lập tức
       const newIsBookmarked = !isBookmarked;
       const newSaveCount = newIsBookmarked ? saveCount + 1 : Math.max(0, saveCount - 1);
-      
+
       setIsBookmarked(newIsBookmarked);
       setSaveCount(newSaveCount);
 
@@ -536,16 +546,16 @@ const ForumPostDetail: React.FC = () => {
               className="back-button-compact"
               onClick={() => navigate(-1)}
               aria-label="Quay lại"
-              style={{position: 'absolute', top: 18, left: 18, zIndex: 2}}
+              style={{ position: 'absolute', top: 18, left: 18, zIndex: 2 }}
             >
-              <FiArrowLeft style={{marginRight: 4, fontSize: 18}} />
+              <FiArrowLeft style={{ marginRight: 4, fontSize: 18 }} />
               <span className="back-text">Quay lại</span>
             </button>
             {/* Cover Image */}
             {post.imageUrl && (
               <div className="forum-post-detail-image-wrapper">
-                <img 
-                  src={post.imageUrl} 
+                <img
+                  src={post.imageUrl}
                   alt={post.title || 'Ảnh bài viết'}
                   title={post.title || 'Ảnh bài viết'}
                   className="forum-post-detail-image"
@@ -556,7 +566,7 @@ const ForumPostDetail: React.FC = () => {
             <header className="forum-post-detail-header">
               <div className="forum-post-detail-author-row">
                 <Link to={`/user/${author?._id || ''}`} className="forum-post-detail-avatar-link">
-                  <img 
+                  <img
                     src={avatarUrl}
                     alt={authorName}
                     className="forum-post-detail-avatar"
@@ -571,35 +581,35 @@ const ForumPostDetail: React.FC = () => {
                 )}
               </div>
               <div className="forum-post-detail-header-actions">
-                                 {(() => {
-                   const currentUser = getCurrentUser();
-                   return currentUser && author && currentUser._id === author._id && !isEditing;
-                 })() && (
-                  <>
-                    <button 
-                      className="forum-post-detail-edit-btn" 
-                      onClick={() => navigate(`/forum/edit/${post._id}`)}
-                      style={{ marginRight: '8px' }}
-                    >
-                      Chỉnh sửa
-                    </button>
-                    <button className="forum-post-detail-delete-btn" onClick={handleDelete}>Xóa</button>
-                  </>
-                )}
+                {(() => {
+                  const currentUser = getCurrentUser();
+                  return currentUser && author && currentUser._id === author._id && !isEditing;
+                })() && (
+                    <>
+                      <button
+                        className="forum-post-detail-edit-btn"
+                        onClick={() => navigate(`/forum/edit/${post._id}`)}
+                        style={{ marginRight: '8px' }}
+                      >
+                        Chỉnh sửa
+                      </button>
+                      <button className="forum-post-detail-delete-btn" onClick={handleDelete}>Xóa</button>
+                    </>
+                  )}
               </div>
             </header>
             {/* Tiêu đề & tags */}
             <h1 className="forum-post-detail-title">{post.title}</h1>
-           
+
             {/* Meta */}
             <div className="forum-post-detail-footer">
-            {post.subject && (
-              <span className={`forum-post-detail-category ${post.subject.toLowerCase()}`}>{getCategoryName(post.subject)}</span>
-            )}
+              {post.subject && (
+                <span className={`forum-post-detail-category ${post.subject.toLowerCase()}`}>{getCategoryName(post.subject)}</span>
+              )}
               {/* Tags */}
               {(() => {
                 let tagsArray = post.tags;
-                
+
                 // Xử lý trường hợp tags là JSON string
                 if (typeof post.tags === 'string') {
                   try {
@@ -609,17 +619,17 @@ const ForumPostDetail: React.FC = () => {
                     tagsArray = [post.tags];
                   }
                 }
-                
+
                 // Đảm bảo tagsArray là array
                 if (!Array.isArray(tagsArray)) {
                   tagsArray = [];
                 }
-                
+
                 return tagsArray.length > 0 ? (
                   <div className="forum-post-detail-tags-container">
                     {tagsArray.map((tag: string, index: number) => (
-                      <Link 
-                        key={index} 
+                      <Link
+                        key={index}
                         to={`/forum?tag=${encodeURIComponent(typeof tag === 'string' ? tag : String(tag))}`}
                         className="forum-post-detail-category other clickable-tag"
                       >
@@ -692,9 +702,9 @@ const ForumPostDetail: React.FC = () => {
                       title="Chọn ảnh chủ đề"
                     />
                     {editCoverImage ? (
-                      <img src={URL.createObjectURL(editCoverImage)} alt="cover" style={{maxWidth: 200, marginTop: 8, borderRadius: 8}} />
+                      <img src={URL.createObjectURL(editCoverImage)} alt="cover" style={{ maxWidth: 200, marginTop: 8, borderRadius: 8 }} />
                     ) : post.imageUrl && (
-                      <img src={post.imageUrl} alt={post.title || 'Ảnh chủ đề'} title={post.title || 'Ảnh chủ đề'} style={{maxWidth: 200, marginTop: 8, borderRadius: 8}} />
+                      <img src={post.imageUrl} alt={post.title || 'Ảnh chủ đề'} title={post.title || 'Ảnh chủ đề'} style={{ maxWidth: 200, marginTop: 8, borderRadius: 8 }} />
                     )}
                   </div>
                   <div className="modern-form-group">
@@ -712,38 +722,38 @@ const ForumPostDetail: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div 
-                  className="forum-post-detail-html-content" 
-                  style={{whiteSpace: 'normal'}} 
-                  dangerouslySetInnerHTML={{ 
+                <div
+                  className="forum-post-detail-html-content"
+                  style={{ whiteSpace: 'normal' }}
+                  dangerouslySetInnerHTML={{
                     __html: (() => {
                       if (!post?.content) return '';
                       let content = String(post.content);
-                      
+
                       // Xử lý URL Giphy dạng text - convert thành thẻ <img>
                       const giphyUrlPattern = /https?:\/\/(?:media\d?\.)?giphy\.com\/media\/[^\s<>"'\)\]&]+/gi;
                       const giphyUrls = content.match(giphyUrlPattern);
-                      
+
                       if (giphyUrls && giphyUrls.length > 0) {
                         const uniqueUrls = [...new Set(giphyUrls)].sort((a, b) => b.length - a.length);
-                        
+
                         uniqueUrls.forEach((url: string) => {
                           const cleanUrl = url.trim();
-                          
+
                           // Bỏ qua nếu URL đã nằm trong thẻ <img> src
                           const escaped = cleanUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                           if (new RegExp(`<img[^>]+src=["']${escaped}`, 'i').test(content)) {
                             return;
                           }
-                          
+
                           const imgTag = `<img src="${cleanUrl}" alt="sticker" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 8px 0; display: block;" />`;
-                          
+
                           // Replace URL trong content (tránh replace trong HTML attributes)
                           content = content.replace(new RegExp(escaped, 'gi'), (match, offset, string) => {
                             const before = string.substring(0, offset);
                             const lastOpen = before.lastIndexOf('<');
                             const lastClose = before.lastIndexOf('>');
-                            
+
                             if (lastOpen > lastClose) {
                               const tagPart = before.substring(lastOpen);
                               const doubleQuotes = (tagPart.match(/"/g) || []).length;
@@ -752,15 +762,15 @@ const ForumPostDetail: React.FC = () => {
                                 return match;
                               }
                             }
-                            
+
                             return imgTag;
                           });
                         });
                       }
-                      
+
                       return content;
                     })()
-                  }} 
+                  }}
                 />
               )}
             </section>
@@ -770,13 +780,13 @@ const ForumPostDetail: React.FC = () => {
                 onClick={handleLike}
                 className={`forum-post-detail-action-btn${isLiked ? ' active like' : ''}`}
               >
-                <FaHeart style={{marginRight: 4}} /> {likeCount}
+                <FaHeart style={{ marginRight: 4 }} /> {likeCount}
               </button>
               <button
                 onClick={handleBookmark}
                 className={`forum-post-detail-action-btn${isBookmarked ? ' active bookmark' : ''}`}
               >
-                <FaBookmark style={{marginRight: 4}} /> {saveCount}
+                <FaBookmark style={{ marginRight: 4 }} /> {saveCount}
               </button>
               <button
                 onClick={handleShare}
@@ -784,63 +794,63 @@ const ForumPostDetail: React.FC = () => {
               >
                 Chia sẻ
               </button>
-              <ReportButton 
-                itemId={post._id} 
+              <ReportButton
+                itemId={post._id}
                 itemType="post"
-                onReported={() => {}}
+                onReported={() => { }}
               />
             </div>
           </div>
         </div>
-        
+
         {/* Sidebar */}
         <aside>
           <div className="forum-post-detail-author-card">
-                         {/* Header */}
-                                          <div className="author-header">
-                 <div className="author-avatar-container">
-                   <Link to={`/profile/${author?.username || author?._id}`} className="author-avatar-link">
-                     <img src={avatarUrl} alt={authorName} className="author-avatar" />
-                   </Link>
-                 </div>
-                 <div className="author-name-container">
-                   <Link to={`/profile/${author?.username || author?._id}`} className="author-name-link">
-                     <h3 className="author-name">{authorName}</h3>
-                   </Link>
-                 </div>
-                 <div className="author-level">
-                   <span className="level-badge">Level {author?.level || 1}</span>
-                   <span className="level-title">{author?.levelTitle || 'Mới tham gia'}</span>
-                 </div>
-                {author?.school && (
-                  <div className="academic-info">
-                    <span className="school">{author.school}</span>
-                    {author.faculty && <span className="faculty">• {author.faculty}</span>}
-                    {author.major && <span className="major">• {author.major}</span>}
-                  </div>
-                )}
-                {author?.bio && <p className="author-bio">{author.bio}</p>}
+            {/* Header */}
+            <div className="author-header">
+              <div className="author-avatar-container">
+                <Link to={`/profile/${author?.username || author?._id}`} className="author-avatar-link">
+                  <img src={avatarUrl} alt={authorName} className="author-avatar" />
+                </Link>
               </div>
+              <div className="author-name-container">
+                <Link to={`/profile/${author?.username || author?._id}`} className="author-name-link">
+                  <h3 className="author-name">{authorName}</h3>
+                </Link>
+              </div>
+              <div className="author-level">
+                <span className="level-badge">Level {author?.level || 1}</span>
+                <span className="level-title">{author?.levelTitle || 'Mới tham gia'}</span>
+              </div>
+              {author?.school && (
+                <div className="academic-info">
+                  <span className="school">{author.school}</span>
+                  {author.faculty && <span className="faculty">• {author.faculty}</span>}
+                  {author.major && <span className="major">• {author.major}</span>}
+                </div>
+              )}
+              {author?.bio && <p className="author-bio">{author.bio}</p>}
+            </div>
 
-                                      {/* Stats Grid */}
-              <div className="author-stats">
-                <div className="stat-item">
-                  <span className="stat-number">{authorStats?.points ?? author?.points ?? 0}</span>
-                  <span className="stat-label">Điểm</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">{authorStats?.documentsCount ?? author?.stats?.documentsCount ?? 0}</span>
-                  <span className="stat-label">Tài liệu</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">{authorStats?.followersCount ?? followersCount}</span>
-                  <span className="stat-label">Theo dõi</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">{authorStats?.postsCount ?? author?.stats?.postsCount ?? 0}</span>
-                  <span className="stat-label">Bài viết</span>
-                </div>
+            {/* Stats Grid */}
+            <div className="author-stats">
+              <div className="stat-item">
+                <span className="stat-number">{authorStats?.points ?? author?.points ?? 0}</span>
+                <span className="stat-label">Điểm</span>
               </div>
+              <div className="stat-item">
+                <span className="stat-number">{authorStats?.documentsCount ?? author?.stats?.documentsCount ?? 0}</span>
+                <span className="stat-label">Tài liệu</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{authorStats?.followersCount ?? followersCount}</span>
+                <span className="stat-label">Theo dõi</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{authorStats?.postsCount ?? author?.stats?.postsCount ?? 0}</span>
+                <span className="stat-label">Bài viết</span>
+              </div>
+            </div>
 
             {/* Recent Achievements */}
             {author?.achievements && author.achievements.length > 0 && (
@@ -880,27 +890,27 @@ const ForumPostDetail: React.FC = () => {
               </div>
             )}
 
-                         {/* Actions - chỉ hiện khi không phải người đăng bài */}
-             {(() => {
-               const currentUser = getCurrentUser();
-               const isOwnPost = currentUser && author && currentUser._id === author._id;
-               
-               if (isOwnPost) {
-                 return null; // Ẩn hoàn toàn nếu là người đăng bài
-               }
-               
-               return (
-                 <div className="author-actions">
-                   <button className="btn-follow" onClick={handleFollow}>
-                     {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
-                   </button>
-                   <button className="btn-chat">
-                     <FiMessageSquare />
-                     Nhắn tin
-                   </button>
-                 </div>
-               );
-             })()}
+            {/* Actions - chỉ hiện khi không phải người đăng bài */}
+            {(() => {
+              const currentUser = getCurrentUser();
+              const isOwnPost = currentUser && author && currentUser._id === author._id;
+
+              if (isOwnPost) {
+                return null; // Ẩn hoàn toàn nếu là người đăng bài
+              }
+
+              return (
+                <div className="author-actions">
+                  <button className="btn-follow" onClick={handleFollow}>
+                    {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                  </button>
+                  <button className="btn-chat">
+                    <FiMessageSquare />
+                    Nhắn tin
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
 
@@ -917,25 +927,25 @@ const ForumPostDetail: React.FC = () => {
                 {relatedPosts.map((relatedPost) => {
                   const postSlug = relatedPost.slug || relatedPost._id;
                   const postAuthor = relatedPost.userId?.name || relatedPost.userId?.username || 'User';
-                  const postTime = relatedPost.createdAt 
+                  const postTime = relatedPost.createdAt
                     ? formatDistanceToNow(new Date(relatedPost.createdAt), { addSuffix: true, locale: vi })
                     : '';
                   // Try multiple image fields
-                  const thumbnail = relatedPost.imageUrl 
-                    || relatedPost.coverImage 
-                    || relatedPost.thumbnail 
+                  const thumbnail = relatedPost.imageUrl
+                    || relatedPost.coverImage
+                    || relatedPost.thumbnail
                     || (relatedPost.images && relatedPost.images.length > 0 ? relatedPost.images[0] : null)
                     || '/unknown-avatar.jpg';
-                  
+
                   return (
-                    <Link 
-                      to={`/forum/${postSlug}`} 
-                      key={relatedPost._id} 
+                    <Link
+                      to={`/forum/${postSlug}`}
+                      key={relatedPost._id}
                       className="related-post-item"
                     >
                       <div className="related-post-thumbnail">
-                        <img 
-                          src={thumbnail} 
+                        <img
+                          src={thumbnail}
                           alt={relatedPost.title}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -968,7 +978,7 @@ const ForumPostDetail: React.FC = () => {
           </div>
         </aside>
       </div>
-      
+
       {/* Bình luận tách riêng ở dưới */}
       <section className="forum-post-detail-comments-section">
         <div className="forum-post-detail-comments-container">

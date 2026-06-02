@@ -72,8 +72,8 @@ export const generatePostContent = async (
   data: GenerateContentRequest
 ): Promise<GenerateContentResponse> => {
   try {
-    const response = await api.post<GenerateContentResponse>('/ai/generate-content', data);
-    return response.data;
+    const response: any = await api.post('/ai/generate-content', data);
+    return response;
   } catch (error: any) {
     console.error('Error generating content:', error);
     return {
@@ -90,8 +90,8 @@ export const generatePostSummary = async (
   data: GenerateSummaryRequest
 ): Promise<GenerateSummaryResponse> => {
   try {
-    const response = await api.post<GenerateSummaryResponse>('/ai/generate-summary', data);
-    return response.data;
+    const response: any = await api.post('/ai/generate-summary', data);
+    return response;
   } catch (error: any) {
     console.error('Error generating summary:', error);
     return {
@@ -109,10 +109,10 @@ export const searchImages = async (
   perPage: number = 5
 ): Promise<SearchImagesResponse> => {
   try {
-    const response = await api.get<SearchImagesResponse>('/ai/search-images', {
+    const response: any = await api.get('/ai/search-images', {
       params: { query, perPage }
     });
-    return response.data;
+    return response;
   } catch (error: any) {
     console.error('Error searching images:', error);
     return {
@@ -130,10 +130,10 @@ export const getImageSuggestions = async (
   subject: string
 ): Promise<ImageSuggestionsResponse> => {
   try {
-    const response = await api.get<ImageSuggestionsResponse>('/ai/image-suggestions', {
+    const response: any = await api.get('/ai/image-suggestions', {
       params: { title, subject }
     });
-    return response.data;
+    return response;
   } catch (error: any) {
     console.error('Error getting image suggestions:', error);
     return {
@@ -150,8 +150,8 @@ export const generateImagePrompt = async (
   data: GenerateImagePromptRequest
 ): Promise<GenerateImagePromptResponse> => {
   try {
-    const response = await api.post<GenerateImagePromptResponse>('/ai/generate-image-prompt', data);
-    return response.data;
+    const response: any = await api.post('/ai/generate-image-prompt', data);
+    return response;
   } catch (error: any) {
     console.error('Error generating image prompt:', error);
     return {
@@ -183,8 +183,8 @@ export const generateImage = async (
   data: GenerateImageRequest
 ): Promise<GenerateImageResponse> => {
   try {
-    const response = await api.post<GenerateImageResponse>('/ai/generate-image', data);
-    return response.data;
+    const response: any = await api.post('/ai/generate-image', data);
+    return response;
   } catch (error: any) {
     console.error('Error generating image:', error);
     return {

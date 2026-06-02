@@ -20,6 +20,7 @@ import {
   siteRoutes,
   userRoutes,
   payoutRoutes,
+  aiRoutes,
 } from "./routes";
 
 import dashboardHRoutes from "./routes/dashbardH.route";
@@ -189,6 +190,7 @@ app.use("/dashboardH", authenticate, dashboardHRoutes);
 app.use("/payouts", payoutRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/mobile-selfie", mobileSelfieRoutes);
+app.use("/ai", aiRoutes);
 
 // ============================================================
 // Global Error Handler

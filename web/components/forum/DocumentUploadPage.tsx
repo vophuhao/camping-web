@@ -64,10 +64,12 @@ const DocumentUpload = () => {
         <label>Chủ đề
           <select value={subject} onChange={e => setSubject(e.target.value)} required>
             <option value="">Chọn chủ đề</option>
-            <option value="math">Toán</option>
-            <option value="programming">Lập trình</option>
-            <option value="economics">Kinh tế</option>
-            <option value="language">Ngoại ngữ</option>
+            <option value="camping-experience">Kinh nghiệm cắm trại</option>
+            <option value="camping-gear">Đồ dùng dã ngoại</option>
+            <option value="beautiful-places">Địa điểm đẹp</option>
+            <option value="outdoor-cuisine">Ẩm thực ngoài trời</option>
+            <option value="trip-sharing">Chia sẻ hành trình</option>
+            <option value="qna-support">Hỏi đáp & Hỗ trợ</option>
             <option value="other">Khác</option>
           </select>
         </label>

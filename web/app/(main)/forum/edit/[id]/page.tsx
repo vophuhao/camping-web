@@ -24,12 +24,12 @@ import '../../../../../components/forum/style/Dialog.css';
 import { useParams, useRouter } from 'next/navigation';
 
 const SUBJECTS = [
-  'Lập trình',
-  'Toán học',
-  'AI',
-  'Blog',
-  'Novel',
-  'Anime',
+  'Kinh nghiệm cắm trại',
+  'Đồ dùng dã ngoại',
+  'Địa điểm đẹp',
+  'Ẩm thực ngoài trời',
+  'Chia sẻ hành trình',
+  'Hỏi đáp & Hỗ trợ',
   'Khác',
 ];
 

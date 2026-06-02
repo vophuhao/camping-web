@@ -1,4 +1,5 @@
 import { catchErrors } from "@/errors";
+import 'multer';
 import type {
   CreatePostInput,
   ForumService,

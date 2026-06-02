@@ -1,9 +1,10 @@
 /* eslint-disable no-undef */
 import { catchErrors, ErrorFactory } from "@/errors";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { Request } from "express";
 import { cloudinary } from "../config";
 import { BAD_REQUEST } from "../constants/http";
+import 'multer';
 // Mở rộng type cho Request khi dùng Multer
 
 export interface MulterRequest extends Request {
@@ -36,7 +37,7 @@ export default class MediaController {
     let filesArray: Express.Multer.File[] = [];
 
     if (Array.isArray(req.files)) {
-      filesArray = req.files;
+      filesArray = (req as any).files;
     } else if (req.files && typeof req.files === "object") {
       filesArray = Object.values(req.files).flat();
     }

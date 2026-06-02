@@ -78,21 +78,19 @@ export const updatePostSchema = z.object({
 export const getPostsSchema = z.object({
   page: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).default(1))
     .optional()
-    .default(1),
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).default(1)),
   pageSize: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).max(100).default(10))
     .optional()
-    .default(10),
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).max(100).default(10)),
   limit: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).max(100))
-    .optional(),
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).max(100).optional()),
   search: z.string().optional(),
   category: z.string().optional(),
 });
@@ -101,16 +99,14 @@ export const getPostsSchema = z.object({
 export const getUserPostsSchema = z.object({
   page: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).default(1))
     .optional()
-    .default(1),
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).default(1)),
   pageSize: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).max(100).default(10))
     .optional()
-    .default(10),
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).max(100).default(10)),
 });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;

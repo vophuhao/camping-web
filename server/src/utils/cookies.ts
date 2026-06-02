@@ -1,13 +1,13 @@
-import { NODE_ENV } from "@/constants";
+import { NODE_ENV } from "../constants";
 import type { CookieOptions, Response } from "express";
 import { oneWeekFromNow, thirtyDaysFromNow } from "./date";
 
 export const REFRESH_PATH = "/auth/refresh";
 
 const defaults: CookieOptions = {
-  sameSite: "strict",
+  sameSite: NODE_ENV === "production" ? "none" : "lax",
   httpOnly: true,
-  secure: NODE_ENV === "production", // Only require HTTPS in production
+  secure: NODE_ENV === "production" ? true : false,
 };
 
 export const getAccessTokenCookieOptions = (): CookieOptions => ({
@@ -32,5 +32,15 @@ export const setAuthCookies = ({ res, accessToken, refreshToken }: Params) =>
     .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
     .cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions());
 
+
 export const clearAuthCookies = (res: Response) =>
-  res.clearCookie("accessToken").clearCookie("refreshToken", { path: REFRESH_PATH });
+  res
+    .clearCookie("accessToken", {
+      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      secure: NODE_ENV === "production"
+    })
+    .clearCookie("refreshToken", {
+      path: REFRESH_PATH,
+      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      secure: NODE_ENV === "production"
+    });

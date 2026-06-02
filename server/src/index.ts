@@ -20,6 +20,7 @@ import {
   siteRoutes,
   userRoutes,
   payoutRoutes,
+  aiRoutes,
 } from "./routes";
 
 import dashboardHRoutes from "./routes/dashbardH.route";
@@ -79,7 +80,11 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
   cors({
-    origin: APP_ORIGIN,
+    origin: [
+      APP_ORIGIN,
+      "https://www.hdcamp.id.vn",
+
+    ],
     credentials: true,
   })
 );
@@ -189,6 +194,7 @@ app.use("/dashboardH", authenticate, dashboardHRoutes);
 app.use("/payouts", payoutRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/mobile-selfie", mobileSelfieRoutes);
+app.use("/ai", aiRoutes);
 
 // ============================================================
 // Global Error Handler

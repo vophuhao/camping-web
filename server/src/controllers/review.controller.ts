@@ -1,6 +1,6 @@
 import { catchErrors } from "@/errors";
 import type { ReviewService } from "@/services/review.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   createReviewSchema,
@@ -11,7 +11,7 @@ import {
 } from "@/validators/review.validator";
 
 export default class ReviewController {
-  constructor(private readonly reviewService: ReviewService) {}
+  constructor(private readonly reviewService: ReviewService) { }
 
   /**
    * Create review (guest only, after completed booking)

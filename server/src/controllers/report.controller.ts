@@ -1,10 +1,10 @@
 import { catchErrors } from "@/errors";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import type { ReportService } from "@/services/report.service";
 
 export default class ReportController {
-  constructor(private readonly reportService: ReportService) {}
+  constructor(private readonly reportService: ReportService) { }
 
   /**
    * Create a report

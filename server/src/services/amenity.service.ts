@@ -1,6 +1,6 @@
 import { ErrorFactory } from "@/errors";
 import { AmenityModel, type AmenityDocument } from "@/models";
-import appAssert from "@/utils/app-assert";
+import appAssert from "../utils/app-assert";
 import type { CreateAmenityInput, UpdateAmenityInput } from "@/validators/amenity.validator";
 
 export class AmenityService {

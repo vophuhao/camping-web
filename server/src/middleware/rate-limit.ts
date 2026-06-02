@@ -1,5 +1,5 @@
 import rateLimit from "express-rate-limit";
-import { NODE_ENV } from "@/constants/env";
+import { NODE_ENV } from "../constants/env";
 
 // ==============================
 // Helper — tắt rate limit ở test

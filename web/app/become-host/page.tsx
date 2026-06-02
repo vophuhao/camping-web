@@ -47,7 +47,7 @@ export default function HostRegisterPage() {
   const [qrSessionId, setQrSessionId] = useState("");
   const [qrPolling, setQrPolling] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Generate session ID for QR
   function generateSessionId() {
@@ -88,7 +88,7 @@ export default function HostRegisterPage() {
       } catch { /* ignore polling errors */ }
     }, 2000);
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrPolling, qrSessionId]);
 
   /* ─── Validation step 1 ─── */
@@ -122,7 +122,7 @@ export default function HostRegisterPage() {
       setFaceStatus("loading");
       setFaceError("");
       // Pre-load models while opening camera
-      loadFaceApi().catch(() => {});
+      loadFaceApi().catch(() => { });
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } });
       if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
       setCameraActive(true);
@@ -235,8 +235,8 @@ export default function HostRegisterPage() {
                     <div className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-full border-2 font-bold text-sm transition-all",
                       done ? "bg-emerald-600 border-emerald-600 text-white" :
-                      active ? "bg-white border-emerald-600 text-emerald-600 shadow-md" :
-                      "bg-white border-gray-200 text-gray-400"
+                        active ? "bg-white border-emerald-600 text-emerald-600 shadow-md" :
+                          "bg-white border-gray-200 text-gray-400"
                     )}>
                       {done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
                     </div>

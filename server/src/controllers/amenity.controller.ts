@@ -1,10 +1,10 @@
 import { catchErrors } from "@/errors";
 import { AmenityService } from "@/services/amenity.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { createAmenitySchema, updateAmenitySchema } from "@/validators/amenity.validator";
 
 export default class AmenityController {
-  constructor(private readonly amenityService: AmenityService) {}
+  constructor(private readonly amenityService: AmenityService) { }
 
   // ========== AMENITY ENDPOINTS ==========
 

@@ -1,12 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-
 import React, { useState, useEffect } from 'react';
-
-import '../../../../../components/forum/style/CreatePostPage.css';
-import { forumApi } from '../../../../../lib/forumApi';
-import { toast } from 'sonner';
+import { useParams, useNavigate } from 'react-router-dom';
+import './style/CreatePostPage.css';
+import { forumApi } from '../../lib/forumApi';
+import { toast } from 'react-toastify';
 import {
   Upload,
   Eye,
@@ -18,10 +15,9 @@ import {
   Save,
   ArrowLeft
 } from 'lucide-react';
-import RichTextEditor from '../../../../../components/forum/ui/RichTextEditor';
-import PreviewModal from '../../../../../components/forum/ui/PreviewModal';
-import '../../../../../components/forum/style/Dialog.css';
-import { useParams, useRouter } from 'next/navigation';
+import RichTextEditor from './ui/RichTextEditor';
+import PreviewModal from './ui/PreviewModal';
+import '../../styles/components/modals/Dialog.css';
 
 const SUBJECTS = [
   'Kinh nghiệm cắm trại',
@@ -34,8 +30,8 @@ const SUBJECTS = [
 ];
 
 const EditPostPage = () => {
-  const { id: postId } = useParams<{ id: string }>();
-  const router = useRouter();
+  const { postId } = useParams<{ postId: string }>();
+  const navigate = useNavigate();
   
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -62,15 +58,14 @@ const EditPostPage = () => {
       try {
         setLoadingPost(true);
         const response = await forumApi.getPost(postId);
-        
         if (response?.data) {
-          const post = response.data.post;
-          console.log("Loaded post data:", post);
+          const post = response.data;
+          
           setTitle(post.title || '');
           setSlug(post.slug || '');
           setSummary(post.summary || '');
           setContent(post.content || '');
-          setCurrentCoverUrl(post.imageUrl || '');
+          setCurrentCoverUrl(post.coverImage || '');
           
           // Xử lý subject
           if (post.subject) {
@@ -90,14 +85,14 @@ const EditPostPage = () => {
         }
       } catch (err: any) {
         toast.error('Không thể tải bài viết: ' + (err?.response?.data?.error || 'Lỗi không xác định'));
-        router.push('/forum');
+        navigate('/forum');
       } finally {
         setLoadingPost(false);
       }
     };
     
     loadPost();
-  }, [postId, router]);
+  }, [postId, navigate]);
 
   // Không tự sinh slug ở FE; chỉ cập nhật title, backend sẽ auto-handle
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,7 +166,7 @@ const EditPostPage = () => {
       
       await forumApi.updatePost(postId!, formData);
       toast.success('Cập nhật bài viết thành công!');
-      router.push(`/forum/${slug}`);
+      navigate(`/forum/${slug}`);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Cập nhật bài viết thất bại!');
     } finally {
@@ -200,7 +195,7 @@ const EditPostPage = () => {
         <div className="create-post-modern-header-inner">
           <div className="create-post-modern-header-center">
             <button 
-              onClick={() => router.back()}
+              onClick={() => navigate(-1)}
               className="back-button"
               style={{
                 position: 'absolute',

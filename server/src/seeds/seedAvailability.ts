@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { MONGO_URI } from "@/constants/env";
+import { MONGO_URI } from "../constants/env";
 import { AvailabilityModel, PropertyModel, SiteModel } from "@/models";
 import mongoose from "mongoose";
 

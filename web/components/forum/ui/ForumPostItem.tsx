@@ -22,18 +22,30 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({ post, onLike, onBookmark 
 
   // Helper: lấy tên chủ đề tiếng Việt
   const getCategoryName = (cat?: string) => {
-    switch (cat) {
-      case 'math': return 'Toán học';
-      case 'programming': return 'Lập trình';
-      case 'economics': return 'Kinh tế';
-      default: return cat || 'Chủ đề khác';
-    }
+    if (!cat) return 'Chủ đề khác';
+    const names: Record<string, string> = {
+      'camping-experience': 'Kinh nghiệm cắm trại',
+      'camping-gear': 'Đồ dùng dã ngoại',
+      'beautiful-places': 'Địa điểm đẹp',
+      'outdoor-cuisine': 'Ẩm thực ngoài trời',
+      'trip-sharing': 'Chia sẻ hành trình',
+      'qna-support': 'Hỏi đáp & Hỗ trợ',
+      'other': 'Khác',
+      'kinh nghiệm cắm trại': 'Kinh nghiệm cắm trại',
+      'đồ dùng dã ngoại': 'Đồ dùng dã ngoại',
+      'địa điểm đẹp': 'Địa điểm đẹp',
+      'ẩm thực ngoài trời': 'Ẩm thực ngoài trời',
+      'chia sẻ hành trình': 'Chia sẻ hành trình',
+      'hỏi đáp & hỗ trợ': 'Hỏi đáp & Hỗ trợ',
+      'khác': 'Khác'
+    };
+    return names[cat.toLowerCase()] || cat;
   };
 
   // Helper: render badge
   const renderBadge = () => {
     if (!post.badge) return null;
-    
+
     const badgeLabels: Record<string, string> = {
       'new': 'Mới',
       'hot': 'Nổi bật',
@@ -42,14 +54,14 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({ post, onLike, onBookmark 
       'meme': 'Meme',
       'quote': 'Quote'
     };
-    
+
     return (
       <span className={`post-badge badge-${post.badge}`}>
         {badgeLabels[post.badge] || post.badge.toUpperCase()}
       </span>
     );
   };
-  
+
 
   return (
     <article
@@ -117,7 +129,7 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({ post, onLike, onBookmark 
         </div>
         <div className="post-footer-right">
           <span className="post-view-count">
-            <FiEye style={{marginRight: 3, verticalAlign: 'middle'}} /> {formatViewCount(post.viewCount || 0)}
+            <FiEye style={{ marginRight: 3, verticalAlign: 'middle' }} /> {formatViewCount(post.viewCount || 0)}
           </span>
         </div>
       </div>

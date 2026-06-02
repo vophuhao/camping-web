@@ -8,7 +8,7 @@ import {
   TOO_MANY_REQUESTS,
   UNAUTHORIZED,
   UNPROCESSABLE_CONTENT,
-} from "@/constants";
+} from "../constants";
 import AppError from "./app-error";
 
 /**

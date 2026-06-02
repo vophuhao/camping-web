@@ -1,11 +1,11 @@
 import { catchErrors } from "@/errors";
 import type { SiteService } from "@/services/site.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import { createSiteSchema, searchSiteSchema, updateSiteSchema } from "@/validators/site.validator";
 
 export default class SiteController {
-  constructor(private readonly siteService: SiteService) {}
+  constructor(private readonly siteService: SiteService) { }
 
   /**
    * Create new site within a property (host/admin only)

@@ -5,8 +5,8 @@
  * - Wrap route handler với cacheMiddleware(ttlSeconds)
  * - Dùng invalidateCache(pattern) để xóa cache khi data thay đổi
  */
-import { redisClient } from "@/config/redis";
-import { NODE_ENV } from "@/constants/env";
+import { redisClient } from "../config/redis";
+import { NODE_ENV } from "../constants/env";
 import type { NextFunction, Request, Response } from "express";
 
 const CACHE_ENABLED = NODE_ENV !== "test";
@@ -39,7 +39,7 @@ export function cacheMiddleware(ttlSeconds: number = 30) {
     res.json = (body: any) => {
       // Chỉ cache response 2xx thành công
       if (res.statusCode >= 200 && res.statusCode < 300 && redisClient.isOpen) {
-        redisClient.setEx(cacheKey, ttlSeconds, JSON.stringify(body)).catch(() => {});
+        redisClient.setEx(cacheKey, ttlSeconds, JSON.stringify(body)).catch(() => { });
       }
       res.setHeader("X-Cache", "MISS");
       return originalJson(body);

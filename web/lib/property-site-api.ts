@@ -265,7 +265,7 @@ export async function getMyProperties(
 export async function getPropertiesForAdmin(
   page = 1,
   limit = 100,
-): Promise<ApiResponse> {
+): Promise<ApiResponse<Property[]>> {
   return apiClient.get(`/properties?page=${page}&limit=${limit}`);
 }
 

@@ -8,13 +8,13 @@ import { useChatModal } from '@/store/chatstore';
 import { useCallback, useEffect, useState } from 'react';
 import ChatWindow from './chat-window';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ConversationsList() {
   const { user } = useAuthStore();
   const { socket } = useSocket();
   const { isOpen: isChatModalOpen, targetUserId, targetUserInfo, closeChat } = useChatModal();
-  
+
   const [open, setOpen] = useState(false);
   const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
@@ -72,10 +72,10 @@ export default function ConversationsList() {
         const updated = prev.map(conv =>
           conv._id === data.conversationId
             ? {
-                ...conv,
-                lastMessage: data.lastMessage,
-                lastMessageAt: data.lastMessageAt,
-              }
+              ...conv,
+              lastMessage: data.lastMessage,
+              lastMessageAt: data.lastMessageAt,
+            }
             : conv,
         );
 
@@ -137,7 +137,7 @@ export default function ConversationsList() {
   }, [open]);
 
   const startChatWithUser = async (
-    otherUserId: string, 
+    otherUserId: string,
     userInfo?: { username?: string; avatarUrl?: string; email?: string }
   ) => {
     try {
@@ -156,7 +156,7 @@ export default function ConversationsList() {
       if (res.ok) {
         const body = await res.json();
         const conversation = body.data;
-        
+
         // If we have userInfo from external trigger, enrich the conversation
         if (userInfo && (!conversation.otherParticipant || !conversation.otherParticipant.username)) {
           conversation.otherParticipant = {
@@ -173,7 +173,7 @@ export default function ConversationsList() {
             email: userInfo.email,
           };
         }
-        
+
         setSelectedConversation(conversation);
         setSearchQuery('');
         setShowSearchResults(false);
@@ -245,14 +245,14 @@ export default function ConversationsList() {
                   {conversations.length} cuộc trò chuyện
                 </p>
                 <button
-                  onClick={() => { 
-                    setOpen(false); 
-                    setSelectedConversation(null); 
+                  onClick={() => {
+                    setOpen(false);
+                    setSelectedConversation(null);
                     setSearchQuery('');
                     setShowSearchResults(false);
                   }}
                   className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
-                > 
+                >
                   <span className="sr-only">Đóng</span>
                   <svg
                     className="h-5 w-5"
@@ -381,9 +381,8 @@ export default function ConversationsList() {
                           <button
                             key={conv._id}
                             onClick={() => setSelectedConversation(conv)}
-                            className={`flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                              hasUnread ? 'bg-blue-50' : ''
-                            }`}
+                            className={`flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${hasUnread ? 'bg-blue-50' : ''
+                              }`}
                           >
                             <div className="relative flex-shrink-0">
                               {avatar ? (

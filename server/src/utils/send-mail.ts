@@ -1,4 +1,4 @@
-import { transporter } from "@/config";
+import { transporter } from "../config";
 
 type Params = {
   to: string;

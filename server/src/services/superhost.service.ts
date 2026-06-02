@@ -117,7 +117,7 @@ export class SuperhostService {
       }
       // Nếu mất Superhost → xóa ngày bắt đầu
       if (!isEligible) {
-        property.superhostSince = undefined;
+        property.superhostSince = undefined as any;
       }
 
       await property.save();

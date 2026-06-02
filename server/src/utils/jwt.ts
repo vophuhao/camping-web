@@ -1,4 +1,4 @@
-import { JWT_REFRESH_SECRET, JWT_SECRET, ROLES } from "@/constants";
+import { JWT_REFRESH_SECRET, JWT_SECRET, ROLES } from "../constants";
 import type { SessionDocument, UserDocument } from "@/models";
 import type { SignOptions, VerifyOptions } from "jsonwebtoken";
 import jwt from "jsonwebtoken";

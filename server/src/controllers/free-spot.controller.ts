@@ -1,10 +1,10 @@
 import { catchErrors } from "@/errors";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import type { FreeSpotService } from "@/services/free-spot.service";
 import { mongoIdSchema } from "@/validators";
 
 export default class FreeSpotController {
-  constructor(private readonly freeSpotService: FreeSpotService) {}
+  constructor(private readonly freeSpotService: FreeSpotService) { }
 
   getSpots = catchErrors(async (req: any, res: any) => {
     const { page, limit, search, city, terrain, author } = req.query;
@@ -142,25 +142,30 @@ export default class FreeSpotController {
       amenities,
     } = req.body;
 
+    const updateData: any = {
+      title,
+      description,
+      address,
+      city,
+      province,
+      directions,
+      terrain,
+    };
+
+    if (latitude) {
+      updateData.latitude = parseFloat(latitude);
+    }
+    if (longitude) {
+      updateData.longitude = parseFloat(longitude);
+    }
+    if (amenities) {
+      updateData.amenities = typeof amenities === "string" ? amenities.split(",") : amenities;
+    }
+
     const spot = await this.freeSpotService.updateSpot(
       id,
       userId,
-      {
-        title,
-        description,
-        address,
-        city,
-        province,
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
-        directions,
-        terrain,
-        amenities: amenities
-          ? typeof amenities === "string"
-            ? amenities.split(",")
-            : amenities
-          : undefined,
-      },
+      updateData,
       req.files as any
     );
 

@@ -1,6 +1,6 @@
 import { ErrorFactory } from "@/errors";
 import { AvailabilityModel, BookingModel } from "@/models";
-import appAssert from "@/utils/app-assert";
+import appAssert from "../utils/app-assert";
 import mongoose from "mongoose";
 
 

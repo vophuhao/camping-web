@@ -15,3 +15,4 @@ export { default as siteRoutes } from "./site.route";
 export { default as commentRoutes } from "./comment.route";
 export { default as forumRoutes } from "./forum.route";
 export { default as payoutRoutes } from "./payout.route";
+export { default as aiRoutes } from "./ai.route";

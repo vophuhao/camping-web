@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Camera, CheckCircle2, Loader2, RefreshCw, Smartphone } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function MobileCapturePage() {
   const searchParams = useSearchParams();

@@ -1,4 +1,4 @@
-import { oneWeekFromNow } from "@/utils";
+import { oneWeekFromNow } from "../utils";
 import mongoose from "mongoose";
 
 export interface SessionDocument extends mongoose.Document {

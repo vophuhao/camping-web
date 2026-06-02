@@ -213,7 +213,7 @@ export class CommentService {
 
     if (
       comment.userId.toString() !== userId.toString() &&
-      post.userId.toString() !== userId.toString()
+      (post as any).userId.toString() !== userId.toString()
     ) {
       throw new Error("Không có quyền xóa comment này.");
     }
@@ -254,27 +254,27 @@ export class CommentService {
     let newDownvotes = [...downvotes];
 
     if (voteType === "upvote") {
-      if (upvotes.includes(userId)) {
+      if (upvotes.some((id: any) => id.toString() === userId.toString())) {
         // Nếu đã upvote thì bỏ upvote
         newUpvotes = upvotes.filter(
           (id: any) => id.toString() !== userId.toString()
         );
       } else {
         // Thêm upvote và bỏ downvote nếu có
-        newUpvotes = [...upvotes, userId];
+        newUpvotes = [...upvotes, userId as any];
         newDownvotes = downvotes.filter(
           (id: any) => id.toString() !== userId.toString()
         );
       }
     } else {
-      if (downvotes.includes(userId)) {
+      if (downvotes.some((id: any) => id.toString() === userId.toString())) {
         // Nếu đã downvote thì bỏ downvote
         newDownvotes = downvotes.filter(
           (id: any) => id.toString() !== userId.toString()
         );
       } else {
         // Thêm downvote và bỏ upvote nếu có
-        newDownvotes = [...downvotes, userId];
+        newDownvotes = [...downvotes, userId as any];
         newUpvotes = upvotes.filter(
           (id: any) => id.toString() !== userId.toString()
         );
@@ -288,7 +288,7 @@ export class CommentService {
 
     // Tạo thông báo nếu vote lần đầu
     try {
-      if (voteType === "upvote" && !upvotes.includes(userId)) {
+      if (voteType === "upvote" && !upvotes.some((id: any) => id.toString() === userId.toString())) {
         const notificationService = new NotificationService();
         const post = await ForumPost.findById(comment.postId);
         if (post && (notificationService as any).createCommentLikeNotification) {

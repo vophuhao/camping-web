@@ -1,15 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-
 import React, { useState } from 'react';
-import '../../../../components/forum/style/CreatePostPage.css';
-import { forumApi } from '../../../../lib/forumApi';
+import './style/CreatePostPage.css';
+import { forumApi } from '../../lib/forumApi';
 
 import { generatePostContent, generatePostSummary, 
     getImageSuggestions, generateImage, 
-    UnsplashImage } from '../../../../lib/ai';
+    UnsplashImage } from '../../lib/ai';
 
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import {
   Upload,
   Eye,
@@ -22,9 +20,9 @@ import {
   X,
   Download
 } from 'lucide-react';
-import RichTextEditor from '../../../../components//forum/ui/RichTextEditor';
-import PreviewModal from '../../../../components/forum/ui/PreviewModal';
-import '../../../../components/forum/style/Dialog.css';
+import RichTextEditor from './ui/RichTextEditor';
+import PreviewModal from './ui/PreviewModal';
+import './style/Dialog.css';
 
 const SUBJECTS = [
   'Kinh nghiệm cắm trại',

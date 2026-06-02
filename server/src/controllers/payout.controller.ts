@@ -1,14 +1,14 @@
 import { catchErrors } from "@/errors";
 import PayoutService from "@/services/payout.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 
 export default class PayoutController {
-  constructor(private readonly payoutService: PayoutService) {}
+  constructor(private readonly payoutService: PayoutService) { }
 
   // Admin: Chạy tổng kết tháng
   runMonthlyPayout = catchErrors(async (req: any, res: any) => {
     const { month, year } = req.body;
-    const m = month || new Date().getMonth(); // previous month (0-indexed, but runMonthlyPayout expects 1-indexed)
+
     const y = year || new Date().getFullYear();
 
     // Nếu không truyền tháng, lấy tháng trước

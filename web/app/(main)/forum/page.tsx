@@ -186,12 +186,12 @@ const ForumPage: React.FC = () => {
 
         // Tạo tags mặc định ban đầu
         const defaultTags = [
-          { id: '1', name: 'Lập trình', color: '#3b82f6', count: 0 },
-          { id: '2', name: 'Toán học', color: '#10b981', count: 0 },
-          { id: '3', name: 'AI', color: '#8b5cf6', count: 0 },
-          { id: '4', name: 'Blog', color: '#f59e0b', count: 0 },
-          { id: '5', name: 'Novel', color: '#ef4444', count: 0 },
-          { id: '6', name: 'Anime', color: '#ec4899', count: 0 },
+          { id: '1', name: 'Kinh nghiệm cắm trại', color: '#3b82f6', count: 0 },
+          { id: '2', name: 'Đồ dùng dã ngoại', color: '#10b981', count: 0 },
+          { id: '3', name: 'Địa điểm đẹp', color: '#8b5cf6', count: 0 },
+          { id: '4', name: 'Ẩm thực ngoài trời', color: '#f59e0b', count: 0 },
+          { id: '5', name: 'Chia sẻ hành trình', color: '#ef4444', count: 0 },
+          { id: '6', name: 'Hỏi đáp & Hỗ trợ', color: '#ec4899', count: 0 },
           { id: '7', name: 'Khác', color: '#6b7280', count: 0 }
         ];
         setTags(defaultTags);
@@ -240,12 +240,12 @@ const ForumPage: React.FC = () => {
     } else {
       // Giữ lại tags mặc định nếu không có tags thực tế
       const defaultTags = [
-        { id: '1', name: 'Lập trình', color: '#3b82f6', count: 0 },
-        { id: '2', name: 'Toán học', color: '#10b981', count: 0 },
-        { id: '3', name: 'AI', color: '#8b5cf6', count: 0 },
-        { id: '4', name: 'Blog', color: '#f59e0b', count: 0 },
-        { id: '5', name: 'Novel', color: '#ef4444', count: 0 },
-        { id: '6', name: 'Anime', color: '#ec4899', count: 0 },
+        { id: '1', name: 'Kinh nghiệm cắm trại', color: '#3b82f6', count: 0 },
+        { id: '2', name: 'Đồ dùng dã ngoại', color: '#10b981', count: 0 },
+        { id: '3', name: 'Địa điểm đẹp', color: '#8b5cf6', count: 0 },
+        { id: '4', name: 'Ẩm thực ngoài trời', color: '#f59e0b', count: 0 },
+        { id: '5', name: 'Chia sẻ hành trình', color: '#ef4444', count: 0 },
+        { id: '6', name: 'Hỏi đáp & Hỗ trợ', color: '#ec4899', count: 0 },
         { id: '7', name: 'Khác', color: '#6b7280', count: 0 }
       ];
       setTags(defaultTags);

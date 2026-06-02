@@ -44,7 +44,8 @@
   min-width: 0;
   width: 100%;
   display: block;
-  padding-right: 8.5rem; /* Đủ chỗ cho nút bên phải */
+  padding-right: 8.5rem;
+  /* Đủ chỗ cho nút bên phải */
   border: 1.5px solid var(--border, #e5e7eb);
   outline: none;
   background: var(--bg-secondary, #f3f4f6);
@@ -57,26 +58,31 @@
   font-family: inherit;
   box-shadow: 0 1px 4px #6366f111;
 }
+
 .forum-create-input::placeholder {
   color: var(--text-secondary, #a1a1aa);
   opacity: 1;
   font-size: 1.05rem;
 }
+
 .forum-create-input:focus {
   border: 1.5px solid var(--primary, #2563eb);
   background: var(--bg-primary, #fff);
   box-shadow: 0 0 0 3px var(--primary-alpha, #2563eb22);
   color: var(--text-primary, #18181b);
 }
+
 .forum-create-input:hover {
   background: var(--bg-primary, #fff);
   border: 1.5px solid var(--primary, #2563eb);
 }
+
 [data-theme="dark"] .forum-create-input {
   background: #23232b;
   color: #f3f4f6;
   border-color: #27272a;
 }
+
 [data-theme="dark"] .forum-create-input:focus,
 [data-theme="dark"] .forum-create-input:hover {
   background: #18181b;
@@ -119,20 +125,21 @@
     padding: 0.4rem 0.7rem;
     border-radius: 6px;
   }
-  
+
   /* Hide text, show only icon on mobile */
   .forum-create-btn-inside {
     padding: 0.5rem;
     min-width: 40px;
     justify-content: center;
   }
-  
+
   .forum-create-btn-inside span {
     display: none;
   }
-  
+
   .forum-create-input {
-    padding-right: 3rem; /* Reduce padding for smaller button */
+    padding-right: 3rem;
+    /* Reduce padding for smaller button */
   }
 }
 
@@ -142,9 +149,9 @@
     min-width: 36px;
     font-size: 0.9rem;
   }
-  
+
   .forum-create-input {
     padding-right: 2.5rem;
     font-size: 1rem;
   }
-} 
+}

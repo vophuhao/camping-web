@@ -7,7 +7,7 @@ module.exports = {
     "^.+\\.ts$": "ts-jest",
   },
   moduleNameMapping: {
-    "^@/(.*)$": "<rootDir>/src/$1",
+    "^../(.*)$": "<rootDir>/src/$1",
   },
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts", "!src/seeds/**", "!src/index.ts"],

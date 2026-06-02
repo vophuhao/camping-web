@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { MONGO_URI } from "@/constants/env";
+import { MONGO_URI } from "../constants/env";
 import {
   AmenityModel,
   AvailabilityModel,
@@ -10,7 +10,7 @@ import {
   SiteModel,
   UserModel,
 } from "@/models";
-import { hashValue } from "@/utils/bcrypt";
+import { hashValue } from "../utils/bcrypt";
 import mongoose from "mongoose";
 
 // ===== AMENITIES DATA =====
@@ -1033,7 +1033,7 @@ async function seedDatabase() {
     await mongoose.connection.db
       ?.collection("availabilities")
       .drop()
-      .catch(() => {});
+      .catch(() => { });
     await AmenityModel.deleteMany({});
     await ReviewModel.deleteMany({});
     await BookingModel.deleteMany({});
@@ -1172,17 +1172,17 @@ async function seedDatabase() {
         // For undesignated, all sites have same capacity
         const siteCapacity = isUndesignated
           ? {
-              maxGuests: data.capacity.maxGuests,
-              maxAdults: data.capacity.maxGuests,
-              maxPets: data.capacity.maxPets || 0,
-              maxVehicles: data.capacity.maxVehicles || 1,
-            }
+            maxGuests: data.capacity.maxGuests,
+            maxAdults: data.capacity.maxGuests,
+            maxPets: data.capacity.maxPets || 0,
+            maxVehicles: data.capacity.maxVehicles || 1,
+          }
           : {
-              maxGuests: Math.max(1, data.capacity.maxGuests + Math.floor(Math.random() * 3) - 1),
-              maxAdults: data.capacity.maxGuests,
-              maxPets: data.capacity.maxPets || 0,
-              maxVehicles: data.capacity.maxVehicles || 1,
-            };
+            maxGuests: Math.max(1, data.capacity.maxGuests + Math.floor(Math.random() * 3) - 1),
+            maxAdults: data.capacity.maxGuests,
+            maxPets: data.capacity.maxPets || 0,
+            maxVehicles: data.capacity.maxVehicles || 1,
+          };
 
         const site = await SiteModel.create({
           name: isUndesignated
@@ -1564,7 +1564,7 @@ async function seedDatabase() {
             template.ratings.value +
             template.ratings.communication) /
             5) *
-            10
+          10
         ) / 10;
 
       const review: any = {

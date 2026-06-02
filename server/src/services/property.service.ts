@@ -9,7 +9,7 @@ import {
   type PropertyAvailabilityDocument,
   type PropertyDocument,
 } from "@/models";
-import appAssert from "@/utils/app-assert";
+import appAssert from "../utils/app-assert";
 import type {
   CreatePropertyInput,
   SearchPropertyInput,

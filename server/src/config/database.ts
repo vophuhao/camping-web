@@ -1,4 +1,4 @@
-import { MONGO_URI, NODE_ENV } from "@/constants/env";
+import { MONGO_URI, NODE_ENV } from "../constants/env";
 import mongoose from "mongoose";
 
 const connectToDatabase = async () => {

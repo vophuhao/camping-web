@@ -6,7 +6,7 @@ import { io } from "socket.io-client";
 type Conversation = any;
 type Message = any;
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555";
+const API = process.env.NEXT_PUBLIC_API_URL;
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || API;
 
 export default function useAdminSupportChat() {

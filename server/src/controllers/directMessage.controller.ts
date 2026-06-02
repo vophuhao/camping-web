@@ -1,9 +1,9 @@
 import { catchErrors, ErrorFactory } from "@/errors";
 import DirectMessageService from "@/services/directMessage.service";
-import { appAssert, ResponseUtil } from "@/utils";
+import { appAssert, ResponseUtil } from "../utils";
 
 export default class DirectMessageController {
-  constructor(private readonly messageService: DirectMessageService) {}
+  constructor(private readonly messageService: DirectMessageService) { }
 
   /**
    * POST /messages/conversations
@@ -35,7 +35,7 @@ export default class DirectMessageController {
 
     const { conversationId } = req.params;
 
-    const { message, messageType  } = req.body.payload;
+    const { message, messageType } = req.body.payload;
 
     const newMessage = await this.messageService.sendMessage(
       conversationId!,

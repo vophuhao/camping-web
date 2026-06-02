@@ -1,4 +1,4 @@
-import { AppErrorCode } from "@/constants";
+import { AppErrorCode } from "../constants";
 
 // response.json() types
 export interface ApiResponse<T = unknown> {

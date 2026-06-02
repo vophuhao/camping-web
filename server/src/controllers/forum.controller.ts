@@ -1,10 +1,11 @@
 import { catchErrors } from "@/errors";
+import 'multer';
 import type {
   CreatePostInput,
   ForumService,
   UpdatePostInput,
 } from "@/services/forum.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   createPostSchema,
@@ -235,7 +236,7 @@ export default class ForumController {
    * Get trending posts
    * @route GET /api/forum/trending
    */
-  getTrending = catchErrors(async (req: any, res: any) => {
+  getTrending = catchErrors(async (_req: any, res: any) => {
     const trending = await this.forumService.getTrending();
 
     return ResponseUtil.success(
@@ -249,7 +250,7 @@ export default class ForumController {
    * Get forum categories
    * @route GET /api/forum/categories
    */
-  getCategories = catchErrors(async (req: any, res: any) => {
+  getCategories = catchErrors(async (_req: any, res: any) => {
     const categories = await this.forumService.getCategories();
 
     return ResponseUtil.success(

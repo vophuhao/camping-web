@@ -8,11 +8,11 @@ import {
   ResponseUtil,
   setAuthCookies,
   verifyToken,
-} from "@/utils";
+} from "../utils";
 import { emailSchema, loginSchema, registerSchema } from "@/validators";
 
 export default class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   /**
    * Send email verification
@@ -101,7 +101,7 @@ export default class AuthController {
 
     if (payload) {
       // remove session from db
-      await this.authService.logoutUser(payload.sessionId as string);
+      await this.authService.logoutUser(payload.sessionId.toString());
     }
 
     // clear cookies

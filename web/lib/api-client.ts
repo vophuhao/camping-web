@@ -36,11 +36,11 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         console.log('Refresh token failed: ', refreshError);
-        if (typeof window !== 'undefined') {
-          window.location.href = '/sign-in';
-        } else {
-          redirect('/sign-in');
-        }
+        // if (typeof window !== 'undefined') {
+        //   window.location.href = '/sign-in';
+        // } else {
+        //   redirect('/sign-in');
+        // }
 
         return Promise.reject(refreshError);
       }
@@ -52,9 +52,9 @@ apiClient.interceptors.response.use(
         toast.error('Tài khoản của bạn đã bị khóa');
         // Redirect to sign-in after a short delay
         const res = await logout();
-           if (res.success) {
-              window.location.href = '/sign-in';
-           }
+        if (res.success) {
+          window.location.href = '/sign-in';
+        }
       } else {
         redirect('/sign-in');
       }

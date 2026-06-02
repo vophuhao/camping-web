@@ -1,29 +1,25 @@
-/* eslint-disable prefer-const */
-/* eslint-disable react-hooks/rules-of-hooks */
-"use client";
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaHeart, FaBookmark } from 'react-icons/fa';
 import { FiArrowLeft, FiMessageSquare } from 'react-icons/fi';
-import { forumApi } from '../../../../lib/forumApi';
-// import { userApi } from '../../services/api/user';
-import  formatDistanceToNow  from 'date-fns/formatDistanceToNow';
-import  vi  from 'date-fns/locale/vi';
-import { toast } from 'sonner';
-import Loader from "../../../../components/forum/ui/Loader";
-import ReportButton from '../../../../components/forum/ui/ReportButton';
-import CommentList from '../../../../components/forum/ui/CommentList';
-import "../../../../components/forum/style/ForumPostDetail.css";
-import { ConfirmDialog } from '../../../../components/forum/ui/ConfirmDialog';
-import RichTextEditor from '../../../../components/forum/ui/RichTextEditor';
-import { useAuthStore } from '@/store/auth.store';
+import { forumApi } from '../../lib/forumApi';
+import { userApi } from '../../services/api/user';
+import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+import vi from 'date-fns/locale/vi';
+import { toast } from 'react-toastify';
+import Loader from './ui/Loader';
+import ReportButton from './ui/ReportButton';
+import CommentList from './ui/CommentList';
+import { api } from '../../services/api/config';
+// import styled from 'styled-components';
+import '../../styles/pages/forum/ForumPostDetail.css';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import RichTextEditor from './ui/RichTextEditor';
 
 const ForumPostDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -58,14 +54,14 @@ const ForumPostDetail: React.FC = () => {
   // Thêm ref để track view đã được tăng cho post này
   const viewedPostsRef = React.useRef<Set<string>>(new Set());
   const hasScrolledToCommentRef = React.useRef(false);
-  const { user } = useAuthStore();
+
   if (!slug) {
     return <div style={{ padding: 32, textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>Không tìm thấy bài viết hoặc đường dẫn không hợp lệ.</div>;
   }
 
   // Helper function to get current user
   const getCurrentUser = () => {
-    const userStr = user?._id ? JSON.stringify(user) : null;
+    const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
         return JSON.parse(userStr);
@@ -146,13 +142,13 @@ const ForumPostDetail: React.FC = () => {
         }
 
         const postData = response.data;
-        const currentUserId = user?._id;
-
+        const currentUserId = localStorage.getItem('userId');
+        const currentUser = getCurrentUser();
 
         // Kiểm tra quyền xem bài viết
         if (postData.visibility === 'private') {
           // Nếu không phải người đăng bài
-          if (!user || postData.userId._id !== currentUserId) {
+          if (!currentUserId || postData.userId._id !== currentUserId) {
             toast.error('Bạn không có quyền xem bài viết này');
             // navigate('/forum'); // Tạm thời disable
             return;
@@ -164,63 +160,62 @@ const ForumPostDetail: React.FC = () => {
           viewedPostsRef.current.add(postData._id);
         }
 
-        setPost(postData.post);
-
-        setIsLiked(postData.post.likes?.includes(user?._id) || false);
-        setIsBookmarked(postData.post.savedBy?.includes(user?._id) || false);
-        setLikeCount(postData.post.likes?.length);
-        setSaveCount(postData.post.savedBy?.length);
-        setCommentCount(postData.post.commentCount);
-        setViewCount(postData.post.viewCount);
+        setPost(postData);
+        setIsLiked(postData.likes?.includes(currentUser?._id) || false);
+        setIsBookmarked(postData.savedBy?.includes(currentUser?._id) || false);
+        setLikeCount(postData.likes?.length || 0);
+        setSaveCount(postData.savedBy?.length || 0);
+        setCommentCount(postData.comments?.length || 0);
+        setViewCount(postData.viewCount || 0);
 
         // Kiểm tra follow status và lấy thông tin follow
-        //  if (postData.userId) {
-        //    try {
-        //      // Load author stats từ API (includes updated level)
-        //      const authorId = postData.userId._id || postData.userId;
-        //      const publicStats = await userApi.getUserPublicStats(authorId);
+        if (postData.userId) {
+          try {
+            // Load author stats từ API (includes updated level)
+            const authorId = postData.userId._id || postData.userId;
+            const publicStats = await userApi.getUserPublicStats(authorId);
 
-        //      // Update author object with latest level data
-        //      if (publicStats.level !== undefined && postData.userId) {
-        //        postData.userId.level = publicStats.level;
-        //        if (publicStats.levelTitle !== undefined) {
-        //          postData.userId.levelTitle = publicStats.levelTitle;
-        //        }
-        //        // Update post state to reflect new level
-        //        setPost({ ...postData });
-        //      }
+            // Update author object with latest level data
+            if (publicStats.level !== undefined && postData.userId) {
+              postData.userId.level = publicStats.level;
+              if (publicStats.levelTitle !== undefined) {
+                postData.userId.levelTitle = publicStats.levelTitle;
+              }
+              // Update post state to reflect new level
+              setPost({ ...postData });
+            }
 
-        //      setAuthorStats({
-        //        documentsCount: publicStats.documentsCount ?? 0,
-        //        postsCount: publicStats.postsCount ?? 0,
-        //        points: publicStats.points ?? 0,
-        //        followersCount: publicStats.followersCount ?? 0,
-        //      });
+            setAuthorStats({
+              documentsCount: publicStats.documentsCount ?? 0,
+              postsCount: publicStats.postsCount ?? 0,
+              points: publicStats.points ?? 0,
+              followersCount: publicStats.followersCount ?? 0,
+            });
 
-        //      // Lấy followers
-        //     //  const followersResponse = await api.get(`/users/${authorId}/followers`);
-        //     //  const followers = followersResponse.data.followers || [];
-        //     //  const actualFollowersCount = publicStats.followersCount ?? followers.length;
-        //     //  setFollowersCount(actualFollowersCount);
+            // Lấy followers
+            const followersResponse = await api.get(`/users/${authorId}/followers`);
+            const followers = followersResponse.data.followers || [];
+            const actualFollowersCount = publicStats.followersCount ?? followers.length;
+            setFollowersCount(actualFollowersCount);
 
-        //      // Kiểm tra currentUser có follow author không
-        //     //  if (currentUser && authorId !== currentUser._id) {
-        //     //    setIsFollowing(followers.some((follower: any) => follower._id === currentUser._id));
-        //     //  }
-        //    } catch (error) {
-        //      console.error('Error loading author stats:', error);
-        //      // Fallback nếu không load được stats
-        //      setAuthorStats({
-        //        documentsCount: postData.userId.stats?.documentsCount || 0,
-        //        postsCount: postData.userId.stats?.postsCount || 0,
-        //        points: postData.userId.points || 0,
-        //        followersCount: 0,
-        //      });
-        //    }
+            // Kiểm tra currentUser có follow author không
+            if (currentUser && authorId !== currentUser._id) {
+              setIsFollowing(followers.some((follower: any) => follower._id === currentUser._id));
+            }
+          } catch (error) {
+            console.error('Error loading author stats:', error);
+            // Fallback nếu không load được stats
+            setAuthorStats({
+              documentsCount: postData.userId.stats?.documentsCount || 0,
+              postsCount: postData.userId.stats?.postsCount || 0,
+              points: postData.userId.points || 0,
+              followersCount: 0,
+            });
+          }
 
-        //    // Load related posts
-        //    loadRelatedPosts(postData);
-        //  }
+          // Load related posts
+          loadRelatedPosts(postData);
+        }
       } catch (error) {
         console.error('Error fetching post:', error);
         toast.error('Không thể tải bài viết');
@@ -301,6 +296,11 @@ const ForumPostDetail: React.FC = () => {
   }, [post, loading, commentCount]);
 
   const handleLike = async () => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      toast.error('Vui lòng đăng nhập để thích bài viết');
+      return;
+    }
 
     try {
       // Optimistic update - cập nhật UI ngay lập tức
@@ -351,43 +351,48 @@ const ForumPostDetail: React.FC = () => {
       return;
     }
 
-    // try {
-    //   // Optimistic update
-    //   const newIsFollowing = !isFollowing;
-    //   const newFollowersCount = newIsFollowing ? followersCount + 1 : Math.max(0, followersCount - 1);
+    try {
+      // Optimistic update
+      const newIsFollowing = !isFollowing;
+      const newFollowersCount = newIsFollowing ? followersCount + 1 : Math.max(0, followersCount - 1);
 
-    //   setIsFollowing(newIsFollowing);
-    //   setFollowersCount(newFollowersCount);
+      setIsFollowing(newIsFollowing);
+      setFollowersCount(newFollowersCount);
 
-    //   let response;
-    //   if (isFollowing) {
-    //     // Unfollow
-    //     response = await api.delete(`/users/${author._id}/follow`);
-    //   } else {
-    //     // Follow
-    //     response = await api.post(`/users/${author._id}/follow`);
-    //   }
+      let response;
+      if (isFollowing) {
+        // Unfollow
+        response = await api.delete(`/users/${author._id}/follow`);
+      } else {
+        // Follow
+        response = await api.post(`/users/${author._id}/follow`);
+      }
 
-    //   if (response.status === 200 || response.status === 201) {
-    //     const data = response.data;
-    //     toast.success(data.message || (isFollowing ? 'Đã hủy theo dõi' : 'Đã theo dõi'));
-    //   } else {
-    //     // Rollback nếu API thất bại
-    //     setIsFollowing(isFollowing);
-    //     setFollowersCount(followersCount);
-    //     const errorData = response.data;
-    //     toast.error(errorData.error || 'Có lỗi khi thực hiện thao tác');
-    //   }
-    // } catch (error) {
-    //   // Rollback nếu có lỗi
-    //   setIsFollowing(isFollowing);
-    //   setFollowersCount(followersCount);
-    //   console.error('Follow error:', error);
-    //   toast.error('Có lỗi khi thực hiện thao tác');
-    // }
+      if (response.status === 200 || response.status === 201) {
+        const data = response.data;
+        toast.success(data.message || (isFollowing ? 'Đã hủy theo dõi' : 'Đã theo dõi'));
+      } else {
+        // Rollback nếu API thất bại
+        setIsFollowing(isFollowing);
+        setFollowersCount(followersCount);
+        const errorData = response.data;
+        toast.error(errorData.error || 'Có lỗi khi thực hiện thao tác');
+      }
+    } catch (error) {
+      // Rollback nếu có lỗi
+      setIsFollowing(isFollowing);
+      setFollowersCount(followersCount);
+      console.error('Follow error:', error);
+      toast.error('Có lỗi khi thực hiện thao tác');
+    }
   };
 
   const handleBookmark = async () => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      toast.error('Vui lòng đăng nhập để lưu bài viết');
+      return;
+    }
 
     try {
       // Optimistic update - cập nhật UI ngay lập tức
@@ -501,7 +506,7 @@ const ForumPostDetail: React.FC = () => {
     try {
       await forumApi.deletePost(post._id);
       toast.success('Đã xóa bài viết');
-      router.push('/forum');
+      navigate('/forum');
     } catch (error) {
       toast.error('Xóa bài viết thất bại');
     }
@@ -522,13 +527,15 @@ const ForumPostDetail: React.FC = () => {
       </div>
     );
   }
-  const author = post.userId;
+
+  const author = post.userId && typeof post.userId === 'object' ? post.userId : null;
   const avatarUrl = author?.avatarUrl || '/unknown-avatar.jpg';
   const authorName = author?.name || author?.username || 'User';
   let postTime = 'Không xác định';
   if (post.createdAt && !isNaN(new Date(post.createdAt).getTime())) {
     postTime = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi });
   }
+
   return (
     <div className="forum-post-detail">
       <div className="forum-post-detail-article">
@@ -537,7 +544,7 @@ const ForumPostDetail: React.FC = () => {
             {/* Nút quay lại nhỏ gọn trong card */}
             <button
               className="back-button-compact"
-              onClick={() => router.back()}
+              onClick={() => navigate(-1)}
               aria-label="Quay lại"
               style={{ position: 'absolute', top: 18, left: 18, zIndex: 2 }}
             >
@@ -558,7 +565,7 @@ const ForumPostDetail: React.FC = () => {
             {/* Header */}
             <header className="forum-post-detail-header">
               <div className="forum-post-detail-author-row">
-                <Link href={`/user/${author?._id || ''}`} className="forum-post-detail-avatar-link">
+                <Link to={`/user/${author?._id || ''}`} className="forum-post-detail-avatar-link">
                   <img
                     src={avatarUrl}
                     alt={authorName}
@@ -575,13 +582,13 @@ const ForumPostDetail: React.FC = () => {
               </div>
               <div className="forum-post-detail-header-actions">
                 {(() => {
-
-                  return user && author && user._id === author._id && !isEditing;
+                  const currentUser = getCurrentUser();
+                  return currentUser && author && currentUser._id === author._id && !isEditing;
                 })() && (
                     <>
                       <button
                         className="forum-post-detail-edit-btn"
-                        onClick={() => router.push(`/forum/edit/${post.slug}`)}
+                        onClick={() => navigate(`/forum/edit/${post._id}`)}
                         style={{ marginRight: '8px' }}
                       >
                         Chỉnh sửa
@@ -623,7 +630,7 @@ const ForumPostDetail: React.FC = () => {
                     {tagsArray.map((tag: string, index: number) => (
                       <Link
                         key={index}
-                        href={`/forum?tag=${encodeURIComponent(typeof tag === 'string' ? tag : String(tag))}`}
+                        to={`/forum?tag=${encodeURIComponent(typeof tag === 'string' ? tag : String(tag))}`}
                         className="forum-post-detail-category other clickable-tag"
                       >
                         {typeof tag === 'string' ? tag : String(tag)}
@@ -633,7 +640,7 @@ const ForumPostDetail: React.FC = () => {
                 ) : null;
               })()}
               <span className="forum-post-detail-view">{viewCount} lượt xem</span>
-              <span className="forum-post-detail-badge">{post.commentCount} bình luận</span>
+              <span className="forum-post-detail-badge">{commentCount} bình luận</span>
               <span className="forum-post-detail-badge">{likeCount} lượt thích</span>
               <span className={`forum-post-detail-visibility-badge ${post.visibility === 'private' ? 'private' : 'public'}`}>{post.visibility === 'private' ? 'Riêng tư' : 'Công khai'}</span>
             </div>
@@ -802,12 +809,12 @@ const ForumPostDetail: React.FC = () => {
             {/* Header */}
             <div className="author-header">
               <div className="author-avatar-container">
-                <Link href={`/profile/${author?.username || author?._id}`} className="author-avatar-link">
+                <Link to={`/profile/${author?.username || author?._id}`} className="author-avatar-link">
                   <img src={avatarUrl} alt={authorName} className="author-avatar" />
                 </Link>
               </div>
               <div className="author-name-container">
-                <Link href={`/profile/${author?.username || author?._id}`} className="author-name-link">
+                <Link to={`/profile/${author?.username || author?._id}`} className="author-name-link">
                   <h3 className="author-name">{authorName}</h3>
                 </Link>
               </div>
@@ -885,8 +892,8 @@ const ForumPostDetail: React.FC = () => {
 
             {/* Actions - chỉ hiện khi không phải người đăng bài */}
             {(() => {
-
-              const isOwnPost = user && author && user._id === author._id;
+              const currentUser = getCurrentUser();
+              const isOwnPost = currentUser && author && currentUser._id === author._id;
 
               if (isOwnPost) {
                 return null; // Ẩn hoàn toàn nếu là người đăng bài
@@ -932,7 +939,7 @@ const ForumPostDetail: React.FC = () => {
 
                   return (
                     <Link
-                      href={`/forum/${postSlug}`}
+                      to={`/forum/${postSlug}`}
                       key={relatedPost._id}
                       className="related-post-item"
                     >
@@ -979,7 +986,7 @@ const ForumPostDetail: React.FC = () => {
           <CommentList
             targetId={post._id}
             onCommentCountChange={handleCommentCountChange}
-            // authorId={post.userId._id}
+            authorId={post.userId._id}
             commentApi={forumApi}
           />
         </div>

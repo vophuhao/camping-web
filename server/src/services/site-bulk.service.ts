@@ -35,7 +35,7 @@ export class SiteBulkService {
 
     // Force siteType to undesignated
     appAssert(
-      siteConfig.siteType === "undesignated",
+      (siteConfig as any).siteType === "undesignated",
       ErrorFactory.badRequest("Phương thức này chỉ dành cho undesignated sites")
     );
 
@@ -77,7 +77,7 @@ export class SiteBulkService {
 
     return {
       groupId,
-      sites: createdSites,
+      sites: createdSites as unknown as SiteDocument[],
       totalCreated: createdSites.length,
     };
   }
@@ -103,7 +103,7 @@ export class SiteBulkService {
     appAssert(sitesInGroup.length > 0, ErrorFactory.resourceNotFound("Undesignated group"));
 
     // Verify ownership (check first site's property)
-    const property = sitesInGroup[0].property as any;
+    const property = sitesInGroup[0]!.property as any;
     appAssert(
       property.host.toString() === hostId,
       ErrorFactory.forbidden("Bạn không có quyền chỉnh sửa group này")
@@ -148,7 +148,7 @@ export class SiteBulkService {
     appAssert(sitesInGroup.length > 0, ErrorFactory.resourceNotFound("Undesignated group"));
 
     // Verify ownership
-    const property = sitesInGroup[0].property as any;
+    const property = sitesInGroup[0]!.property as any;
     appAssert(
       property.host.toString() === hostId,
       ErrorFactory.forbidden("Bạn không có quyền xóa group này")

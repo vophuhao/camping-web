@@ -667,13 +667,13 @@ export class BookingService {
   /**
    * Check availability helper (dùng trong regular flow)
    */
-  private async checkAvailability(
-    siteId: string,
-    checkIn: string,
-    checkOut: string
-  ): Promise<boolean> {
-    return this.checkAvailabilityInSession(siteId, checkIn, checkOut, null);
-  }
+  // private async checkAvailability(
+  //   siteId: string,
+  //   checkIn: string,
+  //   checkOut: string
+  // ): Promise<boolean> {
+  //   return this.checkAvailabilityInSession(siteId, checkIn, checkOut, null);
+  // }
 
   /**
    * Check availability với optional session (dùng trong transaction để atomic)
@@ -756,7 +756,7 @@ export class BookingService {
       cleaningFee = 0,
       petFee = 0,
       additionalGuestFee = 0,
-      vehicleFee = 0,
+      // vehicleFee = 0,
     } = site.pricing;
 
     // Calculate subtotal day-by-day
@@ -778,7 +778,7 @@ export class BookingService {
         const seasonalRate = site.pricing.seasonalPricing.find((season: any) => {
           const seasonStart = new Date(season.startDate);
           const seasonEnd = new Date(season.endDate);
-          
+
           // Compare dates without time
           const currentZero = new Date(currentDate);
           currentZero.setHours(0, 0, 0, 0);

@@ -13,19 +13,17 @@ export const createCommentSchema = z.object({
     .nullable(),
 });
 
-// Validator for getting comments by post
 export const getCommentsByPostSchema = z.object({
   page: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).default(1))
-    .optional(),
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).default(1)),
   pageSize: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).max(100).default(10))
     .optional()
-
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).max(100).default(10)),
 });
 
 // Validator for voting on a comment

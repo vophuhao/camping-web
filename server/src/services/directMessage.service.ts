@@ -337,4 +337,35 @@ export default class DirectMessageService {
 
     return totalUnread;
   }
+
+  /**
+   * React to a message (stub/skeleton implementation)
+   */
+  async reactToMessage(data: { messageId: string; userId: string; emoji: string }) {
+    return {
+      success: true,
+      data: {
+        messageId: data.messageId,
+        userId: data.userId,
+        emoji: data.emoji,
+      },
+    };
+  }
+
+  /**
+   * Delete message (mark as deleted)
+   */
+  async deleteMessage(messageId: string, userId: string) {
+    const msg = await Message.findById(messageId);
+    if (!msg) {
+      throw ErrorFactory.resourceNotFound("Message");
+    }
+    if (msg.senderId.toString() !== userId) {
+      throw ErrorFactory.forbidden("Bạn không có quyền xóa tin nhắn này");
+    }
+    msg.isDeleted = true;
+    msg.deletedAt = new Date();
+    await msg.save();
+    return { success: true, message: "Đã xóa tin nhắn" };
+  }
 }

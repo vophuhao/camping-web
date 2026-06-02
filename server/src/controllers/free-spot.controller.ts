@@ -142,25 +142,30 @@ export default class FreeSpotController {
       amenities,
     } = req.body;
 
+    const updateData: any = {
+      title,
+      description,
+      address,
+      city,
+      province,
+      directions,
+      terrain,
+    };
+
+    if (latitude) {
+      updateData.latitude = parseFloat(latitude);
+    }
+    if (longitude) {
+      updateData.longitude = parseFloat(longitude);
+    }
+    if (amenities) {
+      updateData.amenities = typeof amenities === "string" ? amenities.split(",") : amenities;
+    }
+
     const spot = await this.freeSpotService.updateSpot(
       id,
       userId,
-      {
-        title,
-        description,
-        address,
-        city,
-        province,
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
-        directions,
-        terrain,
-        amenities: amenities
-          ? typeof amenities === "string"
-            ? amenities.split(",")
-            : amenities
-          : undefined,
-      },
+      updateData,
       req.files as any
     );
 

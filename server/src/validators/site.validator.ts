@@ -1,63 +1,63 @@
 import { z } from "zod";
 
 // Capacity sub-schema
-const capacitySchema = z.object({
-  maxGuests: z.number().int().min(1).max(100),
-  maxAdults: z.number().int().min(0).optional(),
-  maxChildren: z.number().int().min(0).optional(),
-  maxInfants: z.number().int().min(0).optional(),
-  maxPets: z.number().int().min(0).optional(),
-  maxVehicles: z.number().int().min(0).optional(),
-  maxTents: z.number().int().min(0).optional(),
-  maxRVs: z.number().int().min(0).optional(),
-  rvMaxLength: z.number().min(0).optional(), // feet
+// const capacitySchema = z.object({
+//   maxGuests: z.number().int().min(1).max(100),
+//   maxAdults: z.number().int().min(0).optional(),
+//   maxChildren: z.number().int().min(0).optional(),
+//   maxInfants: z.number().int().min(0).optional(),
+//   maxPets: z.number().int().min(0).optional(),
+//   maxVehicles: z.number().int().min(0).optional(),
+//   maxTents: z.number().int().min(0).optional(),
+//   maxRVs: z.number().int().min(0).optional(),
+//   rvMaxLength: z.number().min(0).optional(), // feet
 
-  // Concurrent Bookings (designated vs undesignated)
-  // 1 = designated (only 1 booking at a time)
-  // 2+ = undesignated (multiple concurrent bookings, "X sites left")
-  maxConcurrentBookings: z.number().int().min(1).max(100).default(1),
-});
+//   // Concurrent Bookings (designated vs undesignated)
+//   // 1 = designated (only 1 booking at a time)
+//   // 2+ = undesignated (multiple concurrent bookings, "X sites left")
+//   maxConcurrentBookings: z.number().int().min(1).max(100).default(1),
+// });
 
 // Pricing sub-schema
-const pricingSchema = z.object({
-  basePrice: z.number().min(0),
-  weekendPrice: z.number().min(0).optional(),
-  currency: z.string().default("VND"),
-  seasonalPricing: z
-    .array(
-      z.object({
-        name: z.string().max(100),
-        startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
-        endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        price: z.number().min(0),
-      })
-    )
-    .optional(),
-  discounts: z
-    .object({
-      weekly: z.number().min(0).max(100).optional(), // percentage
-      monthly: z.number().min(0).max(100).optional(),
-    })
-    .optional(),
-  fees: z
-    .object({
-      cleaningFee: z.number().min(0).optional(),
-      petFee: z.number().min(0).optional(),
-      extraGuestFee: z.number().min(0).optional(),
-      extraVehicleFee: z.number().min(0).optional(),
-    })
-    .optional(),
-});
+// const pricingSchema = z.object({
+//   basePrice: z.number().min(0),
+//   weekendPrice: z.number().min(0).optional(),
+//   currency: z.string().default("VND"),
+//   seasonalPricing: z
+//     .array(
+//       z.object({
+//         name: z.string().max(100),
+//         startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+//         endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+//         price: z.number().min(0),
+//       })
+//     )
+//     .optional(),
+//   discounts: z
+//     .object({
+//       weekly: z.number().min(0).max(100).optional(), // percentage
+//       monthly: z.number().min(0).max(100).optional(),
+//     })
+//     .optional(),
+//   fees: z
+//     .object({
+//       cleaningFee: z.number().min(0).optional(),
+//       petFee: z.number().min(0).optional(),
+//       extraGuestFee: z.number().min(0).optional(),
+//       extraVehicleFee: z.number().min(0).optional(),
+//     })
+//     .optional(),
+// });
 
 // Booking settings sub-schema
-const bookingSettingsSchema = z.object({
-  minimumNights: z.number().int().min(1).default(1),
-  maximumNights: z.number().int().min(1).optional(),
-  checkInTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
-  checkOutTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-  allowInstantBook: z.boolean().default(false),
-  requireApproval: z.boolean().default(true),
-});
+// const bookingSettingsSchema = z.object({
+//   minimumNights: z.number().int().min(1).default(1),
+//   maximumNights: z.number().int().min(1).optional(),
+//   checkInTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
+//   checkOutTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+//   allowInstantBook: z.boolean().default(false),
+//   requireApproval: z.boolean().default(true),
+// });
 
 // Validator cho tạo site
 export const createSiteSchema = z.object({

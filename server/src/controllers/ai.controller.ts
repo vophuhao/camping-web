@@ -1,5 +1,4 @@
 import { catchErrors } from "@/errors";
-import { ResponseUtil } from "@/utils";
 import axios from "axios";
 
 // Curated list of high-quality Unsplash camping images as fallback
@@ -178,11 +177,11 @@ Yêu cầu:
     }
   });
 
-  imageSuggestions = catchErrors(async (req, res) => {
+  imageSuggestions = catchErrors(async (_req, res) => {
     return res.json({ success: true, images: FALLBACK_CAMPING_IMAGES });
   });
 
-  searchImages = catchErrors(async (req, res) => {
+  searchImages = catchErrors(async (_req, res) => {
     return res.json({ success: true, images: FALLBACK_CAMPING_IMAGES });
   });
 
@@ -201,7 +200,7 @@ Output ONLY the DALL-E prompt string.`;
     }
   });
 
-  generateImage = catchErrors(async (req, res) => {
+  generateImage = catchErrors(async (_req, res) => {
     return res.status(404).json({ success: false, error: "DALL-E 3 image generation API is not configured on the server." });
   });
 }

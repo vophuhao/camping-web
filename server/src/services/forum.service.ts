@@ -82,7 +82,7 @@ export class ForumService {
    */
   private processContentImages = async (content: string): Promise<string> => {
     if (!content) return "";
-    
+
     const imgTagRegex =
       /<img[^>]+src=["'](data:image\/(?:png|jpeg|jpg|gif);base64,[^"'>]+)["'][^>]*>/gi;
     let match;
@@ -101,7 +101,7 @@ export class ForumService {
         .then((result: any) => {
           replacements.push({ old: base64Data, url: result.secure_url });
         })
-        .catch(() => {});
+        .catch(() => { });
       uploadPromises.push(uploadPromise);
     }
 
@@ -323,7 +323,7 @@ export class ForumService {
         obj.commentCount = commentCount;
         return obj;
       })
-    ); 
+    );
     return {
       posts: postsWithCounts,
       total,
@@ -336,7 +336,7 @@ export class ForumService {
    * Get a single post by ID or slug
    */
   async getPost(id: string, userId?: string): Promise<any> {
-    
+
     const post = await ForumPost.findOne({ slug: id }).populate(
       "userId",
       "username avatarUrl email _id "
@@ -352,7 +352,7 @@ export class ForumService {
 
     // Check access permissions
     const isAdmin = false; // This would be passed from controller
-    const isOwner = userId && post.userId._id.toString() === userId.toString();
+    const isOwner = userId && (post.userId as any)._id.toString() === userId.toString();
 
     if (post.status === "deleted") {
       throw new Error("Post not found");
@@ -363,12 +363,12 @@ export class ForumService {
     }
 
     if (post.visibility === "private") {
-      if (!userId || post.userId._id.toString() !== userId) {
+      if (!userId || (post.userId as any)._id.toString() !== userId) {
         throw new Error("Access denied");
       }
     }
 
-    const postObj = post.toObject();
+    const postObj = post.toObject() as any;
     postObj.likeCount = post.likes?.length || 0;
     postObj.saveCount = post.savedBy?.length || 0;
 
@@ -416,7 +416,7 @@ export class ForumService {
       throw new Error("Bài viết không tồn tại");
     }
 
-    if (post.userId.toString() !== userId) {
+    if ((post as any).userId.toString() !== userId) {
       throw new Error("Không có quyền sửa bài viết này");
     }
 
@@ -492,7 +492,7 @@ export class ForumService {
       throw new Error("Post not found");
     }
 
-    if (post.userId.toString() !== userId) {
+    if ((post as any).userId.toString() !== userId) {
       throw new Error("Permission denied");
     }
 
@@ -543,7 +543,7 @@ export class ForumService {
     await updatedPost.save();
 
     const postObj = updatedPost.toObject() as any;
-    
+
     postObj.likeCount = newLikeCount;
     postObj.isLiked = updatedPost.likes?.some(
       (id: any) => id && id.toString() === userId.toString()
@@ -602,7 +602,7 @@ export class ForumService {
     await updatedPost.save();
 
     const postObj = updatedPost.toObject() as any;
-    
+
     postObj.saveCount = newSaveCount;
     postObj.likeCount = Array.isArray(updatedPost.likes) ? updatedPost.likes.length : 0;
     postObj.isBookmarked =

@@ -1,5 +1,5 @@
 import { catchErrors, ErrorFactory } from "@/errors";
-import { BookingModel, FavoriteModel, OrderModel, ReviewModel, PropertyModel } from "@/models";
+import { BookingModel, ReviewModel, PropertyModel } from "@/models";
 import HostModel from "@/models/host.modal";
 import { ResponseUtil, sendMail } from "@/utils";
 import UserModel from "../models/user.model";
@@ -13,7 +13,7 @@ export default class UserController {
     return ResponseUtil.success(res, user, "Lấy thông tin user thành công");
   });
 
-  getAllHost = catchErrors(async (req, res) => {
+  getAllHost = catchErrors(async (_req, res) => {
     const hosts = await UserModel.find({ role: "host" }).select(
       "username email avatarUrl createdAt isBlocked phoneNumber bio"
     );
@@ -123,7 +123,7 @@ export default class UserController {
     return ResponseUtil.success(res, users, "Search results");
   });
 
-  getAllUsers = catchErrors(async (req, res) => {
+  getAllUsers = catchErrors(async (_req, res) => {
     const users = await UserModel.find().select("username email role createdAt avatarUrl isBlocked");
     return ResponseUtil.success(res, users, "Lấy danh sách người dùng thành công");
   });
@@ -138,11 +138,11 @@ export default class UserController {
     // Send notification to all admins
     try {
       const { container, TOKENS } = await import("@/di");
-      const NotificationService = (await import("@/services/notification.service")).default;
+      // const NotificationService = (await import("@/services/notification.service")).default;
       const notificationService = container.resolve<NotificationService>(TOKENS.NotificationService);
       const user = await UserModel.findById(userId);
       const admins = await UserModel.find({ role: "admin" });
-      
+
       for (const admin of admins) {
         await notificationService.createNewHostRequestForAdmin(
           admin._id!.toString(),
@@ -158,7 +158,7 @@ export default class UserController {
     return ResponseUtil.success(res, null, "Đăng ký trở thành host thành công");
   });
 
-  getAllBecomeHost = catchErrors(async (req, res) => {
+  getAllBecomeHost = catchErrors(async (_req, res) => {
     const hosts = await HostModel.find().populate("user", "username email avatarUrl");
     return ResponseUtil.success(res, hosts, "Lấy danh sách đăng ký host thành công");
   });
@@ -348,22 +348,18 @@ export default class UserController {
     // Count bookings where user is guest
     const bookingsCount = await BookingModel.countDocuments({ guest: user._id });
 
-    // Count orders
-    const ordersCount = await OrderModel.countDocuments({ user: user._id });
 
     // Count reviews written by user
     const reviewsCount = await ReviewModel.countDocuments({ guest: user._id, isPublished: true });
 
-    // Count favorites (saved items) for the profile
-    const favoritesCount = await FavoriteModel.countDocuments({ user: user._id });
 
     return ResponseUtil.success(
       res,
       {
         bookings: bookingsCount,
-        orders: ordersCount,
+
         reviews: reviewsCount,
-        saves: favoritesCount,
+
       },
       "Lấy thống kê user thành công"
     );

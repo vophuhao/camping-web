@@ -14,10 +14,7 @@ export default class DashboardController {
       totalUsers,
       totalHosts,
       totalProperties,
-      totalProducts,
       totalBookings,
-      totalOrders,
-      bookingRevenue,
 
     ] = await Promise.all([
       UserModel.countDocuments(),
@@ -104,7 +101,7 @@ export default class DashboardController {
   });
 
   // Thống kê booking theo trạng thái
-  getBookingStats = catchErrors(async (req, res) => {
+  getBookingStats = catchErrors(async (_req, res) => {
     const bookingsByStatus = await BookingModel.aggregate([
       {
         $group: {
@@ -329,7 +326,7 @@ export default class DashboardController {
 
 
   // Thống kê properties
-  getPropertyStats = catchErrors(async (req, res) => {
+  getPropertyStats = catchErrors(async (_req, res) => {
     const propertiesByStatus = await PropertyModel.aggregate([
       {
         $group: {

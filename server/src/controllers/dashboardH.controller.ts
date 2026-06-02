@@ -12,7 +12,7 @@ import { mongoIdSchema } from "@/validators";
  */
 function getBookingAmount(b: any): number {
   if (!b) return 0;
-  
+
   // BookingModel stores price in pricing.total
   if (b.pricing?.total != null) {
     const val = Number(b.pricing.total);
@@ -38,7 +38,10 @@ function getBookingAmount(b: any): number {
  */
 export const getHostStats = catchErrors(async (req: Request, res: Response) => {
   const hostId = mongoIdSchema.parse(req.userId);
-  if (!hostId) return res.status(401).json({ message: "Unauthorized" });
+  if (!hostId) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
 
   // Load host properties
   const properties = await PropertyModel.find({ host: hostId })
@@ -131,7 +134,10 @@ export const getRevenueAnalytics = catchErrors(async (req: Request, res: Respons
   const hostId = mongoIdSchema.parse(req.userId);
   const { period = "month", startDate, endDate } = req.query as any;
 
-  if (!hostId) return res.status(401).json({ message: "Unauthorized" });
+  if (!hostId) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
 
   // Get host properties
   const properties = await PropertyModel.find({ host: hostId }).select("_id name").lean();
@@ -191,7 +197,7 @@ export const getRevenueAnalytics = catchErrors(async (req: Request, res: Respons
   bookings.forEach((b) => {
     const dateKey = new Date(b.createdAt).toISOString().slice(0, 10); // YYYY-MM-DD
     const amount = getBookingAmount(b);
-    
+
     revenueByDate[dateKey] = (revenueByDate[dateKey] || 0) + amount;
     bookingsByDate[dateKey] = (bookingsByDate[dateKey] || 0) + 1;
   });
@@ -215,11 +221,11 @@ export const getRevenueAnalytics = catchErrors(async (req: Request, res: Respons
   bookings.forEach((b) => {
     const propId = String((b.property as any)?._id ?? b.property);
     const propName = (b.property as any)?.name ?? "Unknown";
-    
+
     if (!propertyMap[propId]) {
       propertyMap[propId] = { name: propName, revenue: 0, bookings: 0 };
     }
-    
+
     propertyMap[propId].revenue += getBookingAmount(b);
     propertyMap[propId].bookings += 1;
   });
@@ -252,7 +258,10 @@ export const getBookingTrends = catchErrors(async (req: Request, res: Response) 
   const hostId = mongoIdSchema.parse(req.userId);
   const months = Number((req.query.months as any) ?? 6);
 
-  if (!hostId) return res.status(401).json({ message: "Unauthorized" });
+  if (!hostId) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
 
   // Get host properties
   const properties = await PropertyModel.find({ host: hostId }).select("_id").lean();
@@ -280,11 +289,11 @@ export const getBookingTrends = catchErrors(async (req: Request, res: Response) 
 
   bookings.forEach((b) => {
     const monthKey = new Date(b.createdAt).toISOString().slice(0, 7); // YYYY-MM
-    
+
     if (!trendsByMonth[monthKey]) {
       trendsByMonth[monthKey] = { confirmed: 0, cancelled: 0, pending: 0 };
     }
-    
+
     if (b.status === "confirmed" || b.status === "completed") {
       trendsByMonth[monthKey].confirmed++;
     } else if (b.status === "cancelled") {

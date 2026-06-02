@@ -117,11 +117,6 @@ export interface Property {
     minAge?: number;
   };
 
-  cancellationPolicy?: {
-    type: 'flexible' | 'moderate' | 'strict';
-    description?: string;
-  };
-
   nearbyAttractions?: Array<{
     name: string;
     distance: number; // km
@@ -219,7 +214,6 @@ export interface SiteRating {
 
 export interface Site {
   [x: string]: any;
-  [x: string]: string;
   _id: string;
   property: string | Property;
   name: string;
@@ -430,6 +424,7 @@ export interface PropertySearchFilters {
 export interface SiteSearchFilters {
   query?: string;
   propertyId?: string;
+  city?: string;
   accommodationType?: AccommodationType[];
   minPrice?: number;
   maxPrice?: number;
@@ -456,7 +451,7 @@ export interface SiteSearchFilters {
  */
 
 export interface PropertyListResponse {
-  data: any;
+  data?: any;
   properties: Property[];
   pagination: {
     page: number;
@@ -469,7 +464,6 @@ export interface PropertyListResponse {
 }
 
 export interface SiteListResponse {
-  [x: string]: any;
   [x: string]: any;
   sites: Site[];
   pagination: {

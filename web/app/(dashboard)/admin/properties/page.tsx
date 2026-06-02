@@ -75,51 +75,52 @@ export default function PropertiesPage() {
 
       <div className="container mx-auto py-10 px-4">
 
-      <DataTable
-        columns={columns}
-        data={properties}
-        searchKey="name"
-        searchPlaceholder="Tìm kiếm property..."
-        createButton={{
-          label: 'Tạo Property',
-          onClick: handleCreate,
-        }}
-        meta={{
-          onEdit: handleEdit,
-          onDelete: handleDelete,
-          onViewSites: handleViewSites,
-        }}
-      />
+        <DataTable
+          columns={columns}
+          data={properties}
+          searchKey="name"
+          searchPlaceholder="Tìm kiếm property..."
+          createButton={{
+            label: 'Tạo Property',
+            onClick: handleCreate,
+          }}
+          meta={{
+            onEdit: handleEdit,
+            onDelete: handleDelete,
+            onViewSites: handleViewSites,
+          }}
+        />
 
-      {/* Create Modal */}
-      <PropertyModal
-        open={createModalOpen}
-        onOpenChange={setCreateModalOpen}
-        onSuccess={() => {
-          refetch();
-          setCreateModalOpen(false);
-        }}
-      />
+        {/* Create Modal */}
+        <PropertyModal
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          onSuccess={() => {
+            refetch();
+            setCreateModalOpen(false);
+          }}
+        />
 
-      {/* Edit Modal */}
-      <PropertyModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        property={selectedProperty}
-        onSuccess={() => {
-          refetch();
-          setEditModalOpen(false);
-        }}
-      />
+        {/* Edit Modal */}
+        <PropertyModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          property={selectedProperty}
+          onSuccess={() => {
+            refetch();
+            setEditModalOpen(false);
+          }}
+        />
 
-      {/* Delete Dialog */}
-      <DeleteAlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Xóa property?"
-        description={`Bạn có chắc chắn muốn xóa property "${selectedProperty?.name}"? Tất cả sites thuộc property này cũng sẽ bị xóa. Hành động này không thể hoàn tác.`}
-        onConfirm={handleConfirmDelete}
-      />
+        {/* Delete Dialog */}
+        <DeleteAlertDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Xóa property?"
+          description={`Bạn có chắc chắn muốn xóa property "${selectedProperty?.name}"? Tất cả sites thuộc property này cũng sẽ bị xóa. Hành động này không thể hoàn tác.`}
+          onConfirm={handleConfirmDelete}
+        />
+      </div>
     </div>
   );
 }

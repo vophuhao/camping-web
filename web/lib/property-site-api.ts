@@ -90,9 +90,9 @@ export async function searchProperties(
 
   // Backend returns: { success, message, data: Property[], pagination: {...} }
   // We need to transform to: { properties: Property[], pagination: {...} }
-  const response = await apiClient.get(
+  const response = (await apiClient.get(
     `/properties/search?${params.toString()}`,
-  );
+  )) as any;
 
   return {
     properties: response.data || [],
@@ -264,7 +264,7 @@ export async function getMyProperties(
 export async function getPropertiesForAdmin(
   page = 1,
   limit = 100,
-): Promise<ApiResponse> {
+): Promise<ApiResponse<Property[]>> {
   return apiClient.get(`/properties?page=${page}&limit=${limit}`);
 }
 
@@ -324,7 +324,7 @@ export async function searchSites(
 
   // Backend returns: { success, message, data: Site[], pagination: {...} }
   // We need to transform to: { sites: Site[], pagination: {...} }
-  const response = await apiClient.get(`/sites/search?${params.toString()}`);
+  const response = (await apiClient.get(`/sites/search?${params.toString()}`)) as any;
 
   return {
     sites: response.data || [],

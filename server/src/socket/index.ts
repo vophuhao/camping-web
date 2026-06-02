@@ -1,4 +1,4 @@
-import { APP_ORIGIN, NODE_ENV } from "@/constants/env";
+import { APP_ORIGIN, NODE_ENV } from "../constants/env";
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { socketAuthMiddleware } from "./middleware/socketAuth";

@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/constants/env";
+import { JWT_SECRET } from "../../constants/env";
 import { Socket } from "socket.io";
 import { ExtendedError } from "socket.io/dist/namespace";
 import * as cookie from "cookie";
@@ -11,20 +11,20 @@ declare module "socket.io" {
 }
 
 export const socketAuthMiddleware = async (
-  socket: Socket, 
+  socket: Socket,
   next: (err?: ExtendedError) => void
 ) => {
   try {
     // Lấy cookie từ header
     const cookies = socket.handshake.headers.cookie;
-    
+
     if (!cookies) throw new Error("No cookie found");
 
     // Parse cookie
     const parsed = cookie.parse(cookies);
 
-    const token = parsed["accessToken"]; 
-    
+    const token = parsed["accessToken"];
+
     if (!token) {
       throw new Error("No token provided in cookie");
     }

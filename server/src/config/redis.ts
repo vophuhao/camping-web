@@ -1,4 +1,4 @@
-import { REDIS_PASSWORD, REDIS_URL } from "@/constants/env";
+import { REDIS_PASSWORD, REDIS_URL } from "../constants/env";
 import { createClient } from "redis";
 
 // Create Redis client

@@ -1,4 +1,4 @@
-import { EMAIL_PASS, EMAIL_PORT, EMAIL_SENDER } from "@/constants/env";
+import { EMAIL_PASS, EMAIL_PORT, EMAIL_SENDER } from "../constants/env";
 import nodemailer from "nodemailer";
 
 // Tạo transporter dùng Gmail

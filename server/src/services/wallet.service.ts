@@ -3,7 +3,7 @@ import { BookingModel } from "@/models";
 import HostModel from "@/models/host.modal";
 import { WalletTransactionModel } from "@/models/wallet-transaction.model";
 import { WithdrawalModel } from "@/models/withdrawal.model";
-import appAssert from "@/utils/app-assert";
+import appAssert from "../utils/app-assert";
 import mongoose from "mongoose";
 
 const PLATFORM_FEE_RATE = 0.05; // 5%

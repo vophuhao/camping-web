@@ -1,5 +1,5 @@
 import { catchErrors } from "@/errors";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import WalletService from "@/services/wallet.service";
 

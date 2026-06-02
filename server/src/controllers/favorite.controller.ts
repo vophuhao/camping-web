@@ -1,6 +1,6 @@
 import { catchErrors } from "@/errors";
 import { FavoriteService } from "@/services/favorite.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   createFavoriteSchema,

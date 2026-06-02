@@ -1,6 +1,6 @@
 import { catchErrors } from "@/errors";
 import type { PropertyService } from "@/services/property.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   createPropertySchema,
@@ -9,7 +9,7 @@ import {
 } from "@/validators/property.validator";
 
 export default class PropertyController {
-  constructor(private readonly propertyService: PropertyService) {}
+  constructor(private readonly propertyService: PropertyService) { }
 
   /**
    * Create new property (host/admin only)

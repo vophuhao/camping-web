@@ -2,7 +2,7 @@ import { ErrorFactory } from "@/errors";
 import { FavoriteModel } from "@/models/availability.model";
 import { PropertyModel } from "@/models/property.model";
 import { SiteModel } from "@/models/site.model";
-import { appAssert } from "@/utils";
+import { appAssert } from "../utils";
 import {
   CreateFavoriteInput,
   GetFavoritesQuery,

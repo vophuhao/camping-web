@@ -1,7 +1,7 @@
 
 import { catchErrors } from "@/errors";
 import type { CommentService } from "@/services/comment.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   createCommentSchema,
@@ -10,7 +10,7 @@ import {
 } from "@/validators";
 
 export default class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(private readonly commentService: CommentService) { }
 
   /**
    * Create comment or reply

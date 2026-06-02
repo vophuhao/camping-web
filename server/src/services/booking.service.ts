@@ -8,8 +8,8 @@ import {
   SiteModel,
   type BookingDocument,
 } from "@/models";
-import appAssert from "@/utils/app-assert";
-import { sendMail } from "@/utils/send-mail";
+import appAssert from "../utils/app-assert";
+import { sendMail } from "../utils/send-mail";
 import type {
   CancelBookingInput,
   CreateBookingInput,

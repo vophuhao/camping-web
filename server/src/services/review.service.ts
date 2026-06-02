@@ -1,7 +1,7 @@
 import { container, TOKENS } from "@/di";
 import { ErrorFactory } from "@/errors";
 import { BookingModel, PropertyModel, ReviewModel, SiteModel, type ReviewDocument } from "@/models";
-import appAssert from "@/utils/app-assert";
+import appAssert from "../utils/app-assert";
 import type {
   CreateReviewInput,
   HostResponseInput,
@@ -72,7 +72,7 @@ export class ReviewService {
       const UserModel = (await import("@/models/user.model")).default;
       const property = await PropertyModel.findById(booking!.property);
       const guest = await UserModel.findById(guestId);
-      
+
       // Calculate average rating across property and site ratings
       const avgRating = (
         (propertyRatings.location || 0) +

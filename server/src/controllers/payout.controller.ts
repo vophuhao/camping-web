@@ -1,6 +1,6 @@
 import { catchErrors } from "@/errors";
 import PayoutService from "@/services/payout.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 
 export default class PayoutController {
   constructor(private readonly payoutService: PayoutService) { }

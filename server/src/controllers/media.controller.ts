@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import { catchErrors, ErrorFactory } from "@/errors";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { Request } from "express";
 import { cloudinary } from "../config";
 import { BAD_REQUEST } from "../constants/http";

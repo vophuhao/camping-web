@@ -1,6 +1,6 @@
 import { ErrorFactory } from "@/errors";
 import { PropertyModel, SiteModel, type SiteDocument } from "@/models";
-import appAssert from "@/utils/app-assert";
+import appAssert from "../utils/app-assert";
 import type { CreateSiteInput } from "@/validators/site.validator";
 import mongoose from "mongoose";
 

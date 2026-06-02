@@ -1,6 +1,6 @@
 import { catchErrors } from "@/errors";
 import type { BookingService } from "@/services/booking.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   cancelBookingSchema,
@@ -15,7 +15,7 @@ import {
 import mongoose from "mongoose";
 
 export default class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(private readonly bookingService: BookingService) { }
 
   /**
    * Create booking (guest)
@@ -89,7 +89,7 @@ export default class BookingController {
 
     return ResponseUtil.success(res, booking, "Hủy booking thành công");
   });
-  
+
 
   /**
    * Complete booking (system - called after checkout date)

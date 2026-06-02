@@ -1,6 +1,6 @@
 import { ErrorFactory } from "@/errors";
-import { appAssert } from "@/utils";
-import { verifyToken } from "@/utils/jwt";
+import { appAssert } from "../utils";
+import { verifyToken } from "../utils/jwt";
 import type { RequestHandler } from "express";
 import type mongoose from "mongoose";
 import UserModel from "../models/user.model"; // model User của bạn

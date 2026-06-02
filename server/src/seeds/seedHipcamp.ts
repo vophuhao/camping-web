@@ -10,7 +10,7 @@ import {
   SiteModel,
   UserModel,
 } from "@/models";
-import { hashValue } from "@/utils/bcrypt";
+import { hashValue } from "../utils/bcrypt";
 import mongoose from "mongoose";
 
 // ===== AMENITIES DATA =====

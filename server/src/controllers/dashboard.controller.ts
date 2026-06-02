@@ -4,7 +4,7 @@ import HostModel from "@/models/host.modal";
 import { PropertyModel } from "@/models/property.model";
 import { ReviewModel } from "@/models/review.model";
 import UserModel from "@/models/user.model";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import mongoose from "mongoose";
 
 export default class DashboardController {

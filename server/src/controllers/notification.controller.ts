@@ -1,9 +1,9 @@
 import { catchErrors } from "@/errors";
 import NotificationService from "@/services/notification.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 
 export default class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(private readonly notificationService: NotificationService) { }
 
   // Lấy tất cả notifications của user
   getNotifications = catchErrors(async (req, res) => {

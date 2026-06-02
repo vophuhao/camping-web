@@ -1,5 +1,5 @@
 import { DEFAULT_AVATAR, PROVIDERS, ROLES, type Provider, type Role } from "../constants";
-import { compareValue, hashValue } from "@/utils";
+import { compareValue, hashValue } from "../utils";
 import mongoose from "mongoose";
 
 export interface UserDocument extends mongoose.Document {

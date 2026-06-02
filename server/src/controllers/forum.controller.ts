@@ -5,7 +5,7 @@ import type {
   ForumService,
   UpdatePostInput,
 } from "@/services/forum.service";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import { mongoIdSchema } from "@/validators";
 import {
   createPostSchema,

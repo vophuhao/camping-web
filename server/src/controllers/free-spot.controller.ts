@@ -1,10 +1,10 @@
 import { catchErrors } from "@/errors";
-import { ResponseUtil } from "@/utils";
+import { ResponseUtil } from "../utils";
 import type { FreeSpotService } from "@/services/free-spot.service";
 import { mongoIdSchema } from "@/validators";
 
 export default class FreeSpotController {
-  constructor(private readonly freeSpotService: FreeSpotService) {}
+  constructor(private readonly freeSpotService: FreeSpotService) { }
 
   getSpots = catchErrors(async (req: any, res: any) => {
     const { page, limit, search, city, terrain, author } = req.query;

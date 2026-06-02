@@ -11,14 +11,26 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
       },
-    ],
-    domains: [
-      'images.unsplash.com',
-      'i.pravatar.cc',
-      'i.pinimg.com',
-      'lh3.googleusercontent.com',
-      'scontent.fsgn5-9.fna.fbcdn.net',
-      'hdcamp.id.vn'
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pinimg.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'scontent.fsgn5-9.fna.fbcdn.net',
+      },
     ],
   },
 

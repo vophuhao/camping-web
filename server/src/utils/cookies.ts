@@ -4,10 +4,11 @@ import { oneWeekFromNow, thirtyDaysFromNow } from "./date";
 
 export const REFRESH_PATH = "/auth/refresh";
 
+// ✨ ĐÃ SỬA: Cấu hình lại cookie để hỗ trợ chạy Cross-Domain (Vercel <-> Render)
 const defaults: CookieOptions = {
-  sameSite: "strict",
+  sameSite: NODE_ENV === "production" ? "none" : "lax", // Production phải là "none", local dùng "lax" hoặc giữ "strict"
   httpOnly: true,
-  secure: NODE_ENV === "production", // Only require HTTPS in production
+  secure: NODE_ENV === "production" ? true : false,     // "none" bắt buộc phải đi kèm với secure: true trên HTTPS
 };
 
 export const getAccessTokenCookieOptions = (): CookieOptions => ({
@@ -32,5 +33,15 @@ export const setAuthCookies = ({ res, accessToken, refreshToken }: Params) =>
     .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
     .cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions());
 
+// ✨ ĐÃ SỬA: Khi xóa cookie cũng phải truyền kèm đúng cấu hình `path` và `sameSite/secure` thì trình duyệt mới chịu xóa
 export const clearAuthCookies = (res: Response) =>
-  res.clearCookie("accessToken").clearCookie("refreshToken", { path: REFRESH_PATH });
+  res
+    .clearCookie("accessToken", {
+      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      secure: NODE_ENV === "production"
+    })
+    .clearCookie("refreshToken", {
+      path: REFRESH_PATH,
+      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      secure: NODE_ENV === "production"
+    });

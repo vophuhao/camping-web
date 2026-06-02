@@ -101,7 +101,7 @@ export default class AuthController {
 
     if (payload) {
       // remove session from db
-      await this.authService.logoutUser(payload.sessionId as string);
+      await this.authService.logoutUser(payload.sessionId.toString());
     }
 
     // clear cookies

@@ -18,11 +18,6 @@ dashboardRoutes.get("/revenue", dashboardController.getRevenueStats);
 // Booking stats
 dashboardRoutes.get("/bookings", dashboardController.getBookingStats);
 
-// Order stats
-dashboardRoutes.get("/orders", dashboardController.getOrderStats);
-
-// Product stats
-dashboardRoutes.get("/products", dashboardController.getProductStats);
 
 // Property stats
 dashboardRoutes.get("/properties", dashboardController.getPropertyStats);
@@ -31,12 +26,14 @@ dashboardRoutes.get("/properties", dashboardController.getPropertyStats);
 dashboardRoutes.get("/top-properties", dashboardController.getTopProperties);
 
 // Top products
-dashboardRoutes.get("/top-products", dashboardController.getTopProducts);
 
 // Top hosts
 dashboardRoutes.get("/top-hosts", dashboardController.getTopHosts);
 
 // Growth stats
 dashboardRoutes.get("/growth", dashboardController.getGrowthStats);
+
+// Revenue report (with host/date filters)
+dashboardRoutes.get("/revenue-report", dashboardController.getRevenueReport);
 
 export default dashboardRoutes;

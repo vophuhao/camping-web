@@ -34,9 +34,9 @@ export default function HostLayout({
   //   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
       {/* Sidebar */}
-      <Suspense fallback={<div className="w-64 animate-pulse bg-gray-100" />}>
+      <Suspense fallback={<div className="w-64 animate-pulse bg-slate-100 dark:bg-slate-900" />}>
         {role === 'admin' ? (
           <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         ) : (
@@ -46,8 +46,8 @@ export default function HostLayout({
 
       {/* Content */}
       <main
-        className={`flex-1 transition-all duration-300`}
-        style={{ marginLeft: collapsed ? '4rem' : '11rem' }}
+        className="flex-1 transition-all duration-300 overflow-y-auto"
+        style={{ marginLeft: collapsed ? '4rem' : '14rem' }}
       >
         {children}
       </main>

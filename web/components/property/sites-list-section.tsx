@@ -49,6 +49,134 @@ const SiteMap = dynamic(
   },
 );
 
+interface SiteImageSliderProps {
+  photos: Array<{ url: string; isCover?: boolean }>;
+  name: string;
+}
+
+function SiteImageSlider({ photos, name }: SiteImageSliderProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!photos || photos.length === 0) {
+    return <div className="h-full w-full bg-gray-100 rounded-lg" />;
+  }
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCurrentIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <div className="relative h-full w-full group overflow-hidden rounded-lg">
+      <img
+        src={photos[currentIndex].url}
+        alt={`${name} - Ảnh ${currentIndex + 1}`}
+        className="h-full w-full object-cover transition-all duration-300"
+        loading="lazy"
+      />
+
+      {photos.length > 1 && (
+        <>
+          {/* Navigation Arrows */}
+          <button
+            onClick={handlePrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
+            type="button"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
+            type="button"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* Dots Indicator */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 rounded-full bg-black/30 px-2 py-1 backdrop-blur-sm">
+            {photos.map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1 w-1 rounded-full transition-all ${idx === currentIndex ? 'bg-white scale-125' : 'bg-white/55'
+                  }`}
+              />
+            ))}
+          </div>
+
+          {/* Badge count */}
+          <div className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
+            {currentIndex + 1}/{photos.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function calculateSiteSubtotal(site: Site, checkIn: Date, checkOut: Date) {
+  const basePrice = site.pricing.basePrice;
+  const weekendPrice = site.pricing.weekendPrice ?? null;
+  let subtotal = 0;
+  let hasWeekendPrice = false;
+  let hasSeasonalPrice = false;
+
+  const currentDate = new Date(checkIn);
+  while (currentDate < checkOut) {
+    const dayOfWeek = currentDate.getDay();
+    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday & Saturday
+
+    let nightPrice = basePrice;
+    let isSeasonal = false;
+
+    // Seasonal price has highest priority
+    if (site.pricing.seasonalPricing && site.pricing.seasonalPricing.length > 0) {
+      const seasonalRate = site.pricing.seasonalPricing.find((season: any) => {
+        const seasonStart = new Date(season.startDate);
+        const seasonEnd = new Date(season.endDate);
+
+        // Compare dates without time
+        const currentZero = new Date(currentDate);
+        currentZero.setHours(0, 0, 0, 0);
+        const startZero = new Date(seasonStart);
+        startZero.setHours(0, 0, 0, 0);
+        const endZero = new Date(seasonEnd);
+        endZero.setHours(0, 0, 0, 0);
+
+        return currentZero >= startZero && currentZero <= endZero;
+      });
+
+      if (seasonalRate) {
+        nightPrice = seasonalRate.price;
+        isSeasonal = true;
+        hasSeasonalPrice = true;
+      }
+    }
+
+    // Weekend price applied if not overridden by seasonal price
+    if (!isSeasonal && isWeekend && weekendPrice !== null && weekendPrice > 0) {
+      nightPrice = weekendPrice;
+      hasWeekendPrice = true;
+    }
+
+    subtotal += nightPrice;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return {
+    subtotal,
+    hasWeekendPrice,
+    hasSeasonalPrice
+  };
+}
+
 interface SitesListSectionProps {
   sites: Site[];
   property: Property;
@@ -662,11 +790,10 @@ export function SitesListSection({
               <Button
                 variant={instantBook ? 'default' : 'outline'}
                 size="sm"
-                className={`h-9 rounded-full transition-all ${
-                  instantBook
-                    ? 'bg-orange-600 hover:bg-orange-700'
-                    : 'border-gray-300 hover:border-orange-500 hover:bg-orange-50'
-                }`}
+                className={`h-9 rounded-full transition-all ${instantBook
+                  ? 'bg-orange-600 hover:bg-orange-700'
+                  : 'border-gray-300 hover:border-orange-500 hover:bg-orange-50'
+                  }`}
                 onClick={() => setInstantBook(!instantBook)}
               >
                 ⚡ Đặt ngay
@@ -723,16 +850,21 @@ export function SitesListSection({
                   {/* Sites in Group */}
                   <div className="space-y-4">
                     {sitesInGroup.map(site => {
-                      const totalPrice = site.pricing.basePrice * nights;
+                      const dateRange = booking.dateRange;
+                      const hasSelectedDates = !!(dateRange?.from && dateRange?.to);
+                      const calculated = hasSelectedDates
+                        ? calculateSiteSubtotal(site, dateRange.from!, dateRange.to!)
+                        : null;
+                      const totalPrice = calculated ? calculated.subtotal : site.pricing.basePrice * nights;
+                      const averagePricePerNight = hasSelectedDates ? totalPrice / nights : site.pricing.basePrice;
 
                       return (
                         <Card
                           key={site._id}
-                          className={`group cursor-pointer overflow-hidden border-0 transition-all duration-200 ${
-                            selectedSite?._id === site._id
-                              ? 'shadow-md ring-2'
-                              : 'hover:border-orange-200 hover:shadow-md'
-                          }`}
+                          className={`group cursor-pointer overflow-hidden border-0 transition-all duration-200 ${selectedSite?._id === site._id
+                            ? 'shadow-md ring-2'
+                            : 'hover:border-orange-200 hover:shadow-md'
+                            }`}
                           onClick={() => setSelectedSite(site)}
                           onMouseEnter={() => setHoveredSite(site)}
                           onMouseLeave={() => setHoveredSite(null)}
@@ -741,20 +873,7 @@ export function SitesListSection({
                             {/* Site Image */}
                             {site.photos && site.photos.length > 0 && (
                               <div className="relative flex h-62 shrink-0 basis-[45%] overflow-hidden rounded-lg bg-gray-100">
-                                <img
-                                  src={
-                                    site.photos.find(p => p.isCover)?.url ||
-                                    site.photos[0].url
-                                  }
-                                  alt={site.name}
-                                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                                  loading="lazy"
-                                />
-                                {site.photos.length > 1 && (
-                                  <div className="absolute right-2 bottom-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white backdrop-blur-sm">
-                                    +{site.photos.length - 1}
-                                  </div>
-                                )}
+                                <SiteImageSlider photos={site.photos} name={site.name} />
                               </div>
                             )}
 
@@ -771,14 +890,23 @@ export function SitesListSection({
                                       <h4 className="text-md font-bold">
                                         {site.name}
                                       </h4>
-                                      {site.bookingSettings.instantBook && (
+                                      {site.siteClass === 'vip' ? (
+                                        <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sx uppercase shadow-sm">
+                                          VIP
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="text-sx text-gray-600 bg-gray-100 dark:bg-slate-800">
+                                          Cơ bản
+                                        </Badge>
+                                      )}
+                                      {/* {site.bookingSettings.instantBook && (
                                         <Badge
                                           variant="outline"
                                           className="text-center text-xs"
                                         >
                                           Đặt ngay
                                         </Badge>
-                                      )}
+                                      )} */}
                                       {/* Show unavailable reason badge */}
                                       {siteUnavailableReason.has(site._id) && (
                                         <Badge
@@ -856,13 +984,41 @@ export function SitesListSection({
                               {/* Price & CTA */}
                               <div className="flex items-end justify-between">
                                 <div>
-                                  <p className="text-md font-bold">
-                                    {site.pricing.basePrice} VND
-                                    <span className="text-sm font-normal text-gray-600">
-                                      {' '}
-                                      / đêm
-                                    </span>
-                                  </p>
+                                  <div className="flex flex-col">
+                                    <p className="text-md font-bold">
+                                      {averagePricePerNight.toLocaleString()} VND
+                                      <span className="text-sm font-normal text-gray-600">
+                                        {' '}
+                                        / đêm
+                                      </span>
+                                    </p>
+                                    {hasSelectedDates ? (
+                                      <div className="flex flex-col gap-0.5 mt-0.5">
+
+                                        {/* {(calculated?.hasSeasonalPrice || calculated?.hasWeekendPrice) && (
+                                          <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                                            ✨ Đã áp dụng giá
+                                            {calculated.hasSeasonalPrice && ' mùa vụ'}
+                                            {calculated.hasSeasonalPrice && calculated.hasWeekendPrice && ' /'}
+                                            {calculated.hasWeekendPrice && ' cuối tuần'}
+                                          </span>
+                                        )} */}
+                                      </div>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-1 mt-0.5">
+                                        {site.pricing.weekendPrice && site.pricing.weekendPrice !== site.pricing.basePrice && (
+                                          <span className="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded px-1">
+                                            Cuối tuần: {site.pricing.weekendPrice.toLocaleString()} VND
+                                          </span>
+                                        )}
+                                        {site.pricing.seasonalPricing && site.pricing.seasonalPricing.length > 0 && (
+                                          <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-1">
+                                            Lễ, tết...
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
 
                                   {site.capacity.maxConcurrentBookings > 1 && (
                                     <div className="mt-1 flex items-center gap-2">
@@ -879,16 +1035,10 @@ export function SitesListSection({
                                 <Button
                                   size="lg"
                                   className="hover:bg-primary/90 m-2 px-8"
-                                  asChild={
-                                    !!(
-                                      booking.dateRange?.from &&
-                                      booking.dateRange?.to
-                                    )
-                                  }
+                                  asChild={hasSelectedDates}
                                   onClick={handleBookNowClick}
                                 >
-                                  {booking.dateRange?.from &&
-                                  booking.dateRange?.to ? (
+                                  {hasSelectedDates ? (
                                     <Link
                                       href={
                                         `/checkouts/payment?` +
@@ -906,9 +1056,9 @@ export function SitesListSection({
                                             site.photos?.[0]?.url ||
                                             '',
                                           checkIn:
-                                            booking.dateRange.from.toISOString(),
+                                            booking.dateRange!.from!.toISOString(),
                                           checkOut:
-                                            booking.dateRange.to.toISOString(),
+                                            booking.dateRange!.to!.toISOString(),
                                           basePrice:
                                             site.pricing.basePrice.toString(),
                                           nights: nights.toString(),
@@ -917,19 +1067,19 @@ export function SitesListSection({
                                           ).toString(),
                                           petFee: booking.pets
                                             ? (
-                                                (site.pricing.petFee || 0) *
-                                                booking.pets
-                                              ).toString()
+                                              (site.pricing.petFee || 0) *
+                                              booking.pets
+                                            ).toString()
                                             : '0',
                                           additionalGuestFee:
                                             booking.guests >
-                                            site.capacity.maxGuests
+                                              site.capacity.maxGuests
                                               ? (
-                                                  (site.pricing
-                                                    .additionalGuestFee || 0) *
-                                                  (booking.guests -
-                                                    site.capacity.maxGuests)
-                                                ).toString()
+                                                (site.pricing
+                                                  .additionalGuestFee || 0) *
+                                                (booking.guests -
+                                                  site.capacity.maxGuests)
+                                              ).toString()
                                               : '0',
                                           total: totalPrice.toString(),
                                           currency:
@@ -949,10 +1099,10 @@ export function SitesListSection({
                                         }
                                       }}
                                     >
-                                      Đặt
+                                      Đặt ngay
                                     </Link>
                                   ) : (
-                                    <span>Đặt</span>
+                                    <span>Đặt ngay</span>
                                   )}
                                 </Button>
                               </div>
@@ -1007,7 +1157,13 @@ export function SitesListSection({
                       .filter(s => !filteredSites.includes(s) && s.isActive)
                       .map(site => {
                         const isBlocked = siteBlockedMap.get(site._id);
-                        const totalPrice = site.pricing.basePrice * nights;
+                        const dateRange = booking.dateRange;
+                        const hasSelectedDates = !!(dateRange?.from && dateRange?.to);
+                        const calculated = hasSelectedDates
+                          ? calculateSiteSubtotal(site, dateRange.from!, dateRange.to!)
+                          : null;
+                        const totalPrice = calculated ? calculated.subtotal : site.pricing.basePrice * nights;
+                        const averagePricePerNight = hasSelectedDates ? totalPrice / nights : site.pricing.basePrice;
                         return (
                           <div
                             key={site._id}
@@ -1016,15 +1172,11 @@ export function SitesListSection({
                             <Card className="h-full overflow-hidden border border-gray-200 shadow-sm transition-shadow hover:shadow-md">
                               {site.photos && site.photos.length > 0 && (
                                 <div className="relative h-[220px] w-full overflow-hidden">
-                                  <img
-                                    src={site.photos[0].url}
-                                    alt={site.name}
-                                    className="h-full w-full object-cover"
-                                  />
+                                  <SiteImageSlider photos={site.photos} name={site.name} />
                                   {isBlocked &&
                                     booking.dateRange?.from &&
                                     booking.dateRange?.to && (
-                                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
                                         <Badge
                                           variant="destructive"
                                           className="text-sm"
@@ -1042,6 +1194,15 @@ export function SitesListSection({
                                   <h4 className="line-clamp-1 font-semibold">
                                     {site.name}
                                   </h4>
+                                  {site.siteClass === 'vip' ? (
+                                    <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-[10px] uppercase shadow-sm">
+                                      VIP
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-[10px] text-gray-500 bg-gray-100 dark:bg-slate-800">
+                                      Cơ bản
+                                    </Badge>
+                                  )}
                                   {site.stats?.averageRating && (
                                     <span className="flex shrink-0 items-center gap-1 text-sm">
                                       👍
@@ -1066,24 +1227,48 @@ export function SitesListSection({
                                 </p>
                                 <div className="flex items-end justify-between">
                                   <div>
-                                    <div className="flex items-baseline gap-2">
-                                      <p className="text-lg font-bold">
-                                        {site.pricing.basePrice.toLocaleString()}{' '}
-                                      </p>
-                                      <span className="text-sm text-gray-500">
-                                        / đêm
-                                      </span>
-                                    </div>
-                                    {booking.dateRange?.from &&
-                                      booking.dateRange?.to && (
-                                        <p className="text-sm text-gray-500">
-                                          {totalPrice.toLocaleString()} ₫ tổng
+                                    <div className="flex flex-col">
+                                      <div className="flex items-baseline gap-1">
+                                        <p className="text-lg font-bold">
+                                          {averagePricePerNight.toLocaleString()}{' '}
                                         </p>
+                                        <span className="text-sm text-gray-500">
+                                          / đêm
+                                        </span>
+                                      </div>
+                                      {hasSelectedDates ? (
+                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                          <p className="text-xs text-gray-500">
+                                            {totalPrice.toLocaleString()} ₫ tổng
+                                          </p>
+                                          {(calculated?.hasSeasonalPrice || calculated?.hasWeekendPrice) && (
+                                            <span className="text-[9px] text-emerald-600 font-medium">
+                                              ✨ Có áp dụng giá
+                                              {calculated.hasSeasonalPrice && ' mùa vụ'}
+                                              {calculated.hasSeasonalPrice && calculated.hasWeekendPrice && '/'}
+                                              {calculated.hasWeekendPrice && ' cuối tuần'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                          {site.pricing.weekendPrice && site.pricing.weekendPrice !== site.pricing.basePrice && (
+                                            <span className="text-[9px] text-gray-500">
+                                              Cuối tuần: {site.pricing.weekendPrice.toLocaleString()} ₫
+                                            </span>
+                                          )}
+                                          {site.pricing.seasonalPricing && site.pricing.seasonalPricing.length > 0 && (
+                                            <span className="text-[9px] text-amber-700 font-medium">
+                                              Có giá mùa vụ
+                                            </span>
+                                          )}
+                                        </div>
                                       )}
+                                    </div>
                                   </div>
                                   {isBlocked &&
-                                  booking.dateRange?.from &&
-                                  booking.dateRange?.to ? (
+                                    booking.dateRange?.from &&
+                                    booking.dateRange?.to ? (
                                     <Button
                                       size="default"
                                       variant="outline"
@@ -1094,11 +1279,76 @@ export function SitesListSection({
                                     </Button>
                                   ) : (
                                     <Button
-                                      onClick={() => toast('hehe')}
                                       size="default"
-                                      asChild
+                                      asChild={hasSelectedDates}
+                                      onClick={handleBookNowClick}
                                     >
-                                      Đặt chỗ
+                                      {hasSelectedDates ? (
+                                        <Link
+                                          href={
+                                            `/checkouts/payment?` +
+                                            new URLSearchParams({
+                                              siteId: site._id,
+                                              propertyId:
+                                                typeof site.property === 'string'
+                                                  ? site.property
+                                                  : site.property._id,
+                                              name: site.name,
+                                              location: `${property.location.city}, ${property.location.state}`,
+                                              image:
+                                                site.photos?.find(p => p.isCover)
+                                                  ?.url ||
+                                                site.photos?.[0]?.url ||
+                                                '',
+                                              checkIn:
+                                                booking.dateRange!.from!.toISOString(),
+                                              checkOut:
+                                                booking.dateRange!.to!.toISOString(),
+                                              basePrice:
+                                                site.pricing.basePrice.toString(),
+                                              nights: nights.toString(),
+                                              cleaningFee: (
+                                                site.pricing.cleaningFee || 0
+                                              ).toString(),
+                                              petFee: booking.pets
+                                                ? (
+                                                  (site.pricing.petFee || 0) *
+                                                  booking.pets
+                                                ).toString()
+                                                : '0',
+                                              additionalGuestFee:
+                                                booking.guests >
+                                                  site.capacity.maxGuests
+                                                  ? (
+                                                    (site.pricing
+                                                      .additionalGuestFee || 0) *
+                                                    (booking.guests -
+                                                      site.capacity.maxGuests)
+                                                  ).toString()
+                                                  : '0',
+                                              total: totalPrice.toString(),
+                                              currency:
+                                                site.pricing.currency || 'VND',
+                                              guests: booking.guests.toString(),
+                                              pets: booking.pets.toString(),
+                                              vehicles: '1',
+                                            }).toString()
+                                          }
+                                          onClick={e => {
+                                            const isAuthenticated =
+                                              useAuthStore.getState()
+                                                .isAuthenticated;
+                                            if (!isAuthenticated) {
+                                              e.preventDefault();
+                                              setShowLoginPrompt(true);
+                                            }
+                                          }}
+                                        >
+                                          Đặt ngay
+                                        </Link>
+                                      ) : (
+                                        <span>Đặt ngay</span>
+                                      )}
                                     </Button>
                                   )}
                                 </div>

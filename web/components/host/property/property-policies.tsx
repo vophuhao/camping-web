@@ -58,36 +58,6 @@ const PAYMENT_METHODS = [
 ];
 
 export function PropertyPolicies({ data, onChange }: PropertyPoliciesProps) {
-  // Helpers for cancellationPolicy
-  const cp = data.cancellationPolicy ?? { type: "moderate", description: "", refundRules: [] as RefundRule[] };
-
-  const updateCancellation = (patch: Partial<typeof cp>) => {
-    onChange({ cancellationPolicy: { ...cp, ...patch } });
-  };
-
-  const addRefundRule = () => {
-    const list = [...(cp.refundRules ?? [])];
-    list.push({ daysBeforeCheckIn: 0, refundPercentage: 0 });
-    updateCancellation({ refundRules: list });
-  };
-
-  const updateRefundRule = (idx: number, patch: Partial<RefundRule>) => {
-    const list = (cp.refundRules ?? []).map((r, i) => (i === idx ? { ...r, ...patch } : r));
-    updateCancellation({ refundRules: list });
-  };
-
-  const removeRefundRule = (idx: number) => {
-    const list = (cp.refundRules ?? []).filter((_, i) => i !== idx);
-    updateCancellation({ refundRules: list });
-  };
-
-  // Helpers for payment methods
-  const togglePaymentMethod = (method: string) => {
-    const current = data.paymentMethods ?? [];
-    const updated = current.includes(method) ? current.filter((m) => m !== method) : [...current, method];
-    onChange({ paymentMethods: updated });
-  };
-
   // Helpers for rules
   const rulesList = data.rules ?? [];
 
@@ -109,164 +79,15 @@ export function PropertyPolicies({ data, onChange }: PropertyPoliciesProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Chính sách & Quy định</h3>
-        <p className="text-sm text-gray-500">Thiết lập chính sách hủy, hoàn tiền, đặt cọc và các quy định của property.</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Quy định của Property</h3>
+        <p className="text-sm text-gray-500">Thiết lập các nội quy và quy định khi khách lưu trú tại property của bạn.</p>
       </div>
 
       <div className="space-y-6">
-        {/* Cancellation Policy */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Chính sách hủy</CardTitle>
-            <CardDescription>Chọn mức độ linh hoạt và quy tắc hoàn tiền theo ngày.</CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Loại chính sách</Label>
-              <Select
-                value={cp.type || "moderate"}
-                onValueChange={(value: any) => updateCancellation({ type: value })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="flexible">Linh hoạt (refund sớm)</SelectItem>
-                  <SelectItem value="moderate">Vừa phải</SelectItem>
-                  <SelectItem value="strict">Nghiêm ngặt</SelectItem>
-                  <SelectItem value="super_strict">Rất nghiêm ngặt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Chi tiết chính sách (mô tả)</Label>
-              <Textarea
-                value={cp.description || ""}
-                onChange={(e) => updateCancellation({ description: e.target.value })}
-                placeholder="Mô tả chi tiết về chính sách hủy..."
-                rows={3}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Quy tắc hoàn tiền (refund rules)</Label>
-                <Button size="sm" onClick={addRefundRule}>Thêm quy tắc</Button>
-              </div>
-
-              <div className="space-y-2">
-                {(cp.refundRules ?? []).length === 0 && (
-                  <p className="text-xs text-gray-500">Chưa có quy tắc hoàn tiền. Thêm quy tắc nếu muốn.</p>
-                )}
-
-                {(cp.refundRules ?? []).map((r, idx) => (
-                  <div key={idx} className="flex gap-2 items-center bg-white border rounded-md p-3">
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                      <div>
-                        <Label>Ngày trước check-in</Label>
-                        <Input
-                          type="number"
-                          value={r.daysBeforeCheckIn}
-                          onChange={(e) => updateRefundRule(idx, { daysBeforeCheckIn: Math.max(0, parseInt(e.target.value || "0")) })}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">Số ngày</p>
-                      </div>
-
-                      <div>
-                        <Label>Phần trăm hoàn tiền (%)</Label>
-                        <Input
-                          type="number"
-                          value={r.refundPercentage}
-                          onChange={(e) => {
-                            const v = Math.min(100, Math.max(0, parseInt(e.target.value || "0")));
-                            updateRefundRule(idx, { refundPercentage: v });
-                          }}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">0 - 100%</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Button size="sm" variant="ghost" onClick={() => removeRefundRule(idx)}>Xóa</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Deposit & Payment */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Đặt cọc & Thanh toán</CardTitle>
-            <CardDescription>Thiết lập yêu cầu đặt cọc và phương thức thanh toán.</CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="depositRequired"
-                checked={!!data.depositRequired}
-                onCheckedChange={(checked) => onChange({ depositRequired: !!checked })}
-              />
-              <Label htmlFor="depositRequired" className="font-normal">Yêu cầu đặt cọc</Label>
-            </div>
-
-            {data.depositRequired && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Loại đặt cọc</Label>
-                  <Select
-                    value={data.depositType || "fixed"}
-                    onValueChange={(value: any) => onChange({ depositType: value })}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fixed">Số tiền cố định</SelectItem>
-                      <SelectItem value="percentage">Phần trăm</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Số tiền / Phần trăm</Label>
-                  <Input
-                    type="number"
-                    value={data.depositAmount ?? ""}
-                    onChange={(e) => onChange({ depositAmount: parseFloat(e.target.value || "0") })}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            )}
-
-            
-
-            <div>
-              <Label>Ghi chú hoàn tiền / thanh toán</Label>
-              <Textarea
-                value={data.refundPolicy || ""}
-                onChange={(e) => onChange({ refundPolicy: e.target.value })}
-                placeholder="Mô tả quy trình hoàn tiền hoặc ghi chú liên quan đến thanh toán"
-                rows={3}
-                className="mt-1"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Property Rules */}
         <Card>
           <CardHeader>
-            <CardTitle>Quy định của property</CardTitle>
+            <CardTitle>Quy định lưu trú</CardTitle>
             <CardDescription>Danh sách các quy định (ví dụ: không đưa thú cưng, giữ trật tự, lửa trại...)</CardDescription>
           </CardHeader>
 
@@ -302,10 +123,10 @@ export function PropertyPolicies({ data, onChange }: PropertyPoliciesProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="general">General</SelectItem>
-                            <SelectItem value="pets">Pets</SelectItem>
-                            <SelectItem value="noise">Noise</SelectItem>
-                            <SelectItem value="fire">Fire</SelectItem>
+                            <SelectItem value="general">Chung</SelectItem>
+                            <SelectItem value="pets">Thú cưng</SelectItem>
+                            <SelectItem value="noise">Tiếng ồn</SelectItem>
+                            <SelectItem value="fire">Lửa trại</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

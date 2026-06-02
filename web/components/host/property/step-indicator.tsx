@@ -6,13 +6,13 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ currentStep, steps, onStepClick }: StepIndicatorProps) {
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto py-4">
       {/* Steps */}
-      <div className="flex items-center justify-between relative">
+      <div className="flex items-center justify-between relative px-2">
         {/* Progress line */}
-        <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 -z-10">
+        <div className="absolute top-5 left-0 right-0 h-[3px] bg-slate-100 dark:bg-slate-800 -z-10 rounded-full">
           <div
-            className="h-full bg-emerald-500 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out shadow-[0_0_8px_rgba(16,185,129,0.5)] rounded-full"
             style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
           />
         </div>
@@ -27,27 +27,23 @@ export function StepIndicator({ currentStep, steps, onStepClick }: StepIndicator
               key={step.label}
               type="button"
               onClick={() => onStepClick?.(index)}
-              className="flex flex-col items-center group cursor-pointer"
+              className="flex flex-col items-center group cursor-pointer relative focus:outline-none"
               disabled={!onStepClick}
             >
               {/* Circle */}
               <div
                 className={`
-                  w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
-                  transition-all duration-300 mb-2
-                  ${isCompleted ? "bg-emerald-500 text-white" : ""}
-                  ${isCurrent ? "bg-emerald-500 text-white ring-4 ring-emerald-100 scale-110" : ""}
-                  ${isPending ? "bg-white border-2 border-gray-300 text-gray-400" : ""}
-                  ${onStepClick && !isCurrent ? "hover:scale-105 hover:border-emerald-400" : ""}
+                  w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm
+                  transition-all duration-300 mb-2 relative z-10 shadow-sm
+                  ${isCompleted ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-emerald-200/50" : ""}
+                  ${isCurrent ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white ring-4 ring-emerald-100 dark:ring-emerald-950/50 scale-110 shadow-md shadow-emerald-500/20" : ""}
+                  ${isPending ? "bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-slate-400" : ""}
+                  ${onStepClick && !isCurrent ? "group-hover:scale-105 group-hover:border-emerald-400 dark:group-hover:border-emerald-600" : ""}
                 `}
               >
                 {isCompleted ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
+                  <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
                   <span>{index + 1}</span>
@@ -55,18 +51,20 @@ export function StepIndicator({ currentStep, steps, onStepClick }: StepIndicator
               </div>
 
               {/* Label */}
-              <div className="text-center">
+              <div className="text-center mt-1">
                 <p
                   className={`
-                    text-xs sm:text-sm font-medium transition-colors
-                    ${isCurrent ? "text-emerald-600" : ""}
-                    ${isCompleted ? "text-gray-700" : ""}
-                    ${isPending ? "text-gray-400" : ""}
+                    text-xs sm:text-sm font-semibold tracking-wide transition-colors duration-300
+                    ${isCurrent ? "text-emerald-600 dark:text-emerald-400" : ""}
+                    ${isCompleted ? "text-slate-700 dark:text-slate-300" : ""}
+                    ${isPending ? "text-slate-400 dark:text-slate-600" : ""}
                   `}
                 >
                   {step.label}
                 </p>
-               
+                <p className="hidden md:block text-[10px] text-slate-400 dark:text-slate-500 font-normal mt-0.5 max-w-[120px]">
+                  {step.description}
+                </p>
               </div>
             </button>
           );

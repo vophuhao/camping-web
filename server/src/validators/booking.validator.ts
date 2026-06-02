@@ -100,3 +100,26 @@ export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
 export type SearchBookingInput = z.infer<typeof searchBookingSchema>;
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
 export type RefundBookingInput = z.infer<typeof refundBookingSchema>;
+
+// Validator cho yêu cầu hoàn tiền do không hài lòng
+export const requestDissatisfactionSchema = z.object({
+  reason: z.string().min(10, "Lý do phải tối thiểu 10 ký tự").max(2000),
+  phone: z.string().min(1, "Số điện thoại là bắt buộc").max(20),
+  email: z.string().email("Email không hợp lệ").max(100),
+  bankAccountName: z.string().min(1, "Tên tài khoản là bắt buộc").max(200),
+  bankAccountNumber: z.string().min(1, "Số tài khoản là bắt buộc").max(50),
+  bankName: z.string().min(1, "Tên ngân hàng là bắt buộc").max(100),
+  evidenceImages: z
+    .array(z.string().url("Ảnh minh chứng không hợp lệ"))
+    .min(5, "Phải cung cấp tối thiểu 5 ảnh minh chứng"),
+});
+
+// Validator để admin xử lý yêu cầu không hài lòng
+export const processDissatisfactionSchema = z.object({
+  status: z.enum(["approved", "rejected"]),
+  adminNote: z.string().max(1000).optional(),
+});
+
+export type RequestDissatisfactionInput = z.infer<typeof requestDissatisfactionSchema>;
+export type ProcessDissatisfactionInput = z.infer<typeof processDissatisfactionSchema>;
+

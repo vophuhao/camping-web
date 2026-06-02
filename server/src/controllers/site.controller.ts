@@ -183,4 +183,88 @@ export default class SiteController {
 
     return ResponseUtil.success(res, pricing, "Tính giá thành công");
   });
+
+  /**
+   * Block multiple dates for a site
+   * @route POST /api/sites/:id/block-dates
+   */
+  blockSiteDates = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { dates, reason } = req.body as { dates: string[]; reason?: string };
+    const hostId = mongoIdSchema.parse(req.userId);
+
+    await this.siteService.blockSiteDates(id || "", hostId, dates, reason);
+
+    return ResponseUtil.success(res, null, "Chặn các ngày thành công");
+  });
+
+  /**
+   * Unblock multiple dates for a site
+   * @route DELETE /api/sites/:id/block-dates
+   */
+  unblockSiteDates = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { dates } = req.body as { dates: string[] };
+    const hostId = mongoIdSchema.parse(req.userId);
+
+    await this.siteService.unblockSiteDates(id || "", hostId, dates);
+
+    return ResponseUtil.success(res, null, "Mở chặn các ngày thành công");
+  });
+
+  /**
+   * Update seasonal pricing for a site
+   * @route PUT /api/sites/:id/seasonal-pricing
+   */
+  updateSeasonalPricing = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { seasonalPricing } = req.body as {
+      seasonalPricing: Array<{ name: string; startDate: string; endDate: string; price: number }>;
+    };
+    const hostId = mongoIdSchema.parse(req.userId);
+
+    const site = await this.siteService.updateSeasonalPricing(id || "", hostId, seasonalPricing);
+
+    return ResponseUtil.success(res, site, "Cập nhật giá mùa vụ thành công");
+  });
+
+  /**
+   * Get availability calendar for host dashboard
+   * @route GET /api/sites/:id/availability-calendar
+   */
+  getAvailabilityCalendar = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { month } = req.query as { month: string }; // e.g. "2026-06"
+    const hostId = mongoIdSchema.parse(req.userId);
+
+    const result = await this.siteService.getAvailabilityCalendar(id || "", hostId, month);
+
+    return ResponseUtil.success(res, result, "Lấy lịch khả dụng thành công");
+  });
+
+  /**
+   * Admin lock site (set to suspended)
+   * @route POST /api/sites/:id/admin-lock
+   */
+  adminLockSite = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { reason, propertyName } = req.body;
+
+    const site = await this.siteService.adminLockSite(id || "", reason || "Vi phạm quy định", propertyName);
+
+    return ResponseUtil.success(res, site, "Đã khóa site thành công");
+  });
+
+  /**
+   * Admin unlock site (set to active)
+   * @route POST /api/sites/:id/admin-unlock
+   */
+  adminUnlockSite = catchErrors(async (req, res) => {
+    const { id } = req.params;
+    const { propertyName } = req.body;
+
+    const site = await this.siteService.adminUnlockSite(id || "", propertyName);
+
+    return ResponseUtil.success(res, site, "Đã mở khóa site thành công");
+  });
 }

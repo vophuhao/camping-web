@@ -229,7 +229,7 @@ export async function updateProperty(
 /**
  * Delete property (host only)
  */
-export async function deleteProperty(id: string): Promise<{ message: string }> {
+export async function deleteProperty(id: string): Promise<ApiResponse> {
   return apiClient.delete(`/properties/${id}`);
 }
 
@@ -460,6 +460,49 @@ export async function activateSite(id: string): Promise<Site> {
  */
 export async function deactivateSite(id: string): Promise<Site> {
   return apiClient.patch(`/sites/${id}/deactivate`);
+}
+
+/**
+ * Block dates for a site (host only)
+ */
+export async function blockSiteDates(
+  siteId: string,
+  dates: string[],
+  reason?: string,
+): Promise<any> {
+  return apiClient.post(`/sites/${siteId}/block-dates`, { dates, reason });
+}
+
+/**
+ * Unblock dates for a site (host only)
+ */
+export async function unblockSiteDates(
+  siteId: string,
+  dates: string[],
+): Promise<any> {
+  return apiClient.delete(`/sites/${siteId}/block-dates`, {
+    data: { dates },
+  });
+}
+
+/**
+ * Update seasonal pricing for a site (host only)
+ */
+export async function updateSeasonalPricing(
+  siteId: string,
+  seasonalPricing: Array<{ name: string; startDate: string; endDate: string; price: number }>,
+): Promise<any> {
+  return apiClient.put(`/sites/${siteId}/seasonal-pricing`, { seasonalPricing });
+}
+
+/**
+ * Get availability calendar details for a site in a specific month (host only)
+ */
+export async function getAvailabilityCalendar(
+  siteId: string,
+  month: string,
+): Promise<any> {
+  return apiClient.get(`/sites/${siteId}/availability-calendar?month=${month}`);
 }
 
 // ==================== HELPER FUNCTIONS ====================

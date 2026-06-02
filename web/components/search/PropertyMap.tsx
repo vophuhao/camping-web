@@ -26,6 +26,7 @@ interface PropertyMapProps {
   hoveredProperty?: Property | null;
   searchCoordinates?: { lat: number; lng: number } | null;
   onPropertySelect?: (property: Property | null) => void;
+  onBoundsChange?: (bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }) => void;
 }
 
 export function PropertyMap({
@@ -34,6 +35,7 @@ export function PropertyMap({
   hoveredProperty,
   searchCoordinates,
   onPropertySelect,
+  onBoundsChange,
 }: PropertyMapProps) {
   const mapRef = useRef<MapRef>(null);
   const isMounted = useRef(false);
@@ -44,6 +46,43 @@ export function PropertyMap({
   });
   const [popupInfo, setPopupInfo] = useState<Property | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [showSearchAreaButton, setShowSearchAreaButton] = useState(false);
+
+  const handleMapMoveEnd = useCallback(() => {
+    if (!mapLoaded || !onBoundsChange || !mapRef.current) return;
+    
+    try {
+      const map = mapRef.current.getMap();
+      const bounds = map.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      
+      // Let's show the "Search this area" button overlay
+      setShowSearchAreaButton(true);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [mapLoaded, onBoundsChange]);
+
+  const triggerAreaSearch = useCallback(() => {
+    if (!mapRef.current || !onBoundsChange) return;
+    try {
+      const map = mapRef.current.getMap();
+      const bounds = map.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      
+      onBoundsChange({
+        minLat: sw.lat,
+        maxLat: ne.lat,
+        minLng: sw.lng,
+        maxLng: ne.lng,
+      });
+      setShowSearchAreaButton(false);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [onBoundsChange]);
 
   // Initialize and cleanup map state properly
   useEffect(() => {
@@ -186,15 +225,18 @@ export function PropertyMap({
             >
               {/* Price Badge */}
               <div
-                className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                   isActive
                     ? 'border-black bg-black text-white shadow-md'
                     : 'border-gray-300 bg-white text-gray-900 hover:border-black hover:bg-black hover:text-white hover:shadow-md'
                 }`}
               >
-                {property.minPrice
-                  ? `${formatPrice(property.minPrice)}`
-                  : '50k₫'}
+                {(property as any).isSuperhost && <span className="text-xs">🏅</span>}
+                <span>
+                  {property.minPrice
+                    ? `${formatPrice(property.minPrice)}`
+                    : '50k₫'}
+                </span>
               </div>
             </div>
           </Marker>
@@ -224,33 +266,47 @@ export function PropertyMap({
   }
 
   return (
-    <Map
-      ref={mapRef}
-      {...viewState}
-      onMove={evt => setViewState(evt.viewState)}
-      onLoad={() => {
-        // Small delay to ensure DOM is fully ready before rendering markers
-        setTimeout(() => {
-          setMapLoaded(true);
-        }, 100);
-      }}
-      onRemove={() => {
-        // Map is being removed from DOM - clean up state
-        setMapLoaded(false);
-        setPopupInfo(null);
-      }}
-      onError={e => {
-        console.error('Map error:', e);
-      }}
-      mapStyle="mapbox://styles/mapbox/streets-v12"
-      mapboxAccessToken={MAPBOX_TOKEN}
-      style={{ width: '100%', height: '100%' }}
-      minPitch={0}
-      maxPitch={0}
-      projection={{ name: 'mercator' }}
-      dragRotate={false}
-      touchPitch={false}
-    >
+    <div className="relative w-full h-full">
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={evt => setViewState(evt.viewState)}
+        onMoveEnd={handleMapMoveEnd}
+        onLoad={() => {
+          // Small delay to ensure DOM is fully ready before rendering markers
+          setTimeout(() => {
+            setMapLoaded(true);
+          }, 100);
+        }}
+        onRemove={() => {
+          // Map is being removed from DOM - clean up state
+          setMapLoaded(false);
+          setPopupInfo(null);
+        }}
+        onError={e => {
+          console.error('Map error:', e);
+        }}
+        mapStyle="mapbox://styles/mapbox/streets-v12"
+        mapboxAccessToken={MAPBOX_TOKEN}
+        style={{ width: '100%', height: '100%' }}
+        minPitch={0}
+        maxPitch={0}
+        projection={{ name: 'mercator' }}
+        dragRotate={false}
+        touchPitch={false}
+      >
+        {/* Floating Search Area Button */}
+        {showSearchAreaButton && onBoundsChange && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+            <Button
+              size="sm"
+              onClick={triggerAreaSearch}
+              className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-xl rounded-full text-xs font-bold px-4 py-2 flex items-center gap-1.5 transition-all duration-300 transform scale-100 hover:scale-105"
+            >
+              <span>🔍 Tìm kiếm khu vực này</span>
+            </Button>
+          </div>
+        )}
       {/* Navigation Controls */}
       <NavigationControl
         position="top-right"
@@ -339,5 +395,6 @@ export function PropertyMap({
           );
         })()}
     </Map>
+    </div>
   );
 }

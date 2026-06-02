@@ -227,6 +227,7 @@ export interface Site {
   description?: string;
 
   accommodationType: AccommodationType;
+  siteClass?: 'basic' | 'vip';
   lodgingProvided: 'bring_your_own' | 'structure_provided' | 'vehicle_provided';
 
   // Site-specific Location (matches backend siteLocation field)

@@ -1,9 +1,13 @@
-import { APP_ORIGIN } from "@/constants/env";
+import { APP_ORIGIN, NODE_ENV } from "@/constants/env";
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { socketAuthMiddleware } from "./middleware/socketAuth";
 
 let ioInstance: Server | null = null;
+
+// Chỉ log chi tiết trong development — tránh blocking I/O ở production
+const isDev = NODE_ENV === "development";
+const socketLog = (msg: string) => { if (isDev) console.log(msg); };
 
 export function initializeSocket(httpServer: HttpServer) {
   const io = new Server(httpServer, {
@@ -15,24 +19,31 @@ export function initializeSocket(httpServer: HttpServer) {
     pingTimeout: 60000,
     pingInterval: 25000,
     path: "/socket.io",
+    // Tối ưu cho tải cao: ưu tiên websocket, fallback về polling
+    transports: ["websocket", "polling"],
+    upgradeTimeout: 10000,
   });
 
   ioInstance = io;
   io.use(socketAuthMiddleware);
 
+  // Track số lượng connections (monitoring)
+  let connectionCount = 0;
+
   io.on("connection", (socket: Socket & { userId?: string; userRole?: string }) => {
+    connectionCount++;
     const uid = socket.userId ?? "anonymous";
-    console.log(`[SOCKET] ✅ connected: socket=${socket.id} user=${uid} role=${socket.userRole || "?"}`);
+    socketLog(`[SOCKET] ✅ connected: socket=${socket.id} user=${uid} role=${socket.userRole || "?"} total=${connectionCount}`);
 
     // ✅ Join personal room
     socket.join(`user:${uid}`);
-    console.log(`[SOCKET] 🚪 user:${uid} joined personal room`);
+    socketLog(`[SOCKET] 🚪 user:${uid} joined personal room`);
 
     // ✅ JOIN USER ROOM - for direct messages
     socket.on("join_user_room", (userId: string, callback?: Function) => {
       const room = `user:${userId}`;
       socket.join(room);
-      console.log(`[SOCKET] 🚪 ${uid} joined ${room}`);
+      socketLog(`[SOCKET] 🚪 ${uid} joined ${room}`);
       if (callback) callback({ success: true, room });
     });
 
@@ -41,7 +52,7 @@ export function initializeSocket(httpServer: HttpServer) {
       if (!conversationId) return;
       const room = `conversation:${conversationId}`;
       socket.join(room);
-      console.log(`[SOCKET] 🚪 ${uid} joined ${room}`);
+      socketLog(`[SOCKET] 🚪 ${uid} joined ${room}`);
       if (callback) callback({ success: true, room });
     });
 
@@ -50,7 +61,7 @@ export function initializeSocket(httpServer: HttpServer) {
       if (!conversationId) return;
       const room = `conversation:${conversationId}`;
       socket.leave(room);
-      console.log(`[SOCKET] 🚪 ${uid} left ${room}`);
+      socketLog(`[SOCKET] 🚪 ${uid} left ${room}`);
     });
 
     // Support rooms (existing)
@@ -58,14 +69,14 @@ export function initializeSocket(httpServer: HttpServer) {
       if (!conversationId) return;
       const room = `support:${conversationId}`;
       socket.join(room);
-      console.log(`[SOCKET] 🚪 ${uid} joined ${room}`);
+      socketLog(`[SOCKET] 🚪 ${uid} joined ${room}`);
     });
 
     socket.on("leave_support_room", (conversationId: string) => {
       if (!conversationId) return;
       const room = `support:${conversationId}`;
       socket.leave(room);
-      console.log(`[SOCKET] 🚪 ${uid} left ${room}`);
+      socketLog(`[SOCKET] 🚪 ${uid} left ${room}`);
     });
 
     socket.on("support_send_message", (payload: any) => {
@@ -82,14 +93,15 @@ export function initializeSocket(httpServer: HttpServer) {
           io.to(`user:${String(sellerId)}`).emit("support_new_message", payload);
         }
 
-        console.log(`[SOCKET] 📨 support_new_message emitted to ${room} (admin:${sellerId ?? "none"})`);
+        socketLog(`[SOCKET] 📨 support_new_message emitted to ${room} (admin:${sellerId ?? "none"})`);
       } catch (err) {
         console.error("[SOCKET] ❌ error in support_send_message", err);
       }
     });
 
     socket.on("disconnect", (reason) => {
-      console.log(`[SOCKET] ❌ disconnected: socket=${socket.id} user=${uid} reason=${reason}`);
+      connectionCount--;
+      socketLog(`[SOCKET] ❌ disconnected: socket=${socket.id} user=${uid} reason=${reason} total=${connectionCount}`);
     });
 
     socket.on("error", (err) => {

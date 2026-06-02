@@ -21,7 +21,7 @@ export default function EditSitePage() {
   const siteId = params?.siteId ?? params?.site ?? null;
 
   const defaultForm = {
-    basic: { name: "", slug: "", description: "" },
+    basic: { name: "", slug: "", description: "", siteClass: "basic" as "basic" | "vip" },
     accommodationType: "tent",
     lodgingProvided: undefined,
     terrain: undefined,
@@ -39,17 +39,17 @@ export default function EditSitePage() {
   const [propertyLocation, setPropertyLocation] = useState<any | null>(null);
   const [form, setForm] = useState<any>({ ...defaultForm });
   const [step, setStep] = useState(0);
-  
-  const { data: sitesData } = useQuery({
-  queryKey: ['property-sites', propertyId],
-  queryFn: async () => {
-    const response = await  getSitesByProperty(propertyId);
-    return response.data;
-  },
-  enabled: !!propertyId,
-});
 
- 
+  const { data: sitesData } = useQuery({
+    queryKey: ['property-sites', propertyId],
+    queryFn: async () => {
+      const response = await getSitesByProperty(propertyId);
+      return response.data;
+    },
+    enabled: !!propertyId,
+  });
+
+
   useEffect(() => {
     if (!propertyId) return;
     let mounted = true;
@@ -102,7 +102,7 @@ export default function EditSitePage() {
             : defaultForm.photos;
 
           setForm({
-            basic: { name: found.name ?? "", slug: found.slug ?? "", description: found.description ?? "" },
+            basic: { name: found.name ?? "", slug: found.slug ?? "", description: found.description ?? "", siteClass: found.siteClass ?? "basic" },
             accommodationType: found.accommodationType ?? defaultForm.accommodationType,
             lodgingProvided: found.lodgingProvided ?? undefined,
             terrain: found.terrain ?? undefined,
@@ -187,6 +187,7 @@ export default function EditSitePage() {
         name: form.basic?.name?.trim(),
         slug: form.basic?.slug?.trim() || undefined,
         description: form.basic?.description?.trim() || undefined,
+        siteClass: form.basic?.siteClass || "basic",
         accommodationType: typeof form.accommodationType === "string" ? form.accommodationType : form.accommodationType?.type,
         lodgingProvided: form.lodgingProvided || undefined,
         terrain: form.terrain || undefined,
@@ -215,8 +216,9 @@ export default function EditSitePage() {
         amenities: Array.isArray(form.amenities) ? form.amenities : undefined,
         guestsShouldBring: Array.isArray(form.rules?.guestsShouldBring) ? form.rules.guestsShouldBring : undefined,
         siteSpecificRules: Array.isArray(form.rules?.siteSpecificRules) ? form.rules.siteSpecificRules : undefined,
-        isActive: form.bookingSettings?.status !== "unavailable",
-        isAvailableForBooking: form.bookingSettings?.status !== "unavailable",
+        status: publish ? "active" : "inactive",
+        isActive: publish,
+        isAvailableForBooking: publish,
         publish,
       };
       const res = await updateSite(siteId, payload);
@@ -269,10 +271,10 @@ export default function EditSitePage() {
                   <button
                     onClick={() => setStep(idx)}
                     className={`h-10 w-10 rounded-full grid place-items-center text-sm font-medium transition-all ${step === idx
-                        ? "bg-emerald-600 text-white shadow-lg scale-110"
-                        : step > idx
-                          ? "bg-emerald-100 text-emerald-700 border-2 border-emerald-300"
-                          : "bg-gray-100 text-gray-700 border-2 border-gray-200"
+                      ? "bg-emerald-600 text-white shadow-lg scale-110"
+                      : step > idx
+                        ? "bg-emerald-100 text-emerald-700 border-2 border-emerald-300"
+                        : "bg-gray-100 text-gray-700 border-2 border-gray-200"
                       }`}
                   >
                     {step > idx ? <Check className="h-5 w-5" /> : s.icon}
@@ -331,7 +333,7 @@ export default function EditSitePage() {
               update({ siteLocation: { ...(form.siteLocation ?? {}), ...(d ?? {}) } })
             }
             currentSiteId={siteId}
-            existingSites={sitesData.sites|| []}
+            existingSites={sitesData.sites || []}
           />
         )}
 

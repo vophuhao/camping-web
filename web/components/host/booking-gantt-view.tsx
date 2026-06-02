@@ -423,7 +423,7 @@ export function BookingGanttView({
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
@@ -473,7 +473,7 @@ export function BookingGanttView({
             </div>
           </div>
         </Card>
-      </div>
+      </div> */}
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-white p-4">
@@ -600,7 +600,7 @@ export function BookingGanttView({
                               (bar.duration / bar.daysInMonth) * 100,
                               ((bar.daysInMonth - bar.startPos) /
                                 bar.daysInMonth) *
-                                100,
+                              100,
                             )}%`,
                             height: '22px',
                           }}
@@ -682,7 +682,7 @@ export function BookingGanttView({
                                 (bar.duration / group.daysInMonth) * 100,
                                 ((group.daysInMonth - bar.startPos) /
                                   group.daysInMonth) *
-                                  100,
+                                100,
                               )}%`,
                               height: '22px',
                             }}

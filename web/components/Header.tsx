@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useCartCount } from '@/hooks/useCartCount';
 import { logout } from '@/lib/client-actions';
 import { useAuthStore } from '@/store/auth.store';
 import {
@@ -16,11 +15,13 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ModeToggle } from '@/components/mode-toggle';
 
 const navItems = [
   { name: 'Trang chủ', href: '/' },
   { name: 'Tìm kiếm', href: '/search' },
-  { name: 'Sản phẩm', href: '/products' },
+  { name: 'Điểm cắm trại', href: '/free-spots' },
+  { name: 'Diễn đàn', href: '/forum' },
   // { name: 'Giới thiệu', href: '/about' },
   // { name: 'Liên hệ', href: '/contact' },
 ];
@@ -30,8 +31,6 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, setUser } = useAuthStore();
-  const cartCount = useCartCount(); // ✅ Use socket-based cart count
-
   const handleLogout = async () => {
     const res = await logout();
     if (res.success) {
@@ -41,7 +40,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/10 backdrop-blur-xs supports-backdrop-filter:bg-white/35">
+    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="container-padding mx-auto max-w-7xl">
         <div className="flex-between h-16">
           {/* Logo */}
@@ -61,11 +60,13 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`hover:text-primary text-sm font-medium transition-colors ${
-                    isActive ? 'text-primary' : 'text-foreground/60'
-                  }`}
+                  className={`relative py-2 text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-foreground/60'
+                    }`}
                 >
                   {item.name}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
+                  )}
                 </Link>
               );
             })}
@@ -73,6 +74,8 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden items-center gap-3 md:flex">
+            {/* Theme toggle */}
+            <ModeToggle />
             {/* Shopping Cart
             <Button
               onClick={() => router.push('/cart')}
@@ -92,42 +95,45 @@ export default function Header() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
                 {user.role === 'admin' && (
-                  <Link href="/admin">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="sm"
+                  >
+                    <Link href="/admin">
                       {/* <LayoutDashboard className="mr-2 h-4 w-4" /> */}
                       Admin
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
                 {user.role === 'host' && (
-                  <Link href="/host">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="sm"
+                  >
+                    <Link href="/host">
                       {/* <LayoutDashboard className="mr-2 h-4 w-4" /> */}
                       Trang Host
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
                 {user.role === 'user' && (
-                  <Link href="/become-host">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="sm"
+                  >
+                    <Link href="/become-host">
                       {/* <LayoutDashboard className="mr-2 h-4 w-4" /> */}
                       Trở thành Host
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
-                <Button
+                {/* <Button
                   onClick={() => router.push('/cart')}
                   variant="ghost"
                   size="icon"
@@ -139,7 +145,7 @@ export default function Header() {
                       {cartCount > 99 ? '99+' : cartCount}
                     </span>
                   )}
-                </Button>
+                </Button> */}
 
                 <div
                   onClick={() => router.push(`/u/${user.username}`)}
@@ -159,14 +165,12 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/sign-in">
-                  <Button variant="ghost" size="sm">
-                    Đăng nhập
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button size="sm">Đăng ký</Button>
-                </Link>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/sign-in">Đăng nhập</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/sign-up">Đăng ký</Link>
+                </Button>
               </div>
             )}
           </div>
@@ -190,7 +194,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="border-t bg-white md:hidden">
+        <div className="border-t bg-background md:hidden">
           <nav className="container-padding mx-auto max-w-7xl space-y-1 py-4">
             {navItems.map(item => {
               const isActive = pathname === item.href;
@@ -199,11 +203,10 @@ export default function Header() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block rounded-md px-3 py-2 text-base font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground/60 hover:text-primary hover:bg-gray-100'
-                  }`}
+                  className={`block rounded-md px-3 py-2 text-base font-medium transition-colors ${isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-foreground/60 hover:text-primary hover:bg-accent'
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -216,9 +219,9 @@ export default function Header() {
                 router.push('/cart');
                 setMobileMenuOpen(false);
               }}
-              className="text-foreground/60 hover:text-primary flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium hover:bg-gray-100"
+              className="text-foreground/60 hover:text-primary flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium hover:bg-accent"
             >
-              <span className="flex items-center gap-2">
+              {/* <span className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 Giỏ hàng
               </span>
@@ -226,36 +229,41 @@ export default function Header() {
                 <span className="bg-primary flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
-              )}
+              )} */}
             </button>
 
             <div className="border-t pt-4">
               {isAuthenticated && user ? (
                 <div className="space-y-2">
                   {user.role === 'admin' && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-start"
                     >
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
+                      <Link
+                        href="/admin"
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Admin Panel
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   )}
                   {user.role === 'host' && (
-                    <Link href="/host" onClick={() => setMobileMenuOpen(false)}>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <Link
+                        href="/host"
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Host Panel
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   )}
                   <div className="flex items-center gap-2 rounded-md border px-3 py-2">
                     <User className="h-4 w-4" />
@@ -272,20 +280,22 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Link
-                    href="/sign-in"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Button variant="outline" className="w-full">
+                  <Button asChild variant="outline" className="w-full">
+                    <Link
+                      href="/sign-in"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       Đăng nhập
-                    </Button>
-                  </Link>
-                  <Link
-                    href="/sign-up"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Button className="w-full">Đăng ký</Button>
-                  </Link>
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link
+                      href="/sign-up"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Đăng ký
+                    </Link>
+                  </Button>
                 </div>
               )}
             </div>

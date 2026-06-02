@@ -30,12 +30,45 @@ propertyRoutes.get("/recommendations/list", authenticate, propertyController.get
 // My properties (must be before /:idOrSlug to avoid matching "my" as ID)
 propertyRoutes.get("/my/list", authenticate, propertyController.getMyProperties);
 
+// Admin: get host's properties with sites (must be before /:idOrSlug)
+propertyRoutes.get("/host/:hostId", authenticate, propertyController.getHostPropertiesWithSites);
+
 // Property reviews routes (must be before /:idOrSlug)
 propertyRoutes.get("/:propertyId/reviews", reviewController.getPropertyReviews);
 propertyRoutes.get("/:propertyId/reviews/stats", reviewController.getPropertyReviewStats);
 
 // Property stats (must be before /:idOrSlug)
 propertyRoutes.get("/:id/stats", authenticate, propertyController.getPropertyStats);
+
+// Superhost status (public — used by host dashboard and property detail page)
+propertyRoutes.get("/:id/superhost-status", authenticate, async (req, res) => {
+  try {
+    const { SuperhostService } = await import("@/services/superhost.service");
+    const property = await (await import("@/models")).PropertyModel.findOne({
+      $or: [{ _id: req.params.id }, { slug: req.params.id }],
+    }).select("host isSuperhost superhostSince superhostEvaluatedAt");
+
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    const superhostService = new SuperhostService();
+    const status = await superhostService.getSuperhostStatus(property.host.toString());
+
+    return res.json({
+      success: true,
+      data: {
+        isSuperhost: property.isSuperhost,
+        superhostSince: property.superhostSince,
+        superhostEvaluatedAt: property.superhostEvaluatedAt,
+        criteria: status.criteria,
+        isEligible: status.isEligible,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // Property with sites (must be before /:idOrSlug)
 propertyRoutes.get("/:idOrSlug/with-sites", propertyController.getPropertyWithSites);
@@ -58,5 +91,10 @@ propertyRoutes.patch("/:id", authenticate, propertyController.updateProperty);
 propertyRoutes.delete("/:id", authenticate, propertyController.deleteProperty);
 propertyRoutes.post("/:id/activate", authenticate, propertyController.activateProperty);
 propertyRoutes.post("/:id/deactivate", authenticate, propertyController.deactivateProperty);
+
+// Admin-only routes
+propertyRoutes.post("/:id/admin-lock", authenticate, propertyController.adminLockProperty);
+propertyRoutes.post("/:id/admin-unlock", authenticate, propertyController.adminUnlockProperty);
+propertyRoutes.post("/:id/admin-approve", authenticate, propertyController.adminApproveProperty);
 
 export default propertyRoutes;

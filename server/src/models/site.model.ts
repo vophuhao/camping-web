@@ -28,6 +28,8 @@ export interface SiteDocument extends mongoose.Document {
 
   lodgingProvided?: "bring_your_own" | "structure_provided" | "vehicle_provided";
 
+  siteClass?: "basic" | "vip";
+
   // Site-specific Location
   siteLocation?: {
     coordinates?: {
@@ -133,7 +135,7 @@ export interface SiteDocument extends mongoose.Document {
   };
 
   // Status
-  status: "active" | "inactive" | "maintenance" | "suspended";
+  status: "active" | "inactive" | "blocked";
   isActive: boolean;
   isAvailableForBooking: boolean;
   unavailableReason?: string;
@@ -191,6 +193,13 @@ const siteSchema = new mongoose.Schema<SiteDocument>(
       type: String,
       enum: ["bring_your_own", "structure_provided", "vehicle_provided"],
       required: false,
+    },
+
+    siteClass: {
+      type: String,
+      enum: ["basic", "vip"],
+      default: "basic",
+      index: true,
     },
 
     // Site Location
@@ -310,7 +319,7 @@ const siteSchema = new mongoose.Schema<SiteDocument>(
     // Status
     status: {
       type: String,
-      enum: ["active", "inactive", "maintenance", "suspended"],
+      enum: ["active", "inactive", "blocked"],
       default: "active",
       index: true,
     },

@@ -23,7 +23,7 @@ const STEPS = [
 ];
 
 export default function NewSitePage() {
-    
+
 
     const params = useParams() as any;
     const router = useRouter();
@@ -37,7 +37,7 @@ export default function NewSitePage() {
         enabled: !!propertyId,
     });
     const defaultForm = {
-        basic: { name: "", slug: "", description: "" },
+        basic: { name: "", slug: "", description: "", siteClass: "basic" as "basic" | "vip" },
         accommodationType: "tent",
         lodgingProvided: undefined,
         terrain: undefined,
@@ -140,6 +140,7 @@ export default function NewSitePage() {
                 name: form.basic?.name?.trim(),
                 slug: form.basic?.slug?.trim() || undefined,
                 description: form.basic?.description?.trim() || undefined,
+                siteClass: form.basic?.siteClass || "basic",
                 accommodationType: typeof form.accommodationType === "string" ? form.accommodationType : form.accommodationType?.type,
                 lodgingProvided: form.lodgingProvided || undefined,
                 terrain: form.terrain || undefined,
@@ -200,8 +201,9 @@ export default function NewSitePage() {
                 amenities: Array.isArray(form.amenities) ? form.amenities : undefined,
                 guestsShouldBring: Array.isArray(form.rules?.guestsShouldBring) ? form.rules.guestsShouldBring : undefined,
                 siteSpecificRules: Array.isArray(form.rules?.siteSpecificRules) ? form.rules.siteSpecificRules : undefined,
-                isActive: form.bookingSettings?.status !== "unavailable",
-                isAvailableForBooking: form.bookingSettings?.status !== "unavailable",
+                status: publish ? "active" : "inactive",
+                isActive: publish,
+                isAvailableForBooking: publish,
                 publish,
             };
 

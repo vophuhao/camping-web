@@ -4,71 +4,120 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+
+  /* ── Light mode ── */
+  --background: oklch(0.98 0 0);
+  /* near-white */
+  --foreground: oklch(0.15 0.01 240);
+  /* near-black, slight cool tint */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.15 0.01 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.15 0.01 240);
+
+  /* Primary: Deep Teal — professional, easy on eyes */
+  --primary: oklch(0.40 0.12 200);
+  --primary-foreground: oklch(0.98 0 0);
+
+  /* Secondary: Warm Amber accent */
+  --secondary: oklch(93.806% 0.00357 220.879);
+  --secondary-foreground: oklch(0.25 0.06 200);
+
+  --muted: oklch(0.95 0.01 220);
+  --muted-foreground: oklch(0.50 0.03 220);
+  --accent: oklch(0.93 0.03 200);
+  --accent-foreground: oklch(0.25 0.08 200);
+
+  --destructive: oklch(0.58 0.22 25);
+  --border: oklch(0.88 0.02 220);
+  --input: oklch(0.88 0.02 220);
+  --ring: oklch(0.40 0.12 200);
+
+  --chart-1: oklch(0.40 0.12 200);
+  --chart-2: oklch(0.65 0.16 65);
+  --chart-3: oklch(0.55 0.14 200);
+  --chart-4: oklch(0.75 0.15 80);
+  --chart-5: oklch(0.60 0.14 160);
+
+  --sidebar: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.15 0.01 240);
+  --sidebar-primary: oklch(0.40 0.12 200);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.93 0.03 200);
+  --sidebar-accent-foreground: oklch(0.25 0.08 200);
+  --sidebar-border: oklch(0.88 0.02 220);
+  --sidebar-ring: oklch(0.40 0.12 200);
+
+  /* Forum legacy aliases */
+  --bg-primary: var(--background);
+  --bg-secondary: var(--secondary);
+  --bg-tertiary: var(--card);
+  --bg-hover: var(--muted);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --border-color: var(--border);
+  --primary-light: color-mix(in oklab, var(--primary) 18%, transparent);
+  --primary-dark: color-mix(in oklab, var(--primary) 80%, black);
+  --primary-alpha: color-mix(in oklab, var(--primary) 14%, transparent);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ── Dark mode ── */
+  --background: oklch(0.13 0.01 240);
+  /* deep dark, slight cool tint */
+  --foreground: oklch(0.92 0.01 240);
+  /* light grey — comfortable to read */
+  --card: oklch(0.18 0.01 240);
+  /* slightly lighter than bg */
+  --card-foreground: oklch(0.92 0.01 240);
+  --popover: oklch(0.18 0.01 240);
+  --popover-foreground: oklch(0.92 0.01 240);
+
+  /* Primary: Slightly lighter teal in dark mode */
+  --primary: oklch(0.55 0.13 200);
+  --primary-foreground: oklch(0.98 0 0);
+
+  /* Secondary: Muted amber */
+  --secondary: oklch(0.24 0.02 240);
+  --secondary-foreground: oklch(0.92 0.01 240);
+
+  --muted: oklch(0.22 0.01 240);
+  --muted-foreground: oklch(0.62 0.02 240);
+  /* readable secondary text */
+  --accent: oklch(0.22 0.01 240);
+  --accent-foreground: oklch(0.92 0.01 240);
+
+  --destructive: oklch(0.60 0.22 25);
+  --border: oklch(0.26 0.02 240);
+  --input: oklch(0.26 0.02 240);
+  --ring: oklch(0.55 0.13 200);
+
+  --chart-1: oklch(0.60 0.12 200);
+  --chart-2: oklch(0.72 0.16 65);
+  --chart-3: oklch(0.65 0.10 200);
+  --chart-4: oklch(0.80 0.15 80);
+  --chart-5: oklch(0.70 0.15 60);
+
+  --sidebar: oklch(0.18 0.01 240);
+  --sidebar-foreground: oklch(0.92 0.01 240);
+  --sidebar-primary: oklch(0.55 0.13 200);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.22 0.01 240);
+  --sidebar-accent-foreground: oklch(0.92 0.01 240);
+  --sidebar-border: oklch(0.26 0.02 240);
+  --sidebar-ring: oklch(0.55 0.13 200);
+
+  /* Forum legacy aliases */
+  --bg-primary: var(--background);
+  --bg-secondary: var(--secondary);
+  --bg-tertiary: var(--card);
+  --bg-hover: var(--muted);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --border-color: var(--border);
+  --primary-light: color-mix(in oklab, var(--primary) 20%, transparent);
+  --primary-dark: color-mix(in oklab, var(--primary) 70%, black);
+  --primary-alpha: color-mix(in oklab, var(--primary) 15%, transparent);
 }
 
 @theme inline {
@@ -110,7 +159,7 @@
 }
 
 @utility info-label {
-  @apply text-xs text-gray-600;
+  @apply text-xs text-muted-foreground;
 }
 
 @utility info-value {
@@ -126,11 +175,11 @@
 }
 
 @utility form-label {
-  @apply mb-2 flex items-center gap-2 text-sm font-medium text-gray-700;
+  @apply mb-2 flex items-center gap-2 text-sm font-medium text-foreground;
 }
 
 @utility form-input {
-  @apply focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:ring-2 focus:outline-none;
+  @apply focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-input bg-background p-2.5 text-sm text-foreground focus:ring-2 focus:outline-none;
 }
 
 @utility section-title {
@@ -174,7 +223,7 @@
 }
 
 @utility loading-center {
-  @apply p-10 text-center text-gray-500;
+  @apply p-10 text-center text-muted-foreground;
 }
 
 @utility error-center {
@@ -246,11 +295,15 @@
 }
 
 @utility grid-auto-fit {
-  @apply grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 @utility grid-auto-fill {
-  @apply grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 @utility compact-select {
@@ -262,7 +315,250 @@
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLOBAL DARK MODE OVERRIDES
+   Auto-fix hardcoded colors without touching every file.
+   These rules apply when the .dark class is on <html>.
+   ═══════════════════════════════════════════════════════ */
+
+/* Body base */
+.dark body {
+  background-color: oklch(0.13 0.01 240);
+  color: oklch(0.92 0.01 240);
+}
+
+/* bg-white → dark card */
+.dark .bg-white {
+  background-color: oklch(0.18 0.01 240) !important;
+}
+
+/* bg-gray-50 / bg-slate-50 → dark subtle bg */
+.dark .bg-gray-50,
+.dark .bg-slate-50 {
+  background-color: oklch(0.17 0.01 240) !important;
+}
+
+/* bg-gray-100 / bg-slate-100 → dark muted bg */
+.dark .bg-gray-100,
+.dark .bg-slate-100 {
+  background-color: oklch(0.21 0.01 240) !important;
+}
+
+/* bg-gray-200 / bg-slate-200 */
+.dark .bg-gray-200,
+.dark .bg-slate-200 {
+  background-color: oklch(0.26 0.01 240) !important;
+}
+
+/* bg-gray-300 / bg-slate-300 */
+.dark .bg-gray-300,
+.dark .bg-slate-300 {
+  background-color: oklch(0.31 0.01 240) !important;
+}
+
+/* border-gray-* / border-slate-* */
+.dark .border-gray-100,
+.dark .border-slate-100 {
+  border-color: oklch(1 0 0 / 8%) !important;
+}
+
+.dark .border-gray-200,
+.dark .border-slate-200 {
+  border-color: oklch(1 0 0 / 10%) !important;
+}
+
+.dark .border-gray-300,
+.dark .border-slate-300 {
+  border-color: oklch(1 0 0 / 14%) !important;
+}
+
+/* text-gray-* / text-slate-* — map to readable dark-mode equivalents */
+.dark .text-gray-900,
+.dark .text-slate-900 {
+  color: oklch(0.96 0 0) !important;
+  /* white-ish */
+}
+
+.dark .text-gray-800,
+.dark .text-slate-800 {
+  color: oklch(0.90 0 0) !important;
+}
+
+.dark .text-gray-700,
+.dark .text-slate-700 {
+  color: oklch(0.82 0 0) !important;
+}
+
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: oklch(0.74 0 0) !important;
+  /* comfortable secondary text */
+}
+
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: oklch(0.65 0 0) !important;
+  /* muted, still readable */
+}
+
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: oklch(0.72 0 0) !important;
+  /* was 0.52 — too dark, fix to readable */
+}
+
+/* divide-gray / divide-slate */
+.dark .divide-gray-100>*,
+.dark .divide-slate-100>* {
+  border-color: oklch(1 0 0 / 8%);
+}
+
+.dark .divide-gray-200>*,
+.dark .divide-slate-200>* {
+  border-color: oklch(1 0 0 / 10%);
+}
+
+/* shadow overrides */
+.dark .shadow,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  --tw-shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* hover:bg-gray-50 / hover:bg-slate-50 */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-slate-50:hover {
+  background-color: oklch(0.22 0 0) !important;
+}
+
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: oklch(0.26 0 0) !important;
+}
+
+/* Inputs & selects */
+.dark input:not([class*="bg-"]),
+.dark select:not([class*="bg-"]),
+.dark textarea:not([class*="bg-"]) {
+  background-color: oklch(0.22 0 0);
+  color: oklch(0.985 0 0);
+  border-color: oklch(1 0 0 / 12%);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: oklch(0.55 0 0);
+}
+
+/* Table rows */
+.dark tr:hover {
+  background-color: oklch(0.22 0 0) !important;
+}
+
+.dark thead {
+  background-color: oklch(0.18 0 0) !important;
+}
+
+.dark th {
+  color: oklch(0.70 0 0) !important;
+}
+
+/* details/summary (FAQ) */
+.dark details {
+  background-color: oklch(0.20 0 0) !important;
+}
+
+.dark details:hover {
+  background-color: oklch(0.22 0 0) !important;
+}
+
+/* Gradient from-white overrides */
+.dark .from-white {
+  --tw-gradient-from: oklch(0.205 0 0) !important;
+}
+
+.dark .to-white {
+  --tw-gradient-to: oklch(0.205 0 0) !important;
+}
+
+.dark .via-white {
+  --tw-gradient-via: oklch(0.205 0 0) !important;
+}
+
+/* Common page backgrounds */
+.dark .min-h-screen:not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-background"]) {
+  background-color: oklch(0.145 0 0);
+}
+
+/* Sticky headers */
+.dark .sticky {
+  background-color: oklch(0.145 0 0 / 95%);
+}
+
+/* Admin + Host dashboard cards */
+.dark .rounded-xl:not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-purple"]):not([class*="bg-red"]):not([class*="bg-amber"]) {
+  border-color: oklch(1 0 0 / 8%);
+}
+
+/* Info & utility labels */
+.dark .info-label {
+  color: oklch(0.60 0 0);
+}
+
+/* Transition for smooth dark mode switch */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Premium UI/UX Animation & Glassmorphism Utilities */
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+@utility animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+@utility glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+}
+
+.dark .glass-card {
+  background: rgba(32, 32, 32, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+@utility img-zoom-hover {
+  @apply overflow-hidden;
+
+  & img {
+    @apply transition-transform duration-500 ease-out;
+  }
+
+  &:hover img {
+    @apply scale-105;
   }
 }

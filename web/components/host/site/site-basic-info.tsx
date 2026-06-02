@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 interface SiteBasicInfoProps {
   data: {
     name: string;
     description: string;
+    siteClass?: "basic" | "vip";
   };
   onChange: (data: any) => void;
 }
@@ -36,6 +39,25 @@ export function SiteBasicInfo({ data, onChange }: SiteBasicInfoProps) {
           />
           <p className="text-xs text-gray-500 mt-1">
             Tên ngắn gọn, dễ nhớ để phân biệt các site
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="siteClass">Phân loại Site</Label>
+          <Select
+            value={data.siteClass || "basic"}
+            onValueChange={(v) => onChange({ siteClass: v })}
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Chọn loại site" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="basic">Cơ bản (Standard)</SelectItem>
+              <SelectItem value="vip">VIP (Premium)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500 mt-1">
+            Phân loại giúp khách hàng dễ dàng tìm kiếm và so sánh mức độ tiện nghi của bãi cắm.
           </p>
         </div>
 

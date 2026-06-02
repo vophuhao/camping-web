@@ -96,12 +96,17 @@ export interface PropertyDocument extends mongoose.Document {
   };
 
   // Status
-  status: "active" | "inactive" | "pending_approval" | "suspended";
+  status: "active" | "inactive" | "blocked";
   isActive: boolean;
   isFeatured: boolean;
   featuredUntil?: Date;
   isVerified: boolean;
   verifiedAt?: Date;
+
+  // Superhost
+  isSuperhost: boolean;
+  superhostSince?: Date;
+  superhostEvaluatedAt?: Date;
 
   // Settings
   settings: {
@@ -247,7 +252,7 @@ const propertySchema = new mongoose.Schema<PropertyDocument>(
     // Status
     status: {
       type: String,
-      enum: ["active", "inactive", "pending_approval", "suspended"],
+      enum: ["active", "inactive", "blocked"],
       default: "active",
       index: true,
     },
@@ -256,6 +261,11 @@ const propertySchema = new mongoose.Schema<PropertyDocument>(
     featuredUntil: { type: Date },
     isVerified: { type: Boolean, default: false },
     verifiedAt: { type: Date },
+
+    // Superhost
+    isSuperhost: { type: Boolean, default: false, index: true },
+    superhostSince: { type: Date },
+    superhostEvaluatedAt: { type: Date },
 
     // Settings
     settings: {

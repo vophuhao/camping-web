@@ -98,7 +98,7 @@ export const createPropertySchema = z.object({
       allowWholePropertyBooking: z.boolean().default(false),
     })
     .optional(),
-  status: z.enum(["active", "inactive", "pending_approval", "suspended"]).default("active"),
+  status: z.enum(["active", "inactive", "blocked"]).default("active"),
 
   // Status
   isActive: z.boolean().default(true),

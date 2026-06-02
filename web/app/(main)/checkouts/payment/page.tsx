@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createBooking, getSiteById } from '@/lib/client-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   ArrowLeft,
   Car,
@@ -176,43 +177,106 @@ export default function PaymentPage() {
   // Calculate pricing with proper fees
   const nights = bookingData.nights;
 
-  // Calculate weekend nights (Friday & Saturday)
-  const calculateWeekendNights = (checkIn: string, checkOut: string) => {
-    if (!checkIn || !checkOut) return 0;
+  // Calculate price breakdown day-by-day (seasonal pricing > weekend pricing > base pricing)
+  const {
+    subtotal,
+    weekdayNights,
+    weekendNights,
+    seasonalNights,
+    seasonalDetails,
+  } = useMemo(() => {
+    const checkIn = bookingData.checkIn;
+    const checkOut = bookingData.checkOut;
+    const basePrice = bookingData.basePrice;
+    const weekendPrice = siteDetails?.data?.pricing?.weekendPrice ?? basePrice;
+    const seasonalPricing = siteDetails?.data?.pricing?.seasonalPricing ?? [];
 
-    const startDate = new Date(checkIn);
-    const endDate = new Date(checkOut);
-    let weekendCount = 0;
-    const currentDate = new Date(startDate);
+    if (!checkIn || !checkOut) {
+      return {
+        subtotal: basePrice * nights,
+        weekdayNights: nights,
+        weekendNights: 0,
+        seasonalNights: 0,
+        seasonalDetails: [],
+      };
+    }
 
-    while (currentDate < endDate) {
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+
+    let calculatedSubtotal = 0;
+    let computedWeekdayNights = 0;
+    let computedWeekendNights = 0;
+    let computedSeasonalNights = 0;
+
+    // Track seasonal price matches
+    const seasonalMatchCounts: Record<string, { name: string; price: number; count: number }> = {};
+
+    const currentDate = new Date(checkInDate);
+    while (currentDate < checkOutDate) {
       const dayOfWeek = currentDate.getDay();
-      // 5 = Friday, 6 = Saturday
-      if (dayOfWeek === 5 || dayOfWeek === 6) {
-        weekendCount++;
+      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday & Saturday
+
+      let nightPrice = basePrice;
+      let isSeasonal = false;
+      let matchedSeason: any = null;
+
+      // Seasonal price has highest priority
+      if (seasonalPricing && seasonalPricing.length > 0) {
+        matchedSeason = seasonalPricing.find((season: any) => {
+          const seasonStart = new Date(season.startDate);
+          const seasonEnd = new Date(season.endDate);
+
+          // Compare dates without time
+          const currentZero = new Date(currentDate);
+          currentZero.setHours(0, 0, 0, 0);
+          const startZero = new Date(seasonStart);
+          startZero.setHours(0, 0, 0, 0);
+          const endZero = new Date(seasonEnd);
+          endZero.setHours(0, 0, 0, 0);
+
+          return currentZero >= startZero && currentZero <= endZero;
+        });
+
+        if (matchedSeason) {
+          nightPrice = matchedSeason.price;
+          isSeasonal = true;
+        }
       }
+
+      if (isSeasonal) {
+        computedSeasonalNights++;
+        const key = `${matchedSeason.name}_${matchedSeason.price}`;
+        if (!seasonalMatchCounts[key]) {
+          seasonalMatchCounts[key] = {
+            name: matchedSeason.name,
+            price: matchedSeason.price,
+            count: 0,
+          };
+        }
+        seasonalMatchCounts[key].count++;
+      } else if (isWeekend && weekendPrice !== null && weekendPrice > 0 && weekendPrice !== basePrice) {
+        nightPrice = weekendPrice;
+        computedWeekendNights++;
+      } else {
+        computedWeekdayNights++;
+      }
+
+      calculatedSubtotal += nightPrice;
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    return weekendCount;
-  };
+    return {
+      subtotal: calculatedSubtotal,
+      weekdayNights: computedWeekdayNights,
+      weekendNights: computedWeekendNights,
+      seasonalNights: computedSeasonalNights,
+      seasonalDetails: Object.values(seasonalMatchCounts),
+    };
+  }, [bookingData.checkIn, bookingData.checkOut, bookingData.basePrice, siteDetails, nights]);
 
-  const weekendNights = calculateWeekendNights(
-    bookingData.checkIn,
-    bookingData.checkOut,
-  );
-  const weekdayNights = nights - weekendNights;
-
-  // Get weekend price from site details
-  const weekendPrice =
-    siteDetails?.data.pricing.weekendPrice || bookingData.basePrice;
-  const hasWeekendPricing =
-    weekendPrice && weekendPrice !== bookingData.basePrice && weekendNights > 0;
-
-  // Calculate subtotal with weekend pricing
-  const subtotal = hasWeekendPricing
-    ? weekdayNights * bookingData.basePrice + weekendNights * weekendPrice
-    : bookingData.basePrice * nights;
+  const weekendPrice = siteDetails?.data?.pricing?.weekendPrice ?? bookingData.basePrice;
+  const hasDetailedPricing = weekendNights > 0 || seasonalNights > 0;
 
   // Calculate fees based on site pricing
   const totalCleaningFee = bookingData.cleaningFee || 0;
@@ -436,11 +500,10 @@ export default function PaymentPage() {
                       {/* Full Payment */}
                       <label
                         htmlFor="full"
-                        className={`hover:bg-accent flex cursor-pointer items-start space-x-3 rounded-lg border-2 p-4 transition ${
-                          paymentMethod === 'full'
-                            ? 'border-emerald-600 bg-emerald-50'
-                            : 'border-gray-200'
-                        }`}
+                        className={`hover:bg-accent flex cursor-pointer items-start space-x-3 rounded-lg border-2 p-4 transition ${paymentMethod === 'full'
+                          ? 'border-emerald-600 bg-emerald-50'
+                          : 'border-gray-200'
+                          }`}
                       >
                         <RadioGroupItem
                           value="full"
@@ -464,14 +527,13 @@ export default function PaymentPage() {
                       </label>
 
                       {/* Deposit Payment */}
-                      {hasDepositOption && (
+                      {/* {hasDepositOption && (
                         <label
                           htmlFor="deposit"
-                          className={`hover:bg-accent flex cursor-pointer items-start space-x-3 rounded-lg border-2 p-4 transition ${
-                            paymentMethod === 'deposit'
+                          className={`hover:bg-accent flex cursor-pointer items-start space-x-3 rounded-lg border-2 p-4 transition ${paymentMethod === 'deposit'
                               ? 'border-blue-600 bg-blue-50'
                               : 'border-gray-200'
-                          }`}
+                            }`}
                         >
                           <RadioGroupItem
                             value="deposit"
@@ -505,7 +567,7 @@ export default function PaymentPage() {
                             </div>
                           </div>
                         </label>
-                      )}
+                      )} */}
                     </div>
                   </RadioGroup>
 
@@ -625,8 +687,8 @@ export default function PaymentPage() {
 
                 {/* Price Breakdown */}
                 <div className="space-y-2">
-                  {/* Show weekend pricing breakdown if applicable */}
-                  {hasWeekendPricing ? (
+                  {/* Show pricing breakdown if applicable */}
+                  {hasDetailedPricing ? (
                     <>
                       {weekdayNights > 0 && (
                         <div className="flex justify-between text-sm">
@@ -653,6 +715,20 @@ export default function PaymentPage() {
                           </span>
                         </div>
                       )}
+                      {seasonalDetails.map((season) => (
+                        <div key={season.name} className="flex justify-between text-sm">
+                          <span className="flex items-center gap-1">
+                            {formatPrice(season.price)} × {season.count} đêm{' '}
+                            {season.name}
+                            <span className="text-xs text-amber-600 font-medium">
+                              (Mùa vụ)
+                            </span>
+                          </span>
+                          <span>
+                            {formatPrice(season.count * season.price)}
+                          </span>
+                        </div>
+                      ))}
                       <div className="flex justify-between text-sm font-medium">
                         <span>Tổng tiền phòng</span>
                         <span>{formatPrice(subtotal)}</span>

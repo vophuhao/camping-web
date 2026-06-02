@@ -64,7 +64,7 @@ export default async function HomePage() {
       <AccommodationTypes />
 
       {/* Featured Products - E-commerce section */}
-      <FeaturedProducts />
+      {/* <FeaturedProducts /> */}
 
       {/* Recent Reviews - Real customer testimonials */}
       <RecentReviews reviews={recentReviews} />

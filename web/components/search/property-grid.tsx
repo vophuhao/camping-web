@@ -1,6 +1,7 @@
 'use client';
 
 import { FavoriteButton } from '@/components/property/FavoriteButton';
+import { SuperhostBadge } from '@/components/property/SuperhostBadge';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,7 +10,7 @@ import { Eye } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 // Lazy load map component to avoid SSR issues with mapbox-gl
@@ -99,6 +100,22 @@ export function PropertyGrid({
     return `${value} ${unit === 'acres' ? 'acres' : unit === 'hectares' ? 'ha' : 'm²'}`;
   };
 
+  const useRouterInstance = useRouter();
+
+  const handleBoundsChange = (bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('minLat', bounds.minLat.toString());
+    params.set('maxLat', bounds.maxLat.toString());
+    params.set('minLng', bounds.minLng.toString());
+    params.set('maxLng', bounds.maxLng.toString());
+    // remove circle coords since we are bounding box searching
+    params.delete('lat');
+    params.delete('lng');
+    params.delete('radius');
+
+    useRouterInstance.push(`/search?${params.toString()}`);
+  };
+
   return (
     <div className="flex h-[calc(100vh-64px)] gap-0">
       {/* Properties Grid - 3 columns - Scrollable */}
@@ -115,11 +132,10 @@ export function PropertyGrid({
           {initialProperties.map(property => (
             <Card
               key={property._id}
-              className={`relative cursor-pointer overflow-hidden border-none shadow-md transition-all hover:shadow-lg ${
-                selectedProperty?._id === property._id
+              className={`relative cursor-pointer overflow-hidden border-none shadow-md transition-all hover:shadow-lg ${selectedProperty?._id === property._id
                   ? 'ring-primary ring-2'
                   : ''
-              }`}
+                }`}
               onClick={() => setSelectedProperty(property)}
               onMouseEnter={() => setHoveredProperty(property)}
               onMouseLeave={() => setHoveredProperty(null)}
@@ -158,23 +174,28 @@ export function PropertyGrid({
               </Link>
 
               <div className="space-y-1.5 p-4">
-                {/* Rating % */}
-                <div className="flex items-center gap-1">
-                  {property.stats?.averageRating &&
-                  property.stats.averageRating > 0 ? (
-                    <>
-                      <span className="text-base">👍</span>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {Math.round((property.stats.averageRating / 5) * 100)}%
+                {/* Rating + Superhost badge */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    {property.stats?.averageRating &&
+                      property.stats.averageRating > 0 ? (
+                      <>
+                        <span className="text-base">👍</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {Math.round((property.stats.averageRating / 5) * 100)}%
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          ({property.stats.totalReviews || 0})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        Chưa có đánh giá
                       </span>
-                      <span className="text-xs text-gray-500">
-                        ({property.stats.totalReviews || 0})
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-gray-400">
-                      Chưa có đánh giá
-                    </span>
+                    )}
+                  </div>
+                  {(property as any).isSuperhost && (
+                    <SuperhostBadge size="xs" showTooltip superhostSince={(property as any).superhostSince} />
                   )}
                 </div>
 
@@ -236,6 +257,7 @@ export function PropertyGrid({
             hoveredProperty={hoveredProperty}
             searchCoordinates={searchCoordinates}
             onPropertySelect={setSelectedProperty}
+            onBoundsChange={handleBoundsChange}
           />
         </div>
       </div>

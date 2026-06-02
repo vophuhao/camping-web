@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client';
 
 import {
@@ -19,6 +20,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,13 +36,19 @@ import {
   Calendar,
   Eye,
   Filter,
+  Grid3x3,
   Home,
+  List,
   MapPin,
   Plus,
   Search,
   Settings,
+  Star,
   Trash2,
   TrendingUp,
+  X,
+  MoreHorizontal,
+  Copy,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -52,24 +60,21 @@ export default function PropertiesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
+  const [selectedProperties, setSelectedProperties] = useState<Set<string>>(new Set());
 
-  const {
-    data: properties,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: properties, isLoading, refetch } = useQuery({
     queryKey: ['my-properties'],
     queryFn: async () => {
       const response = await getMyProperties();
       return response.data.properties;
     },
   });
-  console.log('Properties:', properties);
+
   const handleDeleteProperty = async () => {
     if (!propertyToDelete) return;
-
     try {
       await deleteProperty(propertyToDelete);
       toast.success('Xóa property thành công!');
@@ -77,350 +82,420 @@ export default function PropertiesPage() {
       setDeleteDialogOpen(false);
       setPropertyToDelete(null);
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || 'Có lỗi xảy ra khi xóa property',
-      );
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa property');
     }
   };
 
   const filteredProperties = properties?.filter((property: any) => {
-    const matchesSearch = property.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === 'all' || property.status === statusFilter;
+    const matchesSearch = property.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const statusConfig = {
-    active: { label: 'Đang hoạt động', color: 'bg-green-100 text-green-800' },
-    inactive: { label: 'Không hoạt động', color: 'bg-gray-100 text-gray-800' },
+  const stats = {
+    total: properties?.length || 0,
+    active: properties?.filter((p: any) => p.status === 'active').length || 0,
+    totalSites: properties?.reduce((sum: number, p: any) => sum + (p.stats?.totalSites || 0), 0) || 0,
+    totalBookings: properties?.reduce((sum: number, p: any) => sum + (p.stats?.totalBookings || 0), 0) || 0,
   };
 
+  const statusConfig: any = {
+    active: { label: 'Hoạt động', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: '✓' },
+    inactive: { label: 'Không hoạt động', color: 'bg-slate-100 text-slate-800 border-slate-300', icon: '◯' },
+    blocked: { label: 'Bị khóa', color: 'bg-red-100 text-red-800 border-red-200', icon: '⊗' },
+    suspended: { label: 'Bị khóa', color: 'bg-red-100 text-red-800 border-red-200', icon: '⊗' },
+  };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF9F5]">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-          <p className="mt-4 text-gray-600">Đang tải...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#1B4332] border-t-transparent" />
+          <p className="mt-4 text-stone-600 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-stone-900 pb-12">
       {/* Header */}
-      <div className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Quản lý Khu cắm trại
-              </h1>
-            </div>
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => router.push('/host/properties/new')}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm khu mới
-            </Button>
+      <div className="sticky top-0 z-40  backdrop-blur-md  border-stone-200/80">
+        <div className="px-8 py-5 max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl  font-bold text-stone-900 tracking-tight">Khu cắm trại</h1>
           </div>
+          <Button
+            className="bg-[#1B4332] hover:bg-[#122c21] text-white shadow-md hover:shadow-lg transition-all rounded-xl px-5 py-5 text-sm font-medium gap-2"
+            onClick={() => router.push('/host/properties/new')}
+          >
+            <Plus className="h-4 w-4" />
+            Thêm khu mới
+          </Button>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Stats */}
-        {properties && properties.length > 0 && (
-          <div className="mb-8 grid gap-6 md:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Tổng Khu cắm trại
-                    </p>
-                    <p className="mt-1 text-2xl font-bold text-gray-900">
-                      {properties.length}
-                    </p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-                    <Home className="h-6 w-6 text-emerald-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Đã xuất bản
-                    </p>
-                    <p className="mt-1 text-2xl font-bold text-gray-900">
-                      {
-                        properties.filter((p: any) => p.status === 'published')
-                          .length
-                      }
-                    </p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Tổng Địa điểm cắm trại
-                    </p>
-                    <p className="mt-1 text-2xl font-bold text-gray-900">
-                      {properties.reduce(
-                        (sum: number, p: any) =>
-                          sum + (p.stats?.totalSites || 0),
-                        0,
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <MapPin className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Tổng Bookings
-                    </p>
-                    <p className="mt-1 text-2xl font-bold text-gray-900">
-                      {properties.reduce(
-                        (sum: number, p: any) =>
-                          sum + (p.stats?.totalBookings || 0),
-                        0,
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                    <Calendar className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Tìm kiếm theo tên property..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="w-full sm:w-48">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-8 py-8 flex flex-col lg:flex-row gap-8">
+        {/* Sidebar Filters */}
+        <div className="w-full lg:w-64 flex-shrink-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sticky top-28 space-y-6">
+            <div>
+              <h3 className="text-sm font-bold text-stone-900 mb-4 tracking-wider uppercase">Bộ lọc</h3>
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-stone-500 block">Trạng thái</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <Filter className="mr-2 h-4 w-4" />
+                  <SelectTrigger className="bg-stone-50 border-stone-200 h-10 text-sm rounded-xl focus:ring-[#1B4332]/20 focus:border-[#1B4332]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     <SelectItem value="active">Đang hoạt động</SelectItem>
                     <SelectItem value="inactive">Không hoạt động</SelectItem>
-                    <SelectItem value="pending_approval">Chờ duyệt</SelectItem>
-                    <SelectItem value="suspended">Tạm ngưng</SelectItem>
+                    <SelectItem value="blocked">Bị khóa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Properties List */}
-        {filteredProperties && filteredProperties.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProperties.map((property: any) => (
-              <Card
-                key={property._id}
-                className="overflow-hidden transition-shadow hover:shadow-lg"
-              >
-                <div className="relative h-48">
-                  <Image
-                    src={property.photos?.[0]?.url || '/placeholder.jpg'}
-                    alt={property.name}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3">
-                    <Badge
-                      className={
-                        property?.isActive
-                          ? statusConfig.active.color
-                          : statusConfig.inactive.color
-                      }
-                    >
-                      {property?.isActive
-                        ? statusConfig.active.label
-                        : statusConfig.inactive.label}
-                    </Badge>
-                  </div>
+            {/* Quick Stats list */}
+            <div className="pt-5 border-t border-stone-100 space-y-2.5">
+              <label className="text-xs font-semibold text-stone-500 block mb-2">Thống kê nhanh</label>
+              {[
+                { label: 'Tổng khu cắm trại', count: stats.total, color: 'bg-stone-100 text-stone-700' },
+                { label: 'Khu đang hoạt động', count: stats.active, color: 'bg-emerald-100 text-emerald-800' },
+                { label: 'Tổng số Sites', count: stats.totalSites, color: 'bg-blue-100 text-blue-800' },
+                { label: 'Tổng bookings', count: stats.totalBookings, color: 'bg-purple-100 text-purple-800' },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between text-sm py-1.5 px-1.5 rounded-lg"
+                >
+                  <span className="text-stone-600">{item.label}</span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${item.color}`}>
+                    {item.count}
+                  </span>
                 </div>
-
-                <CardContent className="p-4">
-                  <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                    {property.name}
-                  </h3>
-
-                  <div className="mb-4 flex items-start gap-2 text-sm text-gray-600">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <span className="line-clamp-2">
-                      {property.location.city}, {property.location.state}
-                    </span>
-                  </div>
-
-                  <div className="mb-4 grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-lg bg-gray-50 p-2">
-                      <p className="text-xs text-gray-600">Sites</p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {property.stats?.totalSites || 0}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-gray-50 p-2">
-                      <p className="text-xs text-gray-600">Bookings</p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {property.stats?.totalBookings || 0}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-gray-50 p-2">
-                      <p className="text-xs text-gray-600">Rating</p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {property.stats?.averageRating?.toFixed(1) || '0.0'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      asChild
-                    >
-                      <Link href={`/host/properties/${property._id}/sites`}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Xem sites
-                      </Link>
-                    </Button>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(`/host/properties/${property._id}`)
-                          }
-                        >
-                          <Settings className="mr-2 h-4 w-4" />
-                          Chỉnh sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(
-                              `/host/properties/${property._id}/sites/new`,
-                            )
-                          }
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Thêm site
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setPropertyToDelete(property._id);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Xóa property
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+              ))}
+            </div>
           </div>
-        ) : (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <Home className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                {searchQuery || statusFilter !== 'all'
-                  ? 'Không tìm thấy property nào'
-                  : 'Chưa có property nào'}
+        </div>
+
+        {/* Main Area */}
+        <div className="flex-1 min-w-0">
+          {/* Search & View Controls */}
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+              <Input
+                placeholder="Tìm kiếm khu cắm trại..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-11 bg-white border-stone-200/80 h-11 rounded-xl focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] text-sm"
+              />
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex bg-white border border-stone-200/80 rounded-xl p-1 shadow-sm">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-emerald-50 text-[#1B4332]' : 'text-stone-500 hover:text-stone-850'}`}
+                title="Bố cục thẻ ngang"
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-emerald-50 text-[#1B4332]' : 'text-stone-500 hover:text-stone-850'}`}
+                title="Bố cục bảng danh sách"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Empty State */}
+          {!filteredProperties || filteredProperties.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-stone-200/80 shadow-sm px-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center mb-4">
+                <Home className="h-8 w-8 text-stone-400" />
+              </div>
+              <h3 className="text-lg  font-bold text-stone-900 mb-1">
+                {searchQuery || statusFilter !== 'all' ? 'Không tìm thấy khu nào' : 'Chưa có khu cắm trại nào'}
               </h3>
-              <p className="mb-6 text-sm text-gray-600">
-                {searchQuery || statusFilter !== 'all'
-                  ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
-                  : 'Bắt đầu bằng cách tạo property đầu tiên của bạn'}
+              <p className="text-sm text-stone-500 max-w-sm mb-6">
+                {searchQuery || statusFilter !== 'all' ? 'Thử thay đổi từ khóa hoặc bộ lọc trạng thái' : 'Bắt đầu hành trình bằng cách tạo khu cắm trại đầu tiên của bạn'}
               </p>
               {!searchQuery && statusFilter === 'all' && (
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-[#1B4332] hover:bg-[#122c21] text-white rounded-xl px-5 py-5 text-sm"
                   onClick={() => router.push('/host/properties/new')}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tạo Property mới
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tạo khu mới
                 </Button>
               )}
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          ) : viewMode === 'grid' ? (
+            /* Horizontal Cards View */
+            <div className="flex flex-col gap-6">
+              {filteredProperties.map((property: any) => (
+                <PropertyGridCard
+                  key={property._id}
+                  property={property}
+                  statusConfig={statusConfig}
+                  onEdit={(id: string) => router.push(`/host/properties/${id}`)}
+                  onViewSites={(id: string) => router.push(`/host/properties/${id}/sites`)}
+                  onAddSite={(id: string) => router.push(`/host/properties/${id}/sites/new`)}
+                  onDelete={(id: string) => {
+                    setPropertyToDelete(id);
+                    setDeleteDialogOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            /* List View */
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-200/85 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-stone-900">
+                  <thead className="bg-stone-50 border-b border-stone-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-stone-500 uppercase tracking-wider">Khu cắm trại</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-stone-500 uppercase tracking-wider">Địa điểm</th>
+                      <th className="px-6 py-4 text-center text-xs font-bold text-stone-500 uppercase tracking-wider">Sites</th>
+                      <th className="px-6 py-4 text-center text-xs font-bold text-stone-500 uppercase tracking-wider">Bookings</th>
+                      <th className="px-6 py-4 text-center text-xs font-bold text-stone-500 uppercase tracking-wider">Đánh giá</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-stone-500 uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {filteredProperties.map((property: any) => (
+                      <PropertyListRow
+                        key={property._id}
+                        property={property}
+                        statusConfig={statusConfig}
+                        onEdit={(id: string) => router.push(`/host/properties/${id}`)}
+                        onViewSites={(id: string) => router.push(`/host/properties/${id}/sites`)}
+                        onAddSite={(id: string) => router.push(`/host/properties/${id}/sites/new`)}
+                        onDelete={(id: string) => {
+                          setPropertyToDelete(id);
+                          setDeleteDialogOpen(true);
+                        }}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-stone-200">
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa property</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa property này? Hành động này không thể
-              hoàn tác. Property chỉ có thể xóa khi không còn site nào.
+            <AlertDialogTitle className=" text-xl font-bold">Xóa khu cắm trại?</AlertDialogTitle>
+            <AlertDialogDescription className="text-stone-500 text-sm">
+              Hành động này không thể hoàn tác. Khu cắm trại chỉ có thể xóa khi không còn vị trí (site) nào thuộc về khu này.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-stone-200">Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProperty}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
             >
-              Xóa
+              Xóa khu cắm trại
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// Grid Card Component formatted as horizontal layouts
+function PropertyGridCard({ property, statusConfig, onEdit, onViewSites, onAddSite, onDelete }: any) {
+  const config = statusConfig[property.status] || statusConfig.inactive;
+
+  return (
+    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-md border border-stone-200/80 hover:border-stone-300 transition-all duration-300 overflow-hidden flex flex-col md:flex-row">
+      {/* Left side: Image */}
+      <div className="relative w-full md:w-80 h-48 md:h-auto min-h-[220px] bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden flex-shrink-0">
+        <Image
+          src={property.photos?.[0]?.url || '/placeholder.jpg'}
+          alt={property.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          unoptimized
+        />
+        <div className="absolute top-3 left-3">
+          <Badge className={`${config.color} border text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm`}>
+            {config.label}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Middle side: Main content details */}
+      <div className="flex-1 p-6 flex flex-col justify-between">
+        <div>
+          <h3 className=" text-xl md:text-2xl text-stone-900 group-hover:text-emerald-800 transition-colors font-semibold leading-snug line-clamp-2 mb-2">
+            {property.name}
+          </h3>
+          <div className="flex items-center gap-1.5 text-stone-500 mb-4">
+            <MapPin className="h-4 w-4 text-emerald-750 flex-shrink-0" />
+            <span className="text-sm font-medium">{property.location?.city || 'N/A'}, {property.location?.state || 'N/A'}</span>
+          </div>
+        </div>
+
+        {/* Quick Stats: Rounded pills/capsules with elegant styling */}
+        <div className="flex flex-wrap gap-3 mt-auto">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-50 border border-stone-250/30">
+            <Home className="h-3.5 w-3.5 text-emerald-700" />
+            <span className="text-xs text-stone-500">Sites</span>
+            <span className="text-sm font-bold text-stone-800">{property.stats?.totalSites || 0}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-50 border border-stone-250/30">
+            <Calendar className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-xs text-stone-500">Bookings:</span>
+            <span className="text-sm font-bold text-stone-800">{property.stats?.totalBookings || 0}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-50 border border-stone-250/30">
+            <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+            <span className="text-xs text-stone-500">Đánh giá:</span>
+            <span className="text-sm font-bold text-stone-800">{property.stats?.averageRating?.toFixed(1) || '0'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right side: Direct Action Buttons (No dropdown!) */}
+      <div className="flex flex-row md:flex-col justify-center items-stretch gap-3 p-6 border-t md:border-t-0 md:border-l border-stone-200/80 bg-stone-50/50 md:min-w-[220px]">
+        <Button
+          onClick={() => onViewSites(property._id)}
+          className="flex-1 md:flex-initial bg-[#1B4332] hover:bg-[#122c21] text-white font-medium py-5 shadow-sm hover:shadow transition-all rounded-xl gap-2 text-sm"
+        >
+          <Eye className="h-4 w-4" />
+          Quản lý sites
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => onEdit(property._id)}
+          className="flex-1 md:flex-initial border-stone-200 hover:bg-stone-50 text-stone-700 hover:text-stone-900 font-medium py-5 rounded-xl gap-2 text-sm"
+        >
+          <Settings className="h-4 w-4 text-stone-500" />
+          Chỉnh sửa khu
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => onAddSite(property._id)}
+          className="flex-1 md:flex-initial text-emerald-800 hover:bg-emerald-50 font-medium py-5 rounded-xl gap-2 text-sm"
+        >
+          <Plus className="h-4 w-4" />
+          Thêm site mới
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => onDelete(property._id)}
+          className="flex-1 md:flex-initial text-rose-600 hover:bg-rose-50 hover:text-rose-750 font-medium py-5 rounded-xl gap-2 text-sm"
+        >
+          <Trash2 className="h-4 w-4" />
+          Xóa khu cắm trại
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// List Row Component
+function PropertyListRow({ property, statusConfig, onEdit, onViewSites, onAddSite, onDelete }: any) {
+  const config = statusConfig[property.status] || statusConfig.inactive;
+
+  return (
+    <tr className="hover:bg-stone-50/60 transition-colors">
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0">
+            <Image
+              src={property.photos?.[0]?.url || '/placeholder.jpg'}
+              alt={property.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+          <div>
+            <p className=" font-bold text-stone-900 text-sm md:text-base leading-tight">{property.name}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 text-sm text-stone-650">
+        <div className="flex items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 text-emerald-700" />
+          {property.location?.city || 'N/A'}
+        </div>
+      </td>
+      <td className="px-6 py-4 text-center">
+        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-emerald-50 border border-emerald-100 text-[#1B4332] font-bold text-sm">
+          {property.stats?.totalSites || 0}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-center">
+        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-50 border border-blue-100 text-blue-700 font-bold text-sm">
+          {property.stats?.totalBookings || 0}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-center">
+        <div className="flex items-center justify-center gap-1">
+          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+          <span className="font-bold text-stone-900 text-sm">
+            {property.stats?.averageRating?.toFixed(1) || '0'}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <Badge className={`${config.color} border text-xs font-semibold px-2 rounded-full`}>
+          {config.label}
+        </Badge>
+      </td>
+      <td className="px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-stone-200 text-stone-700 hover:bg-stone-50 h-9 rounded-xl px-3.5 gap-1.5"
+            onClick={() => onViewSites(property._id)}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Sites
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-9 w-9 p-0 rounded-xl">
+                <MoreHorizontal className="h-4 w-4 text-stone-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-xl border-stone-200">
+              <DropdownMenuItem onClick={() => onEdit(property._id)} className="cursor-pointer text-stone-700 rounded-lg">
+                <Settings className="h-4 w-4 mr-2 text-stone-500" />
+                Chỉnh sửa khu
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onAddSite(property._id)} className="cursor-pointer text-stone-700 rounded-lg">
+                <Plus className="h-4 w-4 mr-2 text-stone-500" />
+                Thêm site mới
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-stone-100" />
+              <DropdownMenuItem onClick={() => onDelete(property._id)} className="cursor-pointer text-rose-600 hover:bg-rose-50 rounded-lg">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Xóa khu
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </td>
+    </tr>
   );
 }

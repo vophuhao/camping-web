@@ -67,14 +67,14 @@ export function SiteAvailability({
   // Designated site (capacity = 1)
   if (maxConcurrentBookings === 1) {
     return isAvailable ? (
-      <Badge variant="default" className={`bg-green-600 ${className}`}>
+      <Badge variant="outline" className={`bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)] transition-all ${className}`}>
         <CheckCircle className="mr-1 h-3 w-3" />
-        Available
+        Còn trống
       </Badge>
     ) : (
-      <Badge variant="secondary" className={className}>
+      <Badge variant="outline" className={`bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 shadow-[0_0_8px_rgba(244,63,94,0.05)] ${className}`}>
         <AlertCircle className="mr-1 h-3 w-3" />
-        Booked
+        Đã đặt
       </Badge>
     );
   }
@@ -82,25 +82,25 @@ export function SiteAvailability({
   // Undesignated site (capacity > 1) - Hipcamp style
   if (spotsLeft === 0) {
     return (
-      <Badge variant="secondary" className={className}>
+      <Badge variant="outline" className={`bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 shadow-[0_0_8px_rgba(244,63,94,0.05)] ${className}`}>
         <AlertCircle className="mr-1 h-3 w-3" />
-        Fully booked
+        Hết chỗ
       </Badge>
     );
   }
 
   // Show "X sites left"
-  const urgencyColor =
+  const urgencyStyle =
     spotsLeft === 1
-      ? 'bg-orange-600'
+      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.2)]'
       : spotsLeft <= 3
-        ? 'bg-yellow-600'
-        : 'bg-green-600';
+        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25';
 
   return (
-    <Badge variant="default" className={`${urgencyColor} ${className}`}>
+    <Badge variant="outline" className={`${urgencyStyle} transition-all ${className}`}>
       <CheckCircle className="mr-1 h-3 w-3" />
-      {spotsLeft} {spotsLeft === 1 ? 'site' : 'sites'} left
+      Còn {spotsLeft} chỗ {spotsLeft === 1 ? 'cuối' : ''}
     </Badge>
   );
 }

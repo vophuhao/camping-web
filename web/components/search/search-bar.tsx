@@ -154,12 +154,12 @@ export function SearchBar({
         {/* Search Button */}
         <Button
           size="lg"
-          className="bg-primary hover:bg-primary/80 h-auto cursor-pointer rounded-lg px-8 py-3 text-base font-semibold"
+          className="bg-background dark:bg-input/30 h-auto cursor-pointer rounded-lg px-8 py-3 text-base font-semibold"
           onClick={onSearch}
           disabled={loading}
         >
-          <Search className="mr-2 h-5 w-5" />
-          Tìm
+          <Search className="mr-2 h-5 w-5 text-black dark:text-white" />
+          <span className="text-black dark:text-white">Tìm</span>
         </Button>
       </div>
     </div>

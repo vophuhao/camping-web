@@ -68,7 +68,7 @@ export default function TripsPage() {
   const now = new Date();
   const upcomingTrips = bookings.filter(
     b =>
-      // new Date(b.checkOut) >= now &&
+      new Date(b.checkOut) >= now &&
       b.status !== 'cancelled' &&
       b.status !== 'completed' &&
       b.status !== 'refunded',
@@ -175,10 +175,10 @@ export default function TripsPage() {
           </div>
 
           {/* Site Name */}
-          <h3 className="text-lg font-semibold">
+          <h4 className="text-lg font-semibold line-clamp-2">
             {propertyName && `${propertyName}: `}
             {siteName}
-          </h3>
+          </h4>
 
           {/* Location */}
           {(city || state) && (
@@ -230,7 +230,7 @@ export default function TripsPage() {
       <section>
         <h2 className="mb-4 text-xl font-semibold">Chuyến đi sắp tới</h2>
         {upcomingTrips.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             {upcomingTrips.map(booking => (
               <TripCard key={booking._id} booking={booking} />
             ))}
@@ -259,7 +259,7 @@ export default function TripsPage() {
         <section>
           <Separator className="mb-6" />
           <h2 className="mb-4 text-xl font-semibold">Chuyến đi đã qua</h2>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             {pastTrips.map(booking => (
               <TripCard key={booking._id} booking={booking} />
             ))}
@@ -272,7 +272,7 @@ export default function TripsPage() {
         <section>
           <Separator className="mb-6" />
           <h2 className="mb-4 text-xl font-semibold">Chuyến đi đã hủy</h2>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             {cancelledTrips.map(booking => (
               <TripCard key={booking._id} booking={booking} />
             ))}

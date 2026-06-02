@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { SuperhostBadge } from '@/components/property/SuperhostBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useChatModal } from '@/store/chatstore';
 import type { Property } from '@/types/property-site';
@@ -84,10 +85,19 @@ export function PropertyOverview({ property }: PropertyOverviewProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="font-semibold">
-              Chủ đất:{' '}
-              {property.host.username || property.host.email.split('@')[0]}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold">
+                Chủ đất:{' '}
+                {property.host.username || property.host.email.split('@')[0]}
+              </p>
+              {(property as any).isSuperhost && (
+                <SuperhostBadge
+                  size="sm"
+                  showTooltip
+                  superhostSince={(property as any).superhostSince}
+                />
+              )}
+            </div>
             <p className="text-muted-foreground text-sm">
               {property.host.email}
             </p>

@@ -6,29 +6,34 @@ import { useAuthStore } from '@/store/auth.store';
 import { useUnreadCount } from '@/hooks/useNotification';
 import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
 import {
-  BarChart,
   Bell,
   Calendar,
-  ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Home,
   LogOut,
   MessageSquare,
+  Moon,
   Star,
+  Sun,
   Tent,
+  User,
+  DollarSign,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from 'next-themes';
 
 type MenuItem = {
   name: string;
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   action?: () => void;
-  subMenu?: { name: string; href: string }[];
+  group?: 'main' | 'account';
 };
 
 type SidebarProps = {
@@ -36,15 +41,21 @@ type SidebarProps = {
   setCollapsed: (val: boolean) => void;
 };
 
-export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+export default function HostSidebar({ collapsed, setCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const { theme, setTheme } = useTheme();
+  const { user } = useAuthStore();
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.unreadCount || 0;
   const { data: unreadMessagesData } = useUnreadMessagesCount();
   const unreadMessagesCount = unreadMessagesData?.unreadCount || 0;
+
+  const [sidebarMounted, setSidebarMounted] = useState(false);
+
+  useEffect(() => {
+    setSidebarMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     const response = await logout();
@@ -55,163 +66,156 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     }
   };
 
-  const toggleMenu = (name: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name],
-    );
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const menuItems: MenuItem[] = [
-    { name: 'Dashboard', href: '/host', icon: Home },
-    { name: 'Booking & Lịch', href: '/host/bookings', icon: Calendar },
-    { name: 'Khu đất', href: '/host/properties', icon: Tent },
-    { name: 'Thông báo', href: '/host/notifications', icon: Bell },
-    { name: 'Đánh giá', href: '/host/reviews', icon: Star },
-    { name: 'Hỗ trợ', href: '/host/support', icon: MessageSquare },
-    { name: 'Đăng xuất', icon: LogOut, action: handleLogout },
+  const mainMenuItems: MenuItem[] = [
+    { name: 'Dashboard', href: '/host', icon: Home, group: 'main' },
+    { name: 'Booking & Lịch', href: '/host/bookings', icon: Calendar, group: 'main' },
+    { name: 'Lịch & Giá mùa', href: '/host/calendar', icon: Calendar, group: 'main' },
+    { name: 'Khu đất', href: '/host/properties', icon: Tent, group: 'main' },
+    { name: 'Thông báo', href: '/host/notifications', icon: Bell, group: 'main' },
+    { name: 'Đánh giá', href: '/host/reviews', icon: Star, group: 'main' },
+    { name: 'Doanh thu', href: '/host/revenue', icon: DollarSign, group: 'main' },
+    { name: 'Ví của tôi', href: '/host/wallet', icon: Wallet, group: 'main' },
+    { name: 'Hỗ trợ', href: '/host/support', icon: MessageSquare, group: 'main' },
   ];
+
+  const userInitial = user?.username?.charAt(0).toUpperCase() || 'H';
 
   return (
     <aside
       className={cn(
-        'fixed top-0 left-0 z-50 flex h-screen flex-col bg-white shadow-lg transition-all duration-300',
-        collapsed ? 'w-16' : 'w-45',
+        'fixed top-0 left-0 h-screen bg-slate-900 border-r border-slate-800 shadow-2xl flex flex-col transition-all duration-300 z-50',
+        collapsed ? 'w-16' : 'w-56',
       )}
     >
-      {/* Logo + Toggle */}
-      <div className="flex h-16 items-center justify-between px-3">
-        <h1
-          className={cn(
-            'text-xl font-bold transition-all duration-300',
-            collapsed ? 'w-0 overflow-hidden opacity-0' : '',
+      {/* ── Logo + Brand ── */}
+      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800/60">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
+            <Home className="h-4.5 w-4.5 text-sky-400" />
+          </div>
+          {!collapsed && (
+            <span className="text-sm font-bold text-white tracking-wide truncate">
+              HDCAMPING
+            </span>
           )}
-        >
-          Host Panel
-        </h1>
+        </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded p-1 hover:bg-gray-200"
+          className="flex-shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
+          title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
         >
-          <BarChart className="h-5 w-5" />
+          <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsed && "rotate-180")} />
         </button>
       </div>
 
-      {/* Menu */}
-      <nav className="flex-1 px-2 py-1">
-        {menuItems.map(item => {
+      {/* ── Main Navigation ── */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-hide">
+        {mainMenuItems.map(item => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
-          const isHovered = hovered === (item.href || item.name);
+          const isActive = item.href === '/host' ? pathname === '/host' : pathname.startsWith(item.href!);
 
-          const hasSubmenu = !!item.subMenu;
-          const isExpanded = expandedMenus.includes(item.name);
-
-          const finalClasses = cn(
-            'flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
-            isHovered
-              ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-              : !hovered && isActive
-                ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-                : 'hover:bg-gray-200',
-          );
-
-          const mainContent = (
-            <div className="flex w-full items-center gap-3">
-              <div className="relative flex-shrink-0">
-                <Icon className="h-5 w-5" />
-                {item.name === 'Thông báo' && unreadCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
-                  >
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </Badge>
-                )}
-                {item.name === 'Hỗ trợ' && unreadMessagesCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
-                  >
-                    {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                  </Badge>
-                )}
-              </div>
-              {!collapsed && <span className="flex-1">{item.name}</span>}
-              {!collapsed && hasSubmenu && (
-                <span className="flex-shrink-0">
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </span>
-              )}
-            </div>
-          );
-
-          // Nếu item có subMenu
-          if (hasSubmenu) {
-            return (
-              <div key={item.name}>
-                <button
-                  onClick={() => toggleMenu(item.name)}
-                  onMouseEnter={() => setHovered(item.name)}
-                  onMouseLeave={() => setHovered(null)}
-                  className={finalClasses}
-                >
-                  {mainContent}
-                </button>
-
-                {/* Submenu */}
-                {isExpanded && !collapsed && (
-                  <div className="mt-1 ml-6 flex flex-col gap-1">
-                    {item.subMenu!.map(sub => {
-                      const subActive = pathname === sub.href;
-                      return (
-                        <Link
-                          key={sub.name}
-                          href={sub.href}
-                          className={cn(
-                            'rounded-lg px-3 py-2 text-sm transition-colors',
-                            subActive
-                              ? 'bg-[#3B6E5F] text-[#F4FAF4]'
-                              : 'hover:bg-gray-200',
-                          )}
-                        >
-                          {sub.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          // Item bình thường
-          return item.action ? (
-            <button
-              key={item.name}
-              onClick={item.action}
-              onMouseEnter={() => setHovered(item.name)}
-              onMouseLeave={() => setHovered(null)}
-              className={finalClasses}
-            >
-              {mainContent}
-            </button>
-          ) : (
+          return (
             <Link
               key={item.name}
               href={item.href!}
-              onMouseEnter={() => setHovered(item.href!)}
-              onMouseLeave={() => setHovered(null)}
-              className={finalClasses}
+              title={collapsed ? item.name : undefined}
+              className={cn(
+                'group relative flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all duration-200',
+                isActive
+                  ? 'bg-sky-500/15 text-sky-300'
+                  : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-100',
+              )}
             >
-              {mainContent}
+              {/* Icon + badge */}
+              <div className="relative flex-shrink-0">
+                <Icon className={cn("h-4.5 w-4.5 transition-colors", isActive ? "text-sky-400" : "text-slate-500 group-hover:text-slate-200")} />
+                {item.name === 'Thông báo' && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+                {item.name === 'Hỗ trợ' && unreadMessagesCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
+                    {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                  </span>
+                )}
+              </div>
+
+              {/* Label */}
+              <span
+                className={cn(
+                  'flex-1 truncate transition-all duration-300 text-left',
+                  collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100',
+                )}
+              >
+                {item.name}
+              </span>
+
+              {/* Active indicator bar */}
+              {isActive && (
+                <div className="absolute left-0 top-1/2 h-7 w-0.5 -translate-y-1/2 rounded-r bg-sky-400" />
+              )}
             </Link>
           );
         })}
       </nav>
+
+      {/* ── Bottom Section ── */}
+      <div className="border-t border-slate-800/60 p-3 space-y-1.5 bg-slate-950/30">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          title={sidebarMounted && theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
+            'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+          )}
+        >
+          <div className="relative flex-shrink-0 h-4 w-4">
+            <Sun className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', sidebarMounted && theme === 'dark' ? 'scale-0 opacity-0' : 'scale-100 opacity-100')} />
+            <Moon className={cn('absolute inset-0 h-4 w-4 transition-all duration-250', sidebarMounted && theme === 'dark' ? 'scale-100 opacity-100' : 'scale-0 opacity-0')} />
+          </div>
+          <span className={cn('flex-1 truncate transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
+            {sidebarMounted && theme === 'dark' ? 'Giao diện tối' : 'Giao diện sáng'}
+          </span>
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          title="Đăng xuất"
+          className={cn(
+            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
+            'text-slate-400 hover:bg-red-950/20 hover:text-red-400',
+          )}
+        >
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          <span className={cn('flex-1 truncate transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
+            Đăng xuất
+          </span>
+        </button>
+
+        {/* User Info */}
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-lg p-2 border border-slate-800/40 bg-slate-950/30 transition-all duration-200',
+            collapsed ? 'justify-center' : '',
+          )}
+        >
+          {/* Avatar */}
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700 text-slate-200 text-sm font-bold ring-2 ring-slate-700">
+            {userInitial}
+          </div>
+          <div className={cn('min-w-0 transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
+            <p className="text-xs font-bold text-white truncate">{user?.username || 'Host'}</p>
+            <p className="text-[10px] text-slate-400 truncate">{user?.email || 'host@campo.vn'}</p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

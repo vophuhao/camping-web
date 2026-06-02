@@ -1,5 +1,5 @@
 import { catchErrors, ErrorFactory } from "@/errors";
-import { BookingModel, FavoriteModel, OrderModel, ReviewModel } from "@/models";
+import { BookingModel, FavoriteModel, OrderModel, ReviewModel, PropertyModel } from "@/models";
 import HostModel from "@/models/host.modal";
 import { ResponseUtil, sendMail } from "@/utils";
 import UserModel from "../models/user.model";
@@ -15,9 +15,49 @@ export default class UserController {
 
   getAllHost = catchErrors(async (req, res) => {
     const hosts = await UserModel.find({ role: "host" }).select(
-      "username email avatarUrl createdAt isBlocked"
+      "username email avatarUrl createdAt isBlocked phoneNumber bio"
     );
-    return ResponseUtil.success(res, hosts, "Lấy danh sách host thành công");
+
+    const hostsWithStats = await Promise.all(
+      hosts.map(async (host) => {
+        // locationCount (number of properties owned by host)
+        const locationCount = await PropertyModel.countDocuments({ host: host._id });
+
+        // totalBookings
+        const totalBookings = await BookingModel.countDocuments({ host: host._id });
+
+        // totalRevenue (sum of pricing.total for paid or completed bookings)
+        const bookings = await BookingModel.find({
+          host: host._id,
+          status: { $in: ["confirmed", "completed"] },
+          paymentStatus: "paid",
+        }).select("pricing.total");
+        const totalRevenue = bookings.reduce((sum, b) => sum + (b.pricing?.total || 0), 0);
+
+        // rating (average rating of properties)
+        const properties = await PropertyModel.find({ host: host._id }).select("stats.averageRating");
+        const rating = properties.length > 0
+          ? properties.reduce((sum, p) => sum + (p.stats?.averageRating || 0), 0) / properties.length
+          : 0;
+
+        // KYC host info
+        const hostKyc = await HostModel.findOne({ user: host._id });
+
+        return {
+          ...host.toObject(),
+          phone: host.phoneNumber || hostKyc?.phone || "",
+          address: hostKyc?.bankInfo?.bankName ? `${hostKyc.bankInfo.bankName} - ${hostKyc.bankInfo.accountNumber}` : "",
+          locationCount,
+          totalBookings,
+          totalRevenue,
+          rating,
+          verifiedAt: hostKyc?.createdAt || host.createdAt,
+          isActive: !host.isBlocked,
+        };
+      })
+    );
+
+    return ResponseUtil.success(res, hostsWithStats, "Lấy danh sách host thành công");
   });
 
   getUserByUsernameHandler = catchErrors(async (req, res) => {
@@ -355,5 +395,108 @@ export default class UserController {
     user.isBlocked = !user.isBlocked;
     await user.save();
     return ResponseUtil.success(res, null, "Khóa người dùng thành công");
+  });
+
+  /**
+   * KYC-based host registration
+   * Validates age from CCCD number and upgrades role automatically
+   * @route POST /users/kyc-become-host
+   */
+  kycBecomeHostHandler = catchErrors(async (req, res) => {
+    const userId = req.userId;
+    appAssert(userId, ErrorFactory.invalidToken("Yêu cầu đăng nhập"));
+
+    const { name, gmail, phone, idNumber, faceMatchScore, selfieImage } = req.body;
+
+    // Validate required fields
+    appAssert(name, ErrorFactory.badRequest("Thiếu họ tên"));
+    appAssert(gmail, ErrorFactory.badRequest("Thiếu email"));
+    appAssert(idNumber, ErrorFactory.badRequest("Thiếu số CCCD"));
+    appAssert(selfieImage, ErrorFactory.badRequest("Thiếu ảnh selfie"));
+
+    // Validate CCCD format (12 digits)
+    const cccdRegex = /^\d{12}$/;
+    appAssert(cccdRegex.test(idNumber.replace(/\s/g, "")), ErrorFactory.badRequest("Số CCCD không hợp lệ (cần 12 chữ số)"));
+
+    const cccd = idNumber.replace(/\s/g, "");
+
+    // Parse birth year from CCCD 12 digits
+    // Format: [3-digit province][1-digit gender+decade][2-digit year][6-digit sequence]
+    // Digit 4 (index 3): 0=male 190x, 1=male 199x, 2=male 200x, 3=female 190x, 4=female 199x, 5=female 200x, 6=male 201x, 7=female 201x, 8=male 201x+, 9=female 201x+
+    const decadeCode = parseInt(cccd[3], 10);
+    const yearSuffix = cccd.slice(4, 6); // 2 digits
+
+    let birthYear: number;
+    if (decadeCode === 0) birthYear = 1900 + parseInt(yearSuffix, 10);
+    else if (decadeCode === 1) birthYear = 1900 + parseInt(yearSuffix, 10); // 199x
+    else if (decadeCode === 2) birthYear = 2000 + parseInt(yearSuffix, 10);
+    else if (decadeCode === 3) birthYear = 1900 + parseInt(yearSuffix, 10);
+    else if (decadeCode === 4) birthYear = 1900 + parseInt(yearSuffix, 10); // 199x female
+    else if (decadeCode === 5) birthYear = 2000 + parseInt(yearSuffix, 10);
+    else if (decadeCode === 6) birthYear = 2010 + parseInt(yearSuffix, 10);
+    else if (decadeCode === 7) birthYear = 2010 + parseInt(yearSuffix, 10);
+    else birthYear = 2000 + parseInt(yearSuffix, 10);
+
+    // Refine: decade 0 = 190x, 1 = 199x (not 190x)
+    // Vietnamese CCCD: digit[3] encodes gender+decade-of-birth
+    // 0: male, 1900-1909... but realistically:
+    // We trust the 2-digit year suffix directly with the decade hint
+    if (decadeCode <= 2) {
+      // Male
+      if (decadeCode === 0) birthYear = 1900 + parseInt(yearSuffix, 10);
+      else if (decadeCode === 1) birthYear = 1900 + parseInt(yearSuffix, 10);
+      else birthYear = 2000 + parseInt(yearSuffix, 10);
+    } else if (decadeCode <= 5) {
+      // Female
+      if (decadeCode === 3) birthYear = 1900 + parseInt(yearSuffix, 10);
+      else if (decadeCode === 4) birthYear = 1900 + parseInt(yearSuffix, 10);
+      else birthYear = 2000 + parseInt(yearSuffix, 10);
+    } else {
+      birthYear = 2000 + parseInt(yearSuffix, 10);
+    }
+
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - birthYear;
+
+    appAssert(age >= 18, ErrorFactory.badRequest(`Bạn chưa đủ 18 tuổi. Năm sinh được xác định: ${birthYear}`));
+
+    // Validate face match score (sent from client-side face-api comparison)
+    const matchScore = parseFloat(faceMatchScore ?? "0");
+    appAssert(
+      matchScore >= 0.5,
+      ErrorFactory.badRequest("Khuôn mặt không khớp với ảnh CCCD. Vui lòng thử lại với ánh sáng tốt hơn.")
+    );
+
+    // Check if user already is a host
+    const user = await UserModel.findById(userId);
+    appAssert(user, ErrorFactory.resourceNotFound("User"));
+    appAssert(user.role !== "host", ErrorFactory.badRequest("Tài khoản đã có quyền Host"));
+
+    // Upgrade role to host
+    await UserModel.findByIdAndUpdate(userId, {
+      $set: {
+        role: "host",
+        phoneNumber: phone || user.phoneNumber,
+      },
+    });
+
+    // Also create HostModel record for tracking
+    try {
+      await HostModel.create({
+        user: userId,
+        name,
+        gmail,
+        phone,
+        idNumber: cccd,
+        status: "approved",
+        verifiedAt: new Date(),
+        birthYear,
+      });
+    } catch (e) {
+      // Non-critical – role already upgraded
+      console.warn("Could not create HostModel record:", e);
+    }
+
+    return ResponseUtil.success(res, { birthYear, age }, "Xác minh thành công! Tài khoản của bạn đã được nâng cấp thành Host.");
   });
 }

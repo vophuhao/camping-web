@@ -13,16 +13,15 @@ export interface AmenityDocument extends mongoose.Document {
 
 const amenitySchema = new mongoose.Schema<AmenityDocument>(
   {
-    name: { type: String, required: true, unique: true, trim: true, index: true },
+    name: { type: String, required: true, unique: true, trim: true },
     description: { type: String, trim: true, maxlength: 500 },
     icon: { type: String, trim: true },
     category: {
       type: String,
       required: true,
       enum: ["basic", "comfort", "safety", "outdoor", "special"],
-      index: true,
     },
-    isActive: { type: Boolean, default: true, index: true },
+    isActive: { type: Boolean, default: true },
   },
   {
     timestamps: true,
@@ -30,6 +29,9 @@ const amenitySchema = new mongoose.Schema<AmenityDocument>(
 );
 
 // Index for filtering
+amenitySchema.index({ name: 1 }, { unique: true });
+amenitySchema.index({ category: 1 });
+amenitySchema.index({ isActive: 1 });
 amenitySchema.index({ category: 1, isActive: 1 });
 
 export const AmenityModel = mongoose.model<AmenityDocument>("Amenity", amenitySchema);

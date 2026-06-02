@@ -1,4 +1,4 @@
-import { NODE_ENV } from "@/constants";
+import { NODE_ENV } from "../constants";
 import type { CookieOptions, Response } from "express";
 import { oneWeekFromNow, thirtyDaysFromNow } from "./date";
 

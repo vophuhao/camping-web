@@ -1,5 +1,5 @@
-import { AppErrorCode, NODE_ENV } from "@/constants";
-import type { HttpStatusCode } from "@/constants/http";
+import { AppErrorCode, NODE_ENV } from "../constants";
+import type { HttpStatusCode } from "../constants/http";
 
 /**
  * Custom Application Error class for consistent error handling

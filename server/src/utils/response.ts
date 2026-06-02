@@ -1,5 +1,5 @@
-import { AppErrorCode, CREATED, NO_CONTENT, OK } from "@/constants";
-import type { ApiResponse, ErrorResponse, PaginatedResponse } from "@/types";
+import { AppErrorCode, CREATED, NO_CONTENT, OK } from "../constants";
+import type { ApiResponse, ErrorResponse, PaginatedResponse } from "../types";
 import type { Response } from "express";
 
 /**
@@ -96,12 +96,12 @@ class ResponseUtil {
     return res.status(NO_CONTENT).send();
   }
   static outOfStock(res: Response, statusCode: number, message: string, code?: string) {
-  return res.status(statusCode).json({
-    success: false,
-    code,
-    message
-  });
-}
+    return res.status(statusCode).json({
+      success: false,
+      code,
+      message
+    });
+  }
 }
 
 export default ResponseUtil;

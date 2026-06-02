@@ -1,4 +1,4 @@
-import { DEFAULT_AVATAR, PROVIDERS, ROLES, type Provider, type Role } from "@/constants";
+import { DEFAULT_AVATAR, PROVIDERS, ROLES, type Provider, type Role } from "../constants";
 import { compareValue, hashValue } from "@/utils";
 import mongoose from "mongoose";
 

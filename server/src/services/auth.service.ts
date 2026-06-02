@@ -1,7 +1,7 @@
-import { PROVIDERS } from "@/constants";
-import { ErrorFactory } from "@/errors";
-import { SessionModel, UserModel } from "@/models";
-import VerificationService from "@/services/verification.service";
+import { PROVIDERS } from "../constants";
+import { ErrorFactory } from "../errors";
+import { SessionModel, UserModel } from "../models";
+import VerificationService from "../services/verification.service";
 import {
   appAssert,
   getPasswordResetTemplate,
@@ -14,8 +14,8 @@ import {
   sendMail,
   signToken,
   verifyToken,
-} from "@/utils";
-import type { CreateAccountParams, LoginParams } from "@/validators";
+} from "../utils";
+import type { CreateAccountParams, LoginParams } from "../validators";
 
 type GoogleParams = {
   email: string;
@@ -26,7 +26,7 @@ type GoogleParams = {
 };
 
 export default class AuthService {
-  constructor(private readonly verificationService: VerificationService) {}
+  constructor(private readonly verificationService: VerificationService) { }
 
   /**
    * Sends a verification email to the user.
@@ -222,11 +222,11 @@ export default class AuthService {
 
     const newRefreshToken = sessionNeedsRefresh
       ? signToken(
-          {
-            sessionId: session._id,
-          },
-          REFRESH_TOKEN_OPTIONS
-        )
+        {
+          sessionId: session._id,
+        },
+        REFRESH_TOKEN_OPTIONS
+      )
       : undefined;
 
     const accessToken = signToken({

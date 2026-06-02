@@ -1,6 +1,6 @@
-import { AppErrorCode, INTERNAL_SERVER_ERROR, NODE_ENV, UNPROCESSABLE_CONTENT } from "@/constants";
-import { AppError } from "@/errors";
-import { clearAuthCookies, REFRESH_PATH, ResponseUtil } from "@/utils";
+import { AppErrorCode, INTERNAL_SERVER_ERROR, NODE_ENV, UNPROCESSABLE_CONTENT } from "../constants";
+import { AppError } from "../errors";
+import { clearAuthCookies, REFRESH_PATH, ResponseUtil } from "../utils";
 import type { ErrorRequestHandler, Response } from "express";
 import { z } from "zod";
 

@@ -1,4 +1,4 @@
-import { CLIENT_URL, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, PAYOS_CLIENT_ID } from "@/constants";
+import { CLIENT_URL, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, PAYOS_CLIENT_ID } from "../constants";
 import { container, TOKENS } from "@/di";
 import { ErrorFactory } from "@/errors";
 import {

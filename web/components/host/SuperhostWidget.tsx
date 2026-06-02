@@ -12,7 +12,7 @@ interface SuperhostWidgetProps {
   stats: any;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export function SuperhostWidget({ stats }: SuperhostWidgetProps) {
   const [loading, setLoading] = useState(true);

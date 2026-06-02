@@ -18,7 +18,8 @@ const nextConfig: NextConfig = {
       'i.pinimg.com',
       'lh3.googleusercontent.com',
       'scontent.fsgn5-9.fna.fbcdn.net',
-      'www.hdcamp.id.vn'
+      'https://hdcamp.id.vn'
+
     ],
   },
 };

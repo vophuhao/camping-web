@@ -10,7 +10,7 @@ import { uploadMedia } from '@/lib/client-actions';
 import { Paperclip, Send, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 interface Conversation {
   _id: string;
@@ -23,9 +23,9 @@ interface Conversation {
     _id: string;
     username?: string;
     name?: string;
-    userId :{
+    userId: {
       avatarUrl?: string;
-  
+
     }
   };
 }
@@ -44,7 +44,7 @@ export default function HostSupportPage() {
     markAsRead,
     isConnected,
   } = useDirectMessage();
-  
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -52,12 +52,12 @@ export default function HostSupportPage() {
   const [loadingConvs, setLoadingConvs] = useState(false);
   const { data: unreadMessagesData, refetch: refetchUnreadCount } = useUnreadMessagesCount();
   const totalUnread = unreadMessagesData?.unreadCount || 0;
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevMessagesLenRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -189,7 +189,7 @@ export default function HostSupportPage() {
 
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
-    
+
     // Revoke old URL to prevent memory leak
     URL.revokeObjectURL(imagePreviewUrls[index]);
     setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
@@ -235,7 +235,7 @@ export default function HostSupportPage() {
           }
           return conv;
         });
-        
+
         // Sort by lastMessageAt
         return updated.sort((a, b) => {
           const aTime = new Date(a.lastMessageAt || 0).getTime();
@@ -282,18 +282,18 @@ export default function HostSupportPage() {
 
   const handleSelectConv = async (conv: Conversation) => {
     setSelectedConv(conv);
-    
+
     // Reset unread count immediately
     setConversations((prev) =>
       prev.map((c) =>
         c._id === conv._id ? { ...c, unreadCount: 0 } : c
       )
     );
-    
+
     try {
       await loadMessages(conv._id);
       await markAsRead(conv._id);
-      
+
       // Refetch total unread count after marking as read
       refetchUnreadCount();
 
@@ -363,9 +363,8 @@ export default function HostSupportPage() {
               <button
                 key={conv._id}
                 onClick={() => handleSelectConv(conv)}
-                className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                  isSelected ? 'bg-blue-50' : ''
-                }`}
+                className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="relative flex-shrink-0">
@@ -466,7 +465,7 @@ export default function HostSupportPage() {
                 const senderId = msg.senderId?._id;
                 const isHost = senderId === currentUserId;
                 const hasAttachments = msg.attachments && msg.attachments.length > 0;
-                
+
                 // If messageType is image but no attachments, parse URLs from message
                 let imageUrls: string[] = [];
                 if (msg.messageType === 'image' && !hasAttachments && msg.message) {
@@ -527,11 +526,10 @@ export default function HostSupportPage() {
                         </div>
                       ) : (
                         <div
-                          className={`relative rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
-                            isHost
-                              ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
-                              : 'bg-white text-gray-900 border border-gray-200'
-                          }`}
+                          className={`relative rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${isHost
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                            : 'bg-white text-gray-900 border border-gray-200'
+                            }`}
                         >
                           {/* Images from attachments */}
                           {hasAttachments && (

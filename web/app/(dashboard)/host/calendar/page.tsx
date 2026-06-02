@@ -15,7 +15,7 @@ import { Trophy, Calendar as CalendarIcon, Info, ShieldAlert, Loader2, DollarSig
 import { toast } from 'sonner';
 import { getMyProperties, getSitesByProperty } from '@/lib/property-site-api';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function HostCalendarPage() {
   const { user } = useAuthStore();
@@ -53,7 +53,7 @@ export default function HostCalendarPage() {
       try {
         const res = await getMyProperties();
         console.log('getMyProperties response:', res);
-        
+
         let list: any[] = [];
         if (res && res.properties && Array.isArray(res.properties)) {
           list = res.properties;
@@ -64,7 +64,7 @@ export default function HostCalendarPage() {
         } else if (Array.isArray(res)) {
           list = res;
         }
-        
+
         setProperties(list);
         if (list.length > 0) {
           setSelectedPropertyId(list[0]._id);

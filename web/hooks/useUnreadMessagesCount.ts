@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useSocket } from "@/provider/socketProvider";
 import { useEffect } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export function useUnreadMessagesCount() {
   const { user } = useAuthStore();

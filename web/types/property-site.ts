@@ -426,7 +426,6 @@ export interface SiteSearchFilters {
   query?: string;
   city?: string;
   propertyId?: string;
-  city?: string;
   accommodationType?: AccommodationType[];
   minPrice?: number;
   maxPrice?: number;

@@ -6,9 +6,9 @@
   --radius: 0.625rem;
 
   /* ── Light mode ── */
-  --background: oklch(0.98 0 0);
+  --background: oklch(1 0 0);
   /* near-white */
-  --foreground: oklch(0.15 0.01 240);
+  --foreground: oklch(20.62% 0.03831 94.687);
   /* near-black, slight cool tint */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.01 240);
@@ -16,16 +16,16 @@
   --popover-foreground: oklch(0.15 0.01 240);
 
   /* Primary: Deep Teal — professional, easy on eyes */
-  --primary: oklch(0.40 0.12 200);
+  --primary: oklch(61.481% 0.17893 40.225);
   --primary-foreground: oklch(0.98 0 0);
 
   /* Secondary: Warm Amber accent */
-  --secondary: oklch(93.806% 0.00357 220.879);
-  --secondary-foreground: oklch(0.25 0.06 200);
+  --secondary: oklch(36.851% 0.08808 125.723);
+  --secondary-foreground: oklch(0.98 0 0);
 
   --muted: oklch(0.95 0.01 220);
   --muted-foreground: oklch(0.50 0.03 220);
-  --accent: oklch(0.93 0.03 200);
+  --accent: oklch(98.7% 0.004 85);
   --accent-foreground: oklch(0.25 0.08 200);
 
   --destructive: oklch(0.58 0.22 25);

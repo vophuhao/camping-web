@@ -153,8 +153,7 @@ export function PropertyGrid({
                   {/* View count badge (top-right) */}
                   <div className="absolute top-3 right-3 z-20">
                     <Badge
-                      variant="secondary"
-                      className="flex items-center gap-2 rounded-full px-2 py-1 text-xs shadow"
+                      className="flex bg-background items-center gap-2 rounded-full px-2 py-1 text-xs shadow"
                     >
                       <Eye className="h-3 w-3 text-gray-700" />
                       <span className="font-medium text-gray-700">
@@ -229,7 +228,6 @@ export function PropertyGrid({
                   <span className="text-sm text-gray-500">từ </span>
                   <span className="text-base font-bold text-gray-900">
                     {property.minPrice ? formatPrice(property.minPrice) : '50k'}
-                    ₫
                   </span>
                   <span className="text-sm text-gray-500"> / đêm</span>
                 </div>

@@ -8,11 +8,11 @@ import {
   LogOut,
   Menu,
   ShoppingCart,
-  Tent,
   User,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -40,16 +40,22 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border/50">
+    <header className="sticky top-0 z-50 w-full bg-background">
       <div className="container-padding mx-auto max-w-7xl">
         <div className="flex-between h-16">
           {/* Logo */}
           <Link
             href="/"
-            className="hover:text-primary flex items-center gap-2 text-xl font-bold transition-colors md:text-2xl"
+            className="flex items-center"
           >
-            <Tent className="text-primary h-6 w-6" />
-            <span>Campo</span>
+            <Image
+              src="/assets/images/hdcamp-logo-1.png"
+              alt="HDCamp Logo"
+              width={130}
+              height={48}
+              className="h-5 w-auto object-contain"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -60,7 +66,7 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`relative py-2 text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-foreground/60'
+                  className={`relative py-2 text-sm font-bold transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-foreground'
                     }`}
                 >
                   {item.name}
@@ -168,7 +174,7 @@ export default function Header() {
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/sign-in">Đăng nhập</Link>
                 </Button>
-                <Button asChild size="sm">
+                <Button asChild variant="secondary" size="sm">
                   <Link href="/sign-up">Đăng ký</Link>
                 </Button>
               </div>

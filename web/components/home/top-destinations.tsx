@@ -1,10 +1,8 @@
 import type { Property } from '@/types/property-site';
-import { MapPin, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import RevealOnScroll from '../reveal-on-scroll';
 import { StaggerContainer, StaggerItem } from '../stagger-animation';
-import { Card } from '../ui/card';
 
 interface TopDestinationsProps {
   destinations: Array<{
@@ -28,14 +26,14 @@ export default function TopDestinations({
   }
 
   return (
-    <section className="section-padding bg-linear-to-b from-gray-50 to-white">
+    <section className="pb-20 bg-white">
       <div className="container-padding mx-auto max-w-7xl">
         <RevealOnScroll>
-          <div className="mb-12 text-center">
-            <span className="mb-3 inline-block rounded-full bg-blue-100 px-4 py-1 text-sm font-semibold text-blue-700">
+          <div className="mb-8">
+            {/* <span className="mb-3 inline-block rounded-full bg-blue-100 px-4 py-1 text-sm font-semibold text-blue-700">
               Điểm đến hàng đầu
-            </span>
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
+            </span> */}
+            <h2 className="mb-4 text-xl font-bold md:text-2xl">
               Khám Phá Việt Nam
             </h2>
           </div>
@@ -76,32 +74,26 @@ function DestinationCard({
     'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800';
 
   return (
-    <Card className="group cursor-pointer overflow-hidden border-0 shadow-lg transition-all hover:-translate-y-2 hover:shadow-2xl">
-      <div className="relative h-80">
+    <div className="group block cursor-pointer transition-all duration-500 ease-out hover:-translate-y-2">
+      <div className="relative aspect-square w-full overflow-hidden rounded-3xl shadow-sm transition-shadow duration-500 group-hover:shadow-md">
         <Image
           src={mainPhoto}
           alt={destination.state}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
-        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-white">
-          <div className="flex-center mb-4 rounded-full bg-white/20 p-4 backdrop-blur-sm transition-transform group-hover:scale-110">
-            <MapPin className="h-12 w-12" />
-          </div>
-
-          <h3 className="mb-3 text-center text-3xl font-bold">
-            {destination.state}
-          </h3>
-
-          <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 backdrop-blur-sm">
-            <TrendingUp className="h-4 w-4" />
-            <span className="font-semibold">{destination.count} địa điểm</span>
-          </div>
-        </div>
       </div>
-    </Card>
+      <div className="mt-4 px-1">
+        <h3 className="text-xl font-bold text-gray-900">
+          {destination.state}
+        </h3>
+        <p className="mt-1 text-base text-gray-600">
+          {destination.count} địa điểm
+        </p>
+      </div>
+    </div>
   );
 }
+
+

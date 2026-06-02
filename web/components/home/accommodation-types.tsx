@@ -34,13 +34,13 @@ const accommodationTypes = [
 
 export default function AccommodationTypes() {
   return (
-    <section className="section-padding bg-white">
+    <section className="pb-20 bg-white">
       <div className="container-padding mx-auto max-w-7xl">
-        <div className="mb-12 text-center">
-          <span className="bg-primary/10 text-primary mb-3 inline-block rounded-full px-4 py-1 text-sm font-semibold">
+        <div className="mb-8">
+          {/* <span className="bg-primary/10 text-primary mb-3 inline-block rounded-full px-4 py-1 text-sm font-semibold">
             Chọn phong cách của bạn
-          </span>
-          <h2 className="mb-4 text-2xl font-bold md:text-3xl">
+          </span> */}
+          <h2 className="mb-4 text-xl font-bold md:text-2xl">
             Khám Phá Các Loại Hình Cắm Trại
           </h2>
         </div>

@@ -51,15 +51,15 @@ export default function RecommendedProperties() {
   }
 
   return (
-    <section className="section-padding bg-linear-to-b from-white to-gray-50">
+    <section className="pb-20 bg-white">
       <div className="container-padding mx-auto max-w-7xl">
         <RevealOnScroll>
-          <div className="mb-12 text-center">
-            <span className="mb-3 inline-block rounded-full bg-emerald-100 px-4 py-1 text-sm font-semibold text-emerald-700">
+          <div className="mb-8 text-center">
+            {/* <span className="mb-3 inline-block rounded-full bg-emerald-100 px-4 py-1 text-sm font-semibold text-emerald-700">
               Dành riêng cho bạn
-            </span>
+            </span> */}
             <div className="flex items-center justify-center gap-2">
-              <h2 className="mb-0 text-2xl font-bold md:text-3xl">
+              <h2 className="mb-0 text-1xl font-bold md:text-2xl">
                 Có Thể Bạn Cũng Thích
               </h2>
               <HeartIcon className="h-6 w-6 text-rose-400" />
@@ -138,7 +138,7 @@ function PropertyCard({ property }: { property: Property }) {
         </div>
 
         <CardContent className="p-6">
-          <h3 className="mb-2 truncate text-xl font-bold group-hover:text-emerald-600">
+          <h3 className="mb-2 truncate text-xl font-bold">
             {displayName}
           </h3>
 

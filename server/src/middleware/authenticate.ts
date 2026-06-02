@@ -1,8 +1,8 @@
-import { redisClient } from "@/config/redis";
-import { ErrorFactory } from "@/errors";
-import { UserModel } from "@/models";
-import { appAssert } from "@/utils";
-import { verifyToken } from "@/utils/jwt";
+import { redisClient } from "../config/redis";
+import { ErrorFactory } from "../errors";
+import { UserModel } from "../models";
+import { appAssert } from "../utils";
+import { verifyToken } from "../utils/jwt";
 import type { RequestHandler } from "express";
 import type mongoose from "mongoose";
 
@@ -35,7 +35,7 @@ async function isUserBlocked(userId: string): Promise<boolean> {
   if (redisClient.isOpen) {
     redisClient
       .setEx(cacheKey, USER_BLOCK_CACHE_TTL, blocked ? "1" : "0")
-      .catch(() => {}); // Fire-and-forget, không chặn response
+      .catch(() => { }); // Fire-and-forget, không chặn response
   }
 
   return blocked;
@@ -44,7 +44,7 @@ async function isUserBlocked(userId: string): Promise<boolean> {
 // Helper: Xóa cache khi admin block/unblock user (gọi từ admin service)
 export async function invalidateUserBlockCache(userId: string): Promise<void> {
   if (redisClient.isOpen) {
-    await redisClient.del(`${CACHE_PREFIX}${userId}`).catch(() => {});
+    await redisClient.del(`${CACHE_PREFIX}${userId}`).catch(() => { });
   }
 }
 

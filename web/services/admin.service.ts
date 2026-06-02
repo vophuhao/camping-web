@@ -92,3 +92,34 @@ export const adminReplyToRating = async (
   message: string,
 ): Promise<ApiResponse> =>
   apiClient.post(`/rating/admin/reply/${id}`, { message });
+
+// ================== ADMIN PROPERTY/SITE MANAGEMENT ==================
+/** Lấy danh sách properties + sites của 1 host (admin only) */
+export async function getHostPropertiesWithSites(hostId: string): Promise<ApiResponse> {
+  return apiClient.get(`/properties/host/${hostId}`);
+}
+
+/** Admin khóa property */
+export async function adminLockProperty(id: string, reason: string): Promise<ApiResponse> {
+  return apiClient.post(`/properties/${id}/admin-lock`, { reason });
+}
+
+/** Admin mở khóa property */
+export async function adminUnlockProperty(id: string): Promise<ApiResponse> {
+  return apiClient.post(`/properties/${id}/admin-unlock`);
+}
+
+/** Admin duyệt property đang pending_approval → active */
+export async function adminApprovePropertyUpdate(id: string): Promise<ApiResponse> {
+  return apiClient.post(`/properties/${id}/admin-approve`);
+}
+
+/** Admin khóa site */
+export async function adminLockSite(id: string, reason: string, propertyName?: string): Promise<ApiResponse> {
+  return apiClient.post(`/sites/${id}/admin-lock`, { reason, propertyName });
+}
+
+/** Admin mở khóa site */
+export async function adminUnlockSite(id: string, propertyName?: string): Promise<ApiResponse> {
+  return apiClient.post(`/sites/${id}/admin-unlock`, { propertyName });
+}

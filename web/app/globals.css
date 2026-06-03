@@ -20,7 +20,7 @@
   --primary-foreground: oklch(0.98 0 0);
 
   /* Secondary: Warm Amber accent */
-  --secondary: oklch(36.851% 0.08808 125.723);
+  --secondary: oklch(0.98 0 0);
   --secondary-foreground: oklch(0.98 0 0);
 
   --muted: oklch(0.95 0.01 220);

@@ -24,6 +24,7 @@ import { SearchSuggestion } from '../../../components/forum/ui/SmartSearchBox'
 // import { userApi } from '../../../lib/user';
 import { FiMessageSquare, FiUser } from 'react-icons/fi';
 import { useAuthStore } from '@/store/auth.store';
+import Link from 'next/link';
 
 const POSTS_PER_PAGE = 10;
 
@@ -522,15 +523,22 @@ const ForumPage: React.FC = () => {
   }
 
   return (
-    <div className="forum-page-root mt-10" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, paddingBottom: 240 }}>
+    <div className="min-h-screen bg-background text-foreground py-8 md:py-12">
+      <div className="container-padding mx-auto max-w-7xl">
         <ScrollToTop />
-        {/* <div className="forum-banner">
-          <h1>Diễn đàn Campo</h1>
-          <p>Chia sẻ, thảo luận và học hỏi cùng cộng đồng sinh viên!</p>
+
+        {/* Premium Banner */}
+        {/* <div className="relative mb-10 overflow-hidden rounded-3xl bg-linear-to-r from-primary to-emerald-700 px-6 py-10 md:px-10 md:py-14 text-white shadow-xl">
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -left-10 -bottom-10 h-36 w-36 rounded-full bg-white/10 blur-xl" />
+          <div className="relative z-10 max-w-2xl">
+            <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl text-white">Diễn đàn HDCamp</h1>
+
+          </div>
         </div> */}
-        <div className="forum-page-layout">
-          <div className="forum-main-content">
+
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
             <SmartSearchBox
               value={searchTerm}
               placeholder="Tìm kiếm bài viết, chủ đề..."
@@ -549,50 +557,6 @@ const ForumPage: React.FC = () => {
                 setActualSearch('');
                 setCurrentPage(1);
               }}
-              // fetchSuggestions={async (query: string): Promise<SearchSuggestion[]> => {
-              //   if (!query || query.trim().length < 1) return [];
-
-              //   try {
-              //     const [postsResult, usersResult] = await Promise.allSettled([
-              //       forumApi.getPosts(1, 3, query, ''),
-              //       userApi.searchUsers(query, 1, 2),
-              //     ]);
-
-              //     const suggestions: SearchSuggestion[] = [];
-
-              //     // Post suggestions
-              //     if (postsResult.status === 'fulfilled') {
-              //       const posts = (postsResult.value as any)?.data?.posts || (postsResult.value as any)?.posts || [];
-              //       posts.slice(0, 4).forEach((post: any) => {
-              //         suggestions.push({
-              //           id: `post-${post._id || post.id || post.slug}`,
-              //           text: post.title || '',
-              //           type: 'post',
-              //           icon: <FiMessageSquare />,
-              //           metadata: { type: 'post', slug: post.slug, ...post },
-              //         });
-              //       });
-              //     }
-
-              //     // User suggestions
-              //     if (usersResult.status === 'fulfilled') {
-              //       const users = (usersResult.value as any)?.users || [];
-              //       users.slice(0, 2).forEach((user: any) => {
-              //         suggestions.push({
-              //           id: `user-${user._id || user.id || user.username}`,
-              //           text: user.name || user.username || '',
-              //           type: 'user',
-              //           icon: <FiUser />,
-              //           metadata: { type: 'user', username: user.username, ...user },
-              //         });
-              //       });
-              //     }
-
-              //     return suggestions.slice(0, 6);
-              //   } catch {
-              //     return [];
-              //   }
-              // }}
               enableHistory={true}
               historyStorageKey="forum_search_history"
               maxHistory={5}
@@ -611,42 +575,30 @@ const ForumPage: React.FC = () => {
               size="md"
             />
             <ForumPostCreateBar onCreate={() => router.push('/forum/create')} avatarUrl={undefined} />
-            <ForumFilters
-              sortOptions={[
-                { id: '', label: 'Tất cả' },
-                { id: 'newest', label: 'Mới nhất' },
-                { id: 'oldest', label: 'Cũ nhất' },
-                { id: 'featured', label: 'Nổi bật' },
-              ]}
-              selectedSort={selectedSort}
-              onSortChange={(id: string) => {
-                setSelectedSort(id);
-                setTimeout(() => feedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-              }}
-            />
+
+            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm">
+              <ForumFilters
+                sortOptions={[
+                  { id: '', label: 'Tất cả' },
+                  { id: 'newest', label: 'Mới nhất' },
+                  { id: 'oldest', label: 'Cũ nhất' },
+                  { id: 'featured', label: 'Nổi bật' },
+                ]}
+                selectedSort={selectedSort}
+                onSortChange={(id: string) => {
+                  setSelectedSort(id);
+                  setTimeout(() => feedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }}
+              />
+            </div>
+
             {/* Tag filter indicator */}
-            {selectedTag && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                margin: '16px 0',
-                padding: '8px 16px',
-                background: 'var(--bg-secondary)',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)'
-              }}>
-                <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+            {selectedTag ? (
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-muted border border-border rounded-xl">
+                <span className="text-sm text-muted-foreground">
                   Đang lọc theo tag:
                 </span>
-                <span style={{
-                  padding: '4px 12px',
-                  background: 'var(--primary)',
-                  color: '#fff',
-                  borderRadius: '16px',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}>
+                <span className="px-3 py-1 bg-primary text-white rounded-full text-xs font-semibold shadow-sm">
                   {selectedTag}
                 </span>
                 <button
@@ -654,60 +606,73 @@ const ForumPage: React.FC = () => {
                     setSelectedTag('');
                     router.push('/forum');
                   }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    marginLeft: 'auto'
-                  }}
+                  className="ml-auto text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden rounded-md"
                   title="Xóa filter"
+                  aria-label="Xóa bộ lọc tag"
                 >
                   ✕
                 </button>
               </div>
-            )}
-            {featuredPosts.length > 0 && (
-              <>
-                <h2 className="section-title">✨ Bài viết nổi bật</h2>
-                <div className="forum-featured-post">
-                  <img src={featuredPosts[0].imageUrl || '/default-featured.jpg'} alt={featuredPosts[0].title} className="forum-featured-img" />
-                  <span className="forum-featured-badge">Featured</span>
-                  <div className="forum-featured-title">{featuredPosts[0].title}</div>
-                  <div className="forum-featured-meta">
-                    {(featuredPosts[0].author && featuredPosts[0].author.name) || 'Tác giả'}
-                    {' • '}
-                    {featuredPosts[0].createdAt && new Date(featuredPosts[0].createdAt).toLocaleDateString('vi-VN')}
+            ) : null}
+
+            {featuredPosts.length > 0 ? (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">✨ Bài viết nổi bật</h2>
+                <Link
+                  href={`/forum/${featuredPosts[0].slug || featuredPosts[0].id}`}
+                  className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-all duration-300 focus-visible:ring-4 focus-visible:ring-primary/20 outline-hidden"
+                >
+                  <div className="relative aspect-[21/9] w-full overflow-hidden bg-muted">
+                    <img
+                      src={featuredPosts[0].imageUrl || '/default-featured.jpg'}
+                      alt={featuredPosts[0].title}
+                      width={800}
+                      height={343}
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <span className="absolute top-4 left-4 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white shadow-md uppercase tracking-wider">
+                      Featured
+                    </span>
                   </div>
-                </div>
-              </>
-            )}
-            <div className="latest">
+                  <div className="p-6">
+                    <h3 className="text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {featuredPosts[0].title}
+                    </h3>
+                    <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">
+                        {(featuredPosts[0].author && featuredPosts[0].author.name) || 'Tác giả'}
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {featuredPosts[0].createdAt ? new Date(featuredPosts[0].createdAt).toLocaleDateString('vi-VN') : ''}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ) : null}
+
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground">Bản tin thảo luận</h2>
               {loadingPosts ? (
-                <div className="forum-feed-grid" ref={feedRef}>
+                <div className="grid gap-6 sm:grid-cols-2" ref={feedRef}>
                   {[...Array(4)].map((_, i) => <PostSkeleton key={i} />)}
                 </div>
               ) : normalPosts.length === 0 ? (
                 <EmptyState
-
                   title="Không có bài viết nào phù hợp"
                   description="Hãy thử từ khóa khác hoặc tạo bài viết mới để chia sẻ cùng cộng đồng!"
-                >
-
-                </EmptyState>
+                />
               ) : (
-                <div className="forum-feed-grid" ref={feedRef}>
+                <div className="grid gap-6 sm:grid-cols-2" ref={feedRef}>
                   {renderPostsWithSkeleton()}
                   {hasMore && !loadingPosts && (
-                    <div ref={loaderRef} style={{ height: 40, display: 'flex', justifyContent: 'center', alignItems: 'center', gridColumn: '1/-1' }}>
+                    <div ref={loaderRef} className="col-span-full py-6 text-center text-muted-foreground">
                       <span>Đang tải thêm...</span>
                     </div>
                   )}
                   {!hasMore && !loadingPosts && (
-                    <div style={{ height: 40, display: 'flex', justifyContent: 'center', alignItems: 'center', gridColumn: '1/-1', color: '#888', fontSize: 15, fontStyle: 'italic' }}>
+                    <div className="col-span-full py-8 text-center text-sm font-medium text-muted-foreground italic border-t border-border mt-4">
                       Đã hết bài viết
                     </div>
                   )}
@@ -715,7 +680,8 @@ const ForumPage: React.FC = () => {
               )}
             </div>
           </div>
-          <aside className="forum-trending-block">
+
+          <aside className="space-y-6 lg:sticky lg:top-24 h-fit">
             <TrendingBlock trending={trending} tags={tags} loading={loadingTrending} />
             <ForumCategorySection
               categories={topSubjects.map(s => ({ id: s.name, name: s.name, count: s.count }))}

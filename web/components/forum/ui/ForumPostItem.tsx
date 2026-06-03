@@ -42,7 +42,6 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({ post, onLike, onBookmark 
     return names[cat.toLowerCase()] || cat;
   };
 
-  // Helper: render badge
   const renderBadge = () => {
     if (!post.badge) return null;
 
@@ -55,82 +54,117 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({ post, onLike, onBookmark 
       'quote': 'Quote'
     };
 
+    const bgColors: Record<string, string> = {
+      'new': 'bg-emerald-500 text-white',
+      'hot': 'bg-rose-500 text-white',
+      'ai': 'bg-indigo-500 text-white',
+      'featured': 'bg-amber-500 text-white',
+    };
+
+    const badgeClass = bgColors[post.badge] || 'bg-gray-500 text-white';
+
     return (
-      <span className={`post-badge badge-${post.badge}`}>
+      <span className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shadow-xs ${badgeClass}`}>
         {badgeLabels[post.badge] || post.badge.toUpperCase()}
       </span>
     );
   };
 
-
   return (
     <article
-      className="post-card"
+      tabIndex={0}
+      role="link"
+      aria-label={`Bài viết: ${post.title}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          router.push(`/forum/${post.slug || post.id}`);
+        }
+      }}
+      className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative min-h-[220px] h-full hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-primary/20 outline-hidden"
       onClick={() => router.push(`/forum/${post.slug || post.id}`)}
     >
-      {post.subject && (
-        <span className={`post-subject-pill post-subject-corner ${post.subject}`}>{getCategoryName(post.subject)}</span>
-      )}
-      <div className="post-top">
-        <img src={avatarUrl} alt={authorName} className="post-avatar" width={32} height={32} />
-        <div className="post-author">
-          <span className="post-author-name">{authorName}</span>
-          <span className="post-date">{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
-        </div>
-        {/* <div className="post-meta">
-          {(post.tags && post.tags.length > 0) && post.tags.map((tag, idx) => (
-            <span className="post-tag-pill" key={tag.id || tag.name || idx}>{tag.name}</span>
-          ))}
-          {renderBadge()}
-        </div> */}
-      </div>
-      <div className="post-title-row">
-        <h2 className="post-title post-title-clamp">{post.title}</h2>
-        {renderBadge()}
-      </div>
-      {post.imageUrl && (
-        <div className="post-image-ui">
-          <img
-            src={post.imageUrl}
-            alt={post.title}
-            className="post-image"
-            loading="lazy"
-            width={320}
-            height={180}
+      {post.subject ? (
+        <span className="absolute top-4 right-4 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary shadow-xs uppercase tracking-wider">
+          {getCategoryName(post.subject)}
+        </span>
+      ) : null}
+      
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <img 
+            src={avatarUrl} 
+            alt={authorName} 
+            className="h-10 w-10 rounded-full object-cover border-2 border-primary/20 bg-muted" 
+            width={40} 
+            height={40} 
           />
+          <div className="flex flex-col min-w-0 pr-24">
+            <span className="font-bold text-foreground hover:text-primary transition-colors text-sm truncate">
+              {authorName}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(post.createdAt).toLocaleDateString('vi-VN')}
+            </span>
+          </div>
         </div>
-      )}
-      {/* <div>
-        {post.summary}
-      </div> */}
-      <div className="post-footer">
-        <div className="post-footer-left">
+
+        <div className="flex items-start gap-2 mb-3">
+          <h2 className="text-base font-bold text-foreground line-clamp-2 leading-snug flex-1 group-hover:text-primary transition-colors">
+            {post.title}
+          </h2>
+          {renderBadge()}
+        </div>
+
+        {post.imageUrl ? (
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted mb-4">
+            <img
+              src={post.imageUrl}
+              alt={post.title}
+              width={640}
+              height={360}
+              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-103"
+              loading="lazy"
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-auto pt-4 border-t border-border flex items-center justify-between text-sm">
+        <div className="flex items-center gap-4 text-muted-foreground">
           <button
-            className={`post-action${post.isLiked ? ' liked' : ''}`}
+            className={`flex items-center gap-1.5 font-semibold transition-colors hover:text-rose-500 ${
+              post.isLiked ? 'text-rose-500' : ''
+            }`}
             onClick={e => {
               e.stopPropagation();
               if (onLike) onLike(post.id);
             }}
           >
-            {post.isLiked ? <FaHeart /> : <FiHeart />} {formatLikeCount(post.likeCount)}
+            {post.isLiked ? <FaHeart className="text-rose-500" /> : <FiHeart />}
+            <span>{formatLikeCount(post.likeCount)}</span>
           </button>
+          
           <button
-            className={`post-action${post.isBookmarked ? ' bookmarked' : ''}`}
+            className={`flex items-center gap-1.5 font-semibold transition-colors hover:text-amber-500 ${
+              post.isBookmarked ? 'text-amber-500' : ''
+            }`}
             onClick={e => {
               e.stopPropagation();
               if (onBookmark) onBookmark(post.id);
             }}
           >
-            {post.isBookmarked ? <FaBookmark /> : <FiBookmark />} {(post as any).saveCount}
+            {post.isBookmarked ? <FaBookmark className="text-amber-500" /> : <FiBookmark />}
+            <span>{(post as any).saveCount}</span>
           </button>
-          <span className="post-action">
-            <FiMessageCircle /> {formatCommentCount(post.commentCount)}
+
+          <span className="flex items-center gap-1.5 font-semibold">
+            <FiMessageCircle />
+            <span>{formatCommentCount(post.commentCount)}</span>
           </span>
         </div>
-        <div className="post-footer-right">
-          <span className="post-view-count">
-            <FiEye style={{ marginRight: 3, verticalAlign: 'middle' }} /> {formatViewCount(post.viewCount || 0)}
-          </span>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+          <FiEye className="h-3.5 w-3.5" />
+          <span>{formatViewCount(post.viewCount || 0)}</span>
         </div>
       </div>
     </article>

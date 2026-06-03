@@ -51,10 +51,15 @@ export default function FreeSpotDetailPage() {
     try {
       const res: any = await getFreeSpotById(id);
       const data: FreeSpot = res?.data ?? res;
+      console.log('CLIENT FETCH - data:', data);
+      console.log('CLIENT FETCH - user:', user);
       setSpot(data);
       setLikeCount(data.likeCount ?? 0);
-      if (user && data.likes?.includes(user._id)) setLiked(true);
-    } catch {
+      const isLiked = user ? !!data.likes?.includes(user._id) : false;
+      console.log('CLIENT FETCH - isLiked:', isLiked, 'likes array:', data.likes);
+      setLiked(isLiked);
+    } catch (err) {
+      console.error('CLIENT FETCH ERROR:', err);
       toast.error('Không tìm thấy địa điểm');
       router.push('/free-spots');
     } finally {
@@ -69,14 +74,22 @@ export default function FreeSpotDetailPage() {
       toast.info('Vui lòng đăng nhập để thích địa điểm');
       return;
     }
+    if (!spot) return;
     setLikeLoading(true);
-    setLiked((prev) => !prev);
+    const newLiked = !liked;
+    setLiked(newLiked);
     setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+    console.log('CLIENT LIKE CLICKED - next liked state (optimistic):', newLiked);
     try {
-      const res: any = await toggleLike(id);
-      setLiked(res?.data?.liked ?? !liked);
-      setLikeCount(res?.data?.likeCount ?? likeCount);
-    } catch {
+      const res: any = await toggleLike(spot._id);
+      console.log('CLIENT LIKE RESPONSE:', res);
+      const serverLiked = res?.data?.liked ?? res?.liked ?? newLiked;
+      const serverCount = res?.data?.likeCount ?? res?.likeCount ?? (liked ? likeCount - 1 : likeCount + 1);
+      console.log('CLIENT LIKE STATE UPDATED - liked:', serverLiked, 'count:', serverCount);
+      setLiked(serverLiked);
+      setLikeCount(serverCount);
+    } catch (err) {
+      console.error('CLIENT LIKE ERROR:', err);
       setLiked((prev) => !prev);
       setLikeCount((prev) => (liked ? prev + 1 : prev - 1));
     } finally {
@@ -85,10 +98,11 @@ export default function FreeSpotDetailPage() {
   };
 
   const handleDelete = async () => {
+    if (!spot) return;
     if (!confirm('Bạn có chắc muốn xóa địa điểm này?')) return;
     setDeleting(true);
     try {
-      await deleteFreeSpot(id);
+      await deleteFreeSpot(spot._id);
       toast.success('Đã xóa địa điểm');
       router.push('/free-spots');
     } catch {
@@ -104,10 +118,10 @@ export default function FreeSpotDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--background)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <Loader2 size={40} style={{ color: '#10b981', animation: 'spin 1s linear infinite' }} />
-          <p style={{ marginTop: 12, color: 'var(--muted-foreground)', fontSize: 14 }}>Đang tải...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 size={40} className="text-primary animate-spin mx-auto" />
+          <p className="mt-3 text-muted-foreground text-sm font-medium">Đang tải...</p>
         </div>
       </div>
     );
@@ -121,316 +135,325 @@ export default function FreeSpotDetailPage() {
   const isOwner = user && spot.author?._id === user._id;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)', paddingBottom: 80 }}>
+    <div className="min-h-screen bg-background text-foreground pb-20">
       {/* ── Top bar ──────────────────────────────────────────────────── */}
-      <div
-        style={{
-          position: 'sticky', top: 64, zIndex: 40,
-          background: 'var(--background)/90',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--border)',
-          padding: '10px 24px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-        }}
-      >
-        <Link
-          href="/free-spots"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: 14, fontWeight: 600, color: 'var(--foreground)',
-            textDecoration: 'none',
-          }}
-        >
-          <ArrowLeft size={16} />
-          Quay lại danh sách
-        </Link>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={handleShare}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 14px', borderRadius: 10,
-              border: '1px solid var(--border)', background: 'var(--card)',
-              color: 'var(--foreground)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}
+      <div className="sticky top-16 z-40 bg-background/90 backdrop-blur-md  border-border py-3.5">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
+          <Link
+            href="/free-spots"
+            className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden rounded-md px-2 py-1"
           >
-            <Share2 size={13} /> Chia sẻ
-          </button>
+            <ArrowLeft size={16} />
+            Quay lại danh sách
+          </Link>
 
-          <button
-            onClick={handleLike}
-            disabled={likeLoading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 16px', borderRadius: 10,
-              border: liked ? '1px solid #ef4444' : '1px solid var(--border)',
-              background: liked ? '#fef2f2' : 'var(--card)',
-              color: liked ? '#ef4444' : 'var(--foreground)',
-              fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-            }}
-          >
-            <Heart size={14} fill={liked ? '#ef4444' : 'none'} />
-            {likeCount}
-          </button>
+          {/* Quick action group on top bar */}
+          {/* <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              aria-label="Chia sẻ địa điểm này"
+              className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-xs font-bold text-foreground hover:bg-muted transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden"
+            >
+              <Share2 size={13} /> <span className="hidden sm:inline">Chia sẻ</span>
+            </button>
 
-          {/* Report button for non-owners */}
-          {!isOwner && (
-            <ReportButton
-              itemId={id}
-              itemType="free-spot"
-              className=""
-            />
-          )}
-
-          {isOwner && (
-            <>
-              <Link
-                href={`/free-spots/${id}/edit`}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', borderRadius: 10,
-                  border: '1px solid #3b82f6', background: '#eff6ff',
-                  color: '#3b82f6', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  textDecoration: 'none',
-                }}
-              >
-                <Pencil size={13} /> Chỉnh sửa
-              </Link>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', borderRadius: 10,
-                  border: '1px solid #ef4444', background: '#fef2f2',
-                  color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                }}
-              >
-                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                Xóa
-              </button>
-            </>
-          )}
+            <button
+              onClick={handleLike}
+              disabled={likeLoading}
+              aria-label={`Thích địa điểm này. Hiện tại có ${likeCount} lượt thích`}
+              className={`cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-rose-500/50 outline-hidden ${
+                liked
+                  ? 'border-rose-500 bg-rose-500/10 text-rose-500'
+                  : 'border-border bg-card text-foreground hover:bg-muted'
+              }`}
+            >
+              <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
+              <span>{likeCount}</span>
+            </button>
+          </div> */}
         </div>
       </div>
 
-      {/* ── Content ──────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+      {/* ── Main layout: 2 columns ───────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-            <TerrainBadge terrain={spot.terrain} size="md" />
-            {spot.isVerified && (
-              <span style={{ padding: '4px 12px', borderRadius: 99, background: '#d1fae5', color: '#065f46', fontSize: 12, fontWeight: 700 }}>
-                ✓ Đã xác minh
-              </span>
-            )}
-            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--muted-foreground)' }}>
-              <Eye size={13} /> {spot.viewCount ?? 0} lượt xem
-            </span>
-          </div>
+          {/* LEFT COLUMN: Image Gallery, Description, Amenities, Comments */}
+          <div className="lg:col-span-2 space-y-8">
 
-          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 10px', lineHeight: 1.25, color: 'var(--foreground)' }}>
-            {spot.title}
-          </h1>
+            {/* Gallery */}
+            {spot.images && spot.images.length > 0 ? (
+              <div className="space-y-3">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-3xl bg-black shadow-sm group">
+                  <img
+                    src={spot.images[activeImg]}
+                    alt={`${spot.title} - ảnh ${activeImg + 1}`}
+                    width={800}
+                    height={450}
+                    className="w-full h-full object-cover transition-all duration-300"
+                  />
+                  {spot.images.length > 1 ? (
+                    <>
+                      <button
+                        onClick={() => setActiveImg((i) => (i - 1 + spot.images.length) % spot.images.length)}
+                        aria-label="Ảnh trước"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer h-10 w-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-all backdrop-blur-xs opacity-0 group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:opacity-100 outline-hidden"
+                      >
+                        <ChevronLeft size={22} />
+                      </button>
+                      <button
+                        onClick={() => setActiveImg((i) => (i + 1) % spot.images.length)}
+                        aria-label="Ảnh sau"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer h-10 w-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-all backdrop-blur-xs opacity-0 group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:opacity-100 outline-hidden"
+                      >
+                        <ChevronRight size={22} />
+                      </button>
+                      <div className="absolute bottom-4 right-4 bg-black/60 text-white rounded-full px-3 py-1 text-xs font-bold shadow-md">
+                        {activeImg + 1} / {spot.images.length}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--muted-foreground)', marginBottom: 16 }}>
-            <MapPin size={14} color="#10b981" />
-            <span>{spot.address}{spot.city && `, ${spot.city}`}{spot.province && `, ${spot.province}`}</span>
-          </div>
-
-          {/* Author */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {spot.author?.avatarUrl ? (
-              <img src={spot.author.avatarUrl} alt={spot.author.username} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#10b981,#059669)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={16} color="#fff" />
-              </div>
-            )}
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>
-                {spot.author?.username}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-                {new Date(spot.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Image Gallery */}
-        {spot.images?.length > 0 && (
-          <div style={{ marginBottom: 32 }}>
-            <div
-              style={{
-                position: 'relative', borderRadius: 16, overflow: 'hidden',
-                background: '#000', height: 420, marginBottom: 8,
-              }}
-            >
-              <img
-                src={spot.images[activeImg]}
-                alt={`${spot.title} - ảnh ${activeImg + 1}`}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              {spot.images.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setActiveImg((i) => (i - 1 + spot.images.length) % spot.images.length)}
-                    style={{
-                      position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-                      background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%',
-                      width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', color: '#fff', backdropFilter: 'blur(4px)',
-                    }}
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <button
-                    onClick={() => setActiveImg((i) => (i + 1) % spot.images.length)}
-                    style={{
-                      position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                      background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%',
-                      width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', color: '#fff', backdropFilter: 'blur(4px)',
-                    }}
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                  <div
-                    style={{
-                      position: 'absolute', bottom: 12, right: 12,
-                      background: 'rgba(0,0,0,0.6)', color: '#fff',
-                      borderRadius: 99, padding: '4px 12px', fontSize: 12, fontWeight: 600,
-                    }}
-                  >
-                    {activeImg + 1} / {spot.images.length}
+                {spot.images.length > 1 ? (
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {spot.images.map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveImg(i)}
+                        className={`cursor-pointer shrink-0 h-14 w-20 rounded-xl overflow-hidden border-2 transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden ${i === activeImg
+                          ? 'border-primary ring-4 ring-primary/10 scale-102'
+                          : 'border-transparent hover:border-border'
+                          }`}
+                      >
+                        <img src={img} alt="" width={80} height={56} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
-                </>
-              )}
-            </div>
-            {spot.images.length > 1 && (
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-                {spot.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    style={{
-                      flexShrink: 0, width: 72, height: 56, borderRadius: 8, overflow: 'hidden',
-                      border: i === activeImg ? '2px solid #10b981' : '2px solid transparent',
-                      cursor: 'pointer', padding: 0,
-                      boxShadow: i === activeImg ? '0 0 0 2px #10b98144' : 'none',
-                      transition: 'border-color 0.2s',
-                    }}
-                  >
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </button>
-                ))}
+                ) : null}
               </div>
-            )}
+            ) : null}
+
+            {/* Title & Info on Mobile (Hidden on Desktop) */}
+            <div className="block lg:hidden space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <TerrainBadge terrain={spot.terrain} size="md" />
+                {spot.isVerified ? (
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                    ✓ Đã xác minh
+                  </span>
+                ) : null}
+              </div>
+              <h1 className="text-2xl font-extrabold text-foreground leading-tight">{spot.title}</h1>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground font-semibold">
+                <MapPin size={15} className="text-primary/70 shrink-0" />
+                <span>{spot.address}{spot.city ? `, ${spot.city}` : ''}</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-xs">
+              <h2 className="text-base font-extrabold text-foreground mb-4 border-b border-border pb-3 flex items-center gap-2">
+                📝 Mô tả địa điểm
+              </h2>
+              <p className="text-sm md:text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                {spot.description}
+              </p>
+            </div>
+
+            {/* Amenities */}
+            {spot.amenities && spot.amenities.length > 0 ? (
+              <div className="bg-card border border-border rounded-3xl p-6 shadow-xs">
+                <h2 className="text-base font-extrabold text-foreground mb-4 border-b border-border pb-3 flex items-center gap-2">
+                  🎒 Tiện ích dã ngoại
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {spot.amenities.map((a) => (
+                    <span
+                      key={a}
+                      className="px-4 py-2 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                    >
+                      {AMENITY_ICONS[a] ?? a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Directions */}
+            {spot.directions ? (
+              <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-950/20 dark:to-teal-950/20 border border-emerald-500/20 rounded-3xl p-6 shadow-xs">
+                <h2 className="text-base font-extrabold text-emerald-800 dark:text-emerald-400 mb-4 border-b border-emerald-500/20 pb-3 flex items-center gap-2">
+                  <Navigation size={18} className="text-emerald-600 dark:text-emerald-400" /> Cách di chuyển
+                </h2>
+                <p className="text-sm md:text-base leading-relaxed text-emerald-900 dark:text-emerald-300 whitespace-pre-wrap">
+                  {spot.directions}
+                </p>
+              </div>
+            ) : null}
+
+            {/* Comments */}
+            <div className="pt-6 border-t border-border">
+              <FreeSpotComments spotId={spot._id} initialCount={spot.commentCount ?? 0} />
+            </div>
+
           </div>
-        )}
 
-        {/* Description */}
-        <div
-          style={{
-            padding: 24, borderRadius: 16, background: 'var(--card)',
-            border: '1px solid var(--border)', marginBottom: 24,
-          }}
-        >
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--foreground)' }}>
-            📝 Mô tả
-          </h2>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.8, color: 'var(--foreground)', whiteSpace: 'pre-wrap' }}>
-            {spot.description}
-          </p>
-        </div>
+          {/* RIGHT COLUMN: Sticky Sidebar with Map, Navigation, Author details */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-24 space-y-6">
 
-        {/* Amenities */}
-        {spot.amenities?.length > 0 && (
-          <div
-            style={{
-              padding: 24, borderRadius: 16, background: 'var(--card)',
-              border: '1px solid var(--border)', marginBottom: 24,
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--foreground)' }}>
-              🎒 Tiện ích
-            </h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {spot.amenities.map((a) => (
-                <span
-                  key={a}
-                  style={{
-                    padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600,
-                    background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0',
-                  }}
-                >
-                  {AMENITY_ICONS[a] ?? a}
-                </span>
-              ))}
+              {/* Quick Info & Action Card */}
+              <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
+
+                {/* Badge and Title */}
+                <div className="hidden lg:block space-y-3.5">
+                  {/* <div className="flex items-center gap-2.5 flex-wrap">
+                    <TerrainBadge terrain={spot.terrain} size="md" />
+                    {spot.isVerified ? (
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                        ✓ Đã xác minh
+                      </span>
+                    ) : null}
+                  </div> */}
+                  <h1 className="text-xl font-extrabold text-foreground leading-snug">{spot.title}</h1>
+                  <div className="flex items-start gap-1.5 text-xs text-muted-foreground font-semibold">
+                    <MapPin size={14} className="text-primary/70 shrink-0 mt-0.5" />
+                    <span>{spot.address}{spot.city ? `, ${spot.city}` : ''}{spot.province ? `, ${spot.province}` : ''}</span>
+                  </div>
+                </div>
+
+                {/* View stats */}
+                <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground border-b border-border pb-4">
+                  <span className="flex items-center gap-1"><Eye size={14} /> {spot.viewCount ?? 0} lượt xem</span>
+                  <span className="flex items-center gap-1"><Heart className='text-red-500' fill='currentColor' size={14} /> {likeCount} lượt thích</span>
+                </div>
+
+                {/* Author Info */}
+                <div className="flex items-center gap-3">
+                  {spot.author?.avatarUrl ? (
+                    <img
+                      src={spot.author.avatarUrl}
+                      alt={spot.author.username}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                      {spot.author?.username?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    {/* <span className="text-xs text-muted-foreground">Người đăng</span> */}
+                    <span className="text-sm font-extrabold text-foreground truncate">
+                      {spot.author?.username}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {new Date(spot.createdAt).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Primary Action: Google Maps Button */}
+                <div className="pt-2">
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-primary text-white hover:bg-primary/95 px-5 py-3.5 rounded-2xl text-sm font-bold shadow-md hover:scale-102 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden"
+                  >
+                    <Navigation size={15} /> Chỉ đường Google Maps
+                  </a>
+                </div>
+
+                {/* Secondary Actions Flex Row */}
+                <div className="flex items-center gap-2 border-t border-border pt-4">
+                  <button
+                    onClick={handleLike}
+                    disabled={likeLoading}
+                    aria-label={liked ? 'Bỏ thích địa điểm này' : 'Thích địa điểm này'}
+                    className={`flex-1 cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-rose-500/50 outline-hidden ${liked
+                      ? 'border-rose-500 bg-rose-500/10 text-rose-500 font-extrabold'
+                      : 'border-border bg-card text-foreground hover:bg-muted'
+                      }`}
+                  >
+                    <Heart size={13} fill={liked ? 'currentColor' : 'none'} />
+                    <span>{liked ? 'Đã thích' : 'Thích'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleShare}
+                    aria-label="Chia sẻ liên kết đến địa điểm này"
+                    className="flex-1 cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-border bg-card text-xs font-bold text-foreground hover:bg-muted transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden"
+                  >
+                    <Share2 size={13} />
+                    <span>Chia sẻ</span>
+                  </button>
+                </div>
+
+                {/* Owner Actions & Report Option */}
+                {isOwner ? (
+                  <div className="flex items-center gap-2 pt-1 border-t border-border">
+                    <Link
+                      href={`/free-spots/${spot._id}/edit`}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-500/35 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-500/20 transition-all focus-visible:ring-2 focus-visible:ring-blue-500/50 outline-hidden"
+                    >
+                      <Pencil size={13} /> Chỉnh sửa
+                    </Link>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="flex-1 cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-rose-500/35 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-500/20 transition-all focus-visible:ring-2 focus-visible:ring-rose-500/50 outline-hidden"
+                    >
+                      {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                      Xóa bỏ
+                    </button>
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t border-border flex justify-center">
+                    <ReportButton
+                      itemId={spot._id}
+                      itemType="free-spot"
+                      className="w-full justify-center text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                    />
+                  </div>
+                )}
+
+              </div>
+
+              {/* Map Widget */}
+              <div className="bg-card border border-border rounded-3xl p-4 shadow-sm space-y-3">
+                <div className="text-xs font-extrabold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-2.5">
+                  <MapPin size={14} className="text-primary" /> Vị trí bản đồ
+                </div>
+                <div className="rounded-2xl overflow-hidden border border-border h-[220px] relative bg-muted shadow-inner">
+                  <FreeSpotMap
+                    spots={[spot]}
+                    center={coords}
+                    zoom={13}
+                    height={220}
+                    singleSpot
+                  />
+                </div>
+                <div className="text-[10px] text-muted-foreground font-semibold flex items-center justify-between px-1">
+                  <span>Tọa độ: {lat.toFixed(6)}, {lng.toFixed(6)}</span>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-bold"
+                  >
+                    Xem trên Maps
+                  </a>
+                </div>
+              </div>
+
             </div>
           </div>
-        )}
 
-        {/* Directions */}
-        {spot.directions && (
-          <div
-            style={{
-              padding: 24, borderRadius: 16, background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-              border: '1px solid #bbf7d0', marginBottom: 24,
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: '#064e3b', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Navigation size={18} color="#10b981" /> Cách di chuyển
-            </h2>
-            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.9, color: '#065f46', whiteSpace: 'pre-wrap' }}>
-              {spot.directions}
-            </p>
-          </div>
-        )}
-
-        {/* Map */}
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <MapPin size={18} color="#10b981" /> Vị trí trên bản đồ
-          </h2>
-          <FreeSpotMap
-            spots={[spot]}
-            center={coords}
-            zoom={13}
-            height={320}
-            singleSpot
-          />
-          <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                background: '#10b981', color: '#fff', textDecoration: 'none',
-              }}
-            >
-              <Navigation size={13} /> Chỉ đường Google Maps
-            </a>
-            <span style={{ fontSize: 12, color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <MapPin size={12} />
-              {lat.toFixed(6)}, {lng.toFixed(6)}
-            </span>
-          </div>
         </div>
-
-        {/* Comments */}
-        <FreeSpotComments spotId={id} initialCount={spot.commentCount ?? 0} />
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }

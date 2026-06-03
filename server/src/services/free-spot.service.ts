@@ -138,6 +138,12 @@ export class FreeSpotService {
     return spots;
   }
 
+  private async findSpotByIdOrSlug(idOrSlug: string): Promise<any> {
+    return await FreeSpot.findOne({
+      $or: [{ _id: idOrSlug.match(/^[a-f\d]{24}$/i) ? idOrSlug : null }, { slug: idOrSlug }]
+    });
+  }
+
   async getSpotById(id: string): Promise<any> {
     const spot = await FreeSpot.findOne({
       $or: [{ _id: id.match(/^[a-f\d]{24}$/i) ? id : null }, { slug: id }],
@@ -146,8 +152,11 @@ export class FreeSpotService {
 
     if (!spot) throw new Error("Địa điểm không tồn tại");
 
+    console.log("FETCHED SPOT:", spot.title, "likes count:", spot.likes?.length, "likes array:", spot.likes);
+
+    // Atomically increment viewCount in the database without saving the whole document
+    await FreeSpot.updateOne({ _id: spot._id }, { $inc: { viewCount: 1 } });
     spot.viewCount = ((spot.viewCount as number) || 0) + 1;
-    await spot.save();
 
     return spot;
   }
@@ -156,22 +165,26 @@ export class FreeSpotService {
     spotId: string,
     userId: string
   ): Promise<{ liked: boolean; likeCount: number }> {
-    const spot = await FreeSpot.findById(spotId);
+    const spot = await this.findSpotByIdOrSlug(spotId);
     if (!spot) throw new Error("Địa điểm không tồn tại");
 
     const alreadyLiked = spot.likes?.some(
-      (id: any) => id.toString() === userId
+      (id: any) => id && id.toString() === userId
     );
+
+    console.log("TOGGLE LIKE - spot:", spot.title, "user:", userId, "alreadyLiked:", alreadyLiked, "current likes:", spot.likes);
 
     const update = alreadyLiked
       ? { $pull: { likes: userId } }
       : { $addToSet: { likes: userId } };
 
-    const updated = await FreeSpot.findByIdAndUpdate(spotId, update, {
+    const updated = await FreeSpot.findByIdAndUpdate(spot._id, update, {
       new: true,
     });
     const newCount = updated?.likes?.length ?? 0;
-    await FreeSpot.findByIdAndUpdate(spotId, { likeCount: newCount });
+    await FreeSpot.updateOne({ _id: spot._id }, { likeCount: newCount });
+
+    console.log("TOGGLE LIKE - updated likes count:", newCount, "updated likes array:", updated?.likes);
 
     return { liked: !alreadyLiked, likeCount: newCount };
   }
@@ -193,7 +206,7 @@ export class FreeSpotService {
     },
     files?: { [key: string]: { buffer: Buffer }[] }
   ): Promise<any> {
-    const spot = await FreeSpot.findById(spotId);
+    const spot = await this.findSpotByIdOrSlug(spotId);
     if (!spot) throw new Error("Địa điểm không tồn tại");
     if (spot.author?.toString() !== userId)
       throw new Error("Không có quyền chỉnh sửa");
@@ -229,7 +242,7 @@ export class FreeSpotService {
   }
 
   async deleteSpot(spotId: string, userId: string): Promise<void> {
-    const spot = await FreeSpot.findById(spotId);
+    const spot = await this.findSpotByIdOrSlug(spotId);
     if (!spot) throw new Error("Địa điểm không tồn tại");
     if (spot.author?.toString() !== userId)
       throw new Error("Không có quyền xóa");
@@ -241,18 +254,24 @@ export class FreeSpotService {
     userId: string,
     content: string
   ): Promise<any> {
-    const spot = await FreeSpot.findById(spotId);
+    const spot = await this.findSpotByIdOrSlug(spotId);
     if (!spot) throw new Error("Địa điểm không tồn tại");
 
     const comment = { user: userId, content, createdAt: new Date() };
-    spot.comments = spot.comments || [];
-    spot.comments.push(comment as any);
-    spot.commentCount = ((spot.commentCount as number) || 0) + 1;
-    await spot.save();
 
-    // Populate the last comment
-    await spot.populate("comments.user", "username avatarUrl");
-    const saved = spot.comments[spot.comments.length - 1];
+    const updated = await FreeSpot.findByIdAndUpdate(
+      spot._id,
+      {
+        $push: { comments: comment },
+        $inc: { commentCount: 1 }
+      },
+      { new: true }
+    ).populate("comments.user", "username avatarUrl");
+
+    if (!updated) throw new Error("Không thể thêm bình luận");
+
+    // Return the last added comment
+    const saved = updated.comments[updated.comments.length - 1];
     return saved;
   }
 }

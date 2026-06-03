@@ -508,7 +508,7 @@ export function BookingGanttView({
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           {bookingBars.length > 0 || blockedBars.length > 0 ? (
-            <div className="min-w-[800px]">
+            <div className="w-fit min-w-full">
               {/* Timeline header */}
               <div className="sticky top-0 z-10 flex border-b bg-gray-50">
                 <div className="w-48 shrink-0 border-r p-3 font-semibold">
@@ -519,7 +519,7 @@ export function BookingGanttView({
                     <div
                       key={index}
                       className={cn(
-                        'flex flex-1 flex-col border-r p-2 text-center text-xs', // thêm flex-col
+                        'flex w-12 min-w-[48px] shrink-0 flex-col border-r p-2 text-center text-xs',
                         day.isToday && 'bg-emerald-50',
                         day.isWeekend && 'bg-gray-100',
                         day.isBlocked && 'bg-gray-200',
@@ -569,7 +569,7 @@ export function BookingGanttView({
                       <div
                         key={dayIndex}
                         className={cn(
-                          'flex-1 border-r',
+                          'w-12 min-w-[48px] shrink-0 border-r',
                           day.isWeekend && 'bg-gray-50',
                         )}
                       />
@@ -659,7 +659,7 @@ export function BookingGanttView({
                         <div
                           key={dayIndex}
                           className={cn(
-                            'flex-1 border-r',
+                            'w-12 min-w-[48px] shrink-0 border-r',
                             day.isWeekend && 'bg-gray-50',
                             day.isBlocked && 'bg-gray-100',
                           )}

@@ -127,271 +127,171 @@ export default function FreeSpotsPage() {
     }
     router.push('/free-spots/create');
   };
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
+    <div className="min-h-screen bg-background text-foreground">
       {/* ── Hero Banner ─────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 100%)',
-          padding: '48px 24px 40px',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* decorative blobs */}
-        <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(16,185,129,0.15)' }} />
-        <div style={{ position: 'absolute', bottom: -60, left: -30, width: 280, height: 280, borderRadius: '50%', background: 'rgba(5,150,105,0.12)' }} />
-
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          {/* <div style={{ fontSize: 48, marginBottom: 12 }}>🏕️</div> */}
-          <h1 style={{ color: '#fff', fontSize: 30, fontWeight: 800, margin: '0 0 8px', lineHeight: 1.2 }}>
-            Địa Điểm Cắm Trại Miễn Phí
+      <div className="relative overflow-hidden py-10 px-6 md:px-10 text-center text-black">
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full  blur-3xl" />
+        <div className="absolute -left-10 -bottom-20 h-64 w-64 rounded-full  blur-3xl" />
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-black mb-3">
+            Địa Điểm Cắm Trại Tự Do & Miễn Phí
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, margin: '0 0 28px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>
-            Khám phá & chia sẻ những bãi cắm trại miễn phí tuyệt đẹp khắp Việt Nam
-          </p>
+          {/* <p className="text-sm md:text-base text-black/90 max-w-xl mx-auto mb-8 leading-relaxed">
+            Khám phá và chia sẻ những bãi cắm trại hoang sơ, tuyệt đẹp và hoàn toàn miễn phí trên khắp Việt Nam.
+          </p> */}
 
           {/* Search bar */}
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, maxWidth: 560, margin: '0 auto 16px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, position: 'relative', minWidth: 200 }}>
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto mb-6">
+            <div className="relative flex-1">
               <Search
-                size={16}
-                style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Tìm theo tên, thành phố..."
-                style={{
-                  width: '100%',
-                  padding: '12px 16px 12px 40px',
-                  borderRadius: 12,
-                  border: 'none',
-                  fontSize: 14,
-                  background: '#fff',
-                  color: '#111',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                }}
+                placeholder="Tìm theo tên, thành phố…"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-5 py-3.5 pl-12 text-sm text-foreground placeholder-muted-foreground outline-none shadow-md focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden transition-all"
               />
-              {searchInput && (
+              {searchInput ? (
                 <button
                   type="button"
                   onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}
+                  aria-label="Xóa tìm kiếm"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden rounded-md p-0.5"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
-              )}
+              ) : null}
             </div>
             <button
               type="submit"
-              style={{
-                padding: '12px 24px',
-                borderRadius: 12,
-                border: 'none',
-                background: '#10b981',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                transition: 'background 0.2s',
-              }}
+              className="cursor-pointer rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-md hover:bg-primary/95 transition-all focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden"
             >
               Tìm kiếm
             </button>
           </form>
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={handleNearby}
               disabled={locating}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 10,
-                border: nearbyMode ? '2px solid #10b981' : '2px solid rgba(255,255,255,0.4)',
-                background: nearbyMode ? '#10b981' : 'rgba(255,255,255,0.15)',
-                color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                backdropFilter: 'blur(4px)', transition: 'all 0.2s',
-              }}
+              className={`cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden hover:scale-102 ${nearbyMode
+                ? 'bg-primary text-white border-primary shadow-md'
+                : 'bg-card text-foreground border-border hover:bg-muted shadow-sm'
+                }`}
             >
-              {locating ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+              {locating ? <Loader2 size={16} className="animate-spin" /> : <Navigation size={15} />}
               {nearbyMode ? 'Tắt vị trí' : 'Gần tôi (50km)'}
             </button>
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 10,
-                border: showFilters ? '2px solid #f59e0b' : '2px solid rgba(255,255,255,0.4)',
-                background: showFilters ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.15)',
-                color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                backdropFilter: 'blur(4px)', transition: 'all 0.2s',
-              }}
+              className={`cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden hover:scale-102 ${showFilters
+                ? 'bg-primary text-white border-primary shadow-md'
+                : 'bg-card text-foreground border-border hover:bg-muted shadow-sm'
+                }`}
             >
-              <Filter size={14} />
+              <Filter size={15} />
               Lọc địa hình
-              {terrain && <span style={{ background: '#f59e0b', borderRadius: 99, width: 8, height: 8, display: 'inline-block' }} />}
+
             </button>
 
             <button
               onClick={handleShareClick}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 10,
-                border: 'none',
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(16,185,129,0.4)',
-                transition: 'transform 0.15s',
-              }}
+              className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold shadow-md hover:bg-primary/95 transition-all hover:scale-102 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden"
             >
-              <Plus size={14} />
+              <Plus size={15} />
               Chia sẻ địa điểm
             </button>
           </div>
 
           {/* Filter row */}
-          {showFilters && (
-            <div
-              style={{
-                marginTop: 16, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap',
-              }}
-            >
+          {showFilters ? (
+            <div className="mt-6 flex flex-wrap gap-2 justify-center">
               {TERRAIN_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => handleTerrainChange(opt.value)}
-                  style={{
-                    padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                    border: terrain === opt.value ? '2px solid #10b981' : '2px solid rgba(255,255,255,0.3)',
-                    background: terrain === opt.value ? '#10b981' : 'rgba(255,255,255,0.15)',
-                    color: '#fff', cursor: 'pointer', backdropFilter: 'blur(4px)',
-                    transition: 'all 0.15s',
-                  }}
+                  className={`cursor-pointer px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden hover:scale-102 ${terrain === opt.value
+                    ? 'bg-primary border-primary text-white shadow-xs'
+                    : 'bg-card border-border text-foreground hover:bg-muted shadow-xs'
+                    }`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
       {/* ── Status bar ─────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: 'var(--card)', borderBottom: '1px solid var(--border)',
-          padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 12,
-          fontSize: 13, color: 'var(--muted-foreground)', flexWrap: 'wrap',
-        }}
-      >
+      <div className=" px-6 py-3.5 flex items-center justify-between text-sm text-muted-foreground">
         {nearbyMode ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Navigation size={13} color="#3b82f6" />
-            <strong style={{ color: '#3b82f6' }}>Chế độ gần tôi</strong>
-            {' '}— Bán kính 50km
+          <span className="flex items-center gap-2">
+            <Navigation size={14} className="text-primary animate-pulse-subtle" />
+            <strong className="text-primary font-bold">Chế độ gần tôi</strong>
+            <span>— Đang hiển thị địa điểm trong bán kính 50km</span>
           </span>
         ) : (
-          <>
-            <span>
-              <strong style={{ color: 'var(--foreground)' }}>{total}</strong> địa điểm
-              {search && <> phù hợp với "<em>{search}</em>"</>}
-            </span>
-            {terrain && (
-              <span
-                style={{
-                  padding: '2px 10px', borderRadius: 99, background: '#dcfce7',
-                  color: '#15803d', fontWeight: 600,
-                }}
-              >
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* <span>
+              Tìm thấy <strong className="text-foreground font-bold">{total}</strong> địa điểm cắm trại
+              {search && <> khớp với từ khóa "<em>{search}</em>"</>}
+            </span> */}
+            {terrain ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
                 {TERRAIN_OPTIONS.find((t) => t.value === terrain)?.label}
                 <button
                   onClick={() => handleTerrainChange('')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 4, padding: 0 }}
+                  aria-label="Xóa lọc địa hình"
+                  className="hover:text-emerald-700 dark:hover:text-emerald-300 font-bold ml-1 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500/50 outline-hidden rounded-xs px-0.5"
                 >
                   ×
                 </button>
               </span>
-            )}
-          </>
+            ) : null}
+          </div>
         )}
       </div>
 
       {/* ── Main layout: list + map ─────────────────────────────────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 440px',
-          gap: 0,
-          maxWidth: 1400,
-          margin: '0 auto',
-          minHeight: 'calc(100vh - 280px)',
-        }}
-        className="free-spots-layout"
-      >
+      <div className="grid lg:grid-cols-[1fr_440px] max-w-7xl mx-auto min-h-[calc(100vh-280px)]">
         {/* Left: spot list */}
-        <div ref={listRef} style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(100vh - 220px)', scrollbarWidth: 'thin' }}>
+        <div ref={listRef} className="p-6 overflow-y-auto max-h-[calc(100vh-220px)] scrollbar-hide">
           {loading ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: 16,
-              }}
-            >
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  style={{
-                    height: 300, borderRadius: 16, background: 'var(--muted)',
-                    animation: 'pulse 1.5s ease-in-out infinite',
-                  }}
+                  className="h-80 rounded-2xl bg-muted animate-pulse"
                 />
               ))}
             </div>
           ) : spots.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center', padding: '64px 24px',
-                color: 'var(--muted-foreground)',
-              }}
-            >
-              {/* <div style={{ fontSize: 56, marginBottom: 16 }}>🏕️</div> */}
-              <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 8, color: 'var(--foreground)' }}>
-                Chưa có địa điểm nào
+            <div className="text-center py-16 px-6 max-w-md mx-auto">
+              <div className="text-5xl mb-4">🏕️</div>
+              <h3 className="font-bold text-lg text-foreground mb-2">
+                Chưa tìm thấy địa điểm nào
               </h3>
-              <p style={{ fontSize: 14, marginBottom: 24 }}>
+              <p className="text-sm text-muted-foreground mb-6">
                 {nearbyMode
-                  ? 'Không tìm thấy địa điểm nào trong bán kính 50km.'
-                  : 'Hãy thử tìm kiếm khác hoặc chia sẻ địa điểm đầu tiên!'}
+                  ? 'Không tìm thấy địa điểm cắm trại tự do nào trong bán kính 50km quanh bạn.'
+                  : 'Hãy thử tìm kiếm từ khóa khác hoặc chia sẻ địa điểm cắm trại tự do đầu tiên!'}
               </p>
               <button
                 onClick={handleShareClick}
-                style={{
-                  padding: '12px 28px', borderRadius: 12, border: 'none',
-                  background: '#10b981', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer',
-                }}
+                className="cursor-pointer inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-md hover:bg-primary/95 transition-all"
               >
                 + Chia sẻ địa điểm
               </button>
             </div>
           ) : (
             <>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: 16,
-                  marginBottom: 24,
-                }}
-              >
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
                 {spots.map((spot) => (
                   <div key={spot._id} id={`spot-card-${spot._id}`}>
                     <FreeSpotCard
@@ -404,54 +304,39 @@ export default function FreeSpotsPage() {
               </div>
 
               {/* Pagination */}
-              {!nearbyMode && totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, paddingBottom: 8 }}>
+              {!nearbyMode && totalPages > 1 ? (
+                <div className="flex justify-center items-center gap-4 py-4">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    style={{
-                      padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)',
-                      background: page === 1 ? 'var(--muted)' : 'var(--card)',
-                      color: page === 1 ? 'var(--muted-foreground)' : 'var(--foreground)',
-                      cursor: page === 1 ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600,
-                    }}
+                    className={`cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden ${page === 1
+                      ? 'bg-muted border-transparent text-muted-foreground cursor-not-allowed'
+                      : 'bg-card border-border text-foreground hover:bg-muted'
+                      }`}
                   >
                     <ChevronLeft size={14} /> Trước
                   </button>
-                  <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>
-                    Trang <strong>{page}</strong> / {totalPages}
+                  <span className="text-xs text-muted-foreground">
+                    Trang <strong className="text-foreground font-bold">{page}</strong> / {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    style={{
-                      padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)',
-                      background: page === totalPages ? 'var(--muted)' : 'var(--card)',
-                      color: page === totalPages ? 'var(--muted-foreground)' : 'var(--foreground)',
-                      cursor: page === totalPages ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600,
-                    }}
+                    className={`cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden ${page === totalPages
+                      ? 'bg-muted border-transparent text-muted-foreground cursor-not-allowed'
+                      : 'bg-card border-border text-foreground hover:bg-muted'
+                      }`}
                   >
                     Sau <ChevronRight size={14} />
                   </button>
                 </div>
-              )}
+              ) : null}
             </>
           )}
         </div>
 
         {/* Right: map */}
-        <div
-          style={{
-            position: 'sticky',
-            top: 64,
-            height: 'calc(100vh - 64px)',
-            borderLeft: '1px solid var(--border)',
-            overflow: 'hidden',
-          }}
-          className="free-spots-map-panel"
-        >
+        <div className="hidden lg:block sticky top-16 h-[calc(100vh-64px)] border-l border-border overflow-hidden">
           <FreeSpotMap
             spots={spots}
             highlightedId={highlightedId}
@@ -462,21 +347,6 @@ export default function FreeSpotsPage() {
           />
         </div>
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @media (max-width: 860px) {
-          .free-spots-layout {
-            grid-template-columns: 1fr !important;
-          }
-          .free-spots-map-panel {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
-  );
+  )
 }

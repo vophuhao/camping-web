@@ -5,8 +5,7 @@
 import dynamic from 'next/dynamic';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
-  Upload, X, MapPin, Navigation, Loader2, ArrowLeft,
-  Mountain, Waves, TreePine, Info,
+  Upload, X, Navigation, Loader2, ArrowLeft, Info,
 } from 'lucide-react';
 import { createFreeSpot } from '@/lib/free-spot-api';
 import { useAuthStore } from '@/store/auth.store';
@@ -181,350 +180,303 @@ export default function CreateFreeSpotPage() {
       : [];
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)', paddingBottom: 60 }}>
-      {/* Header */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)',
-          padding: '28px 24px',
-        }}
-      >
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      {/* Header Banner */}
+      <div className="py-10 px-6 md:px-10 ">
+        <div className="max-w-7xl mx-auto flex flex-col gap-3">
           <Link
             href="/free-spots"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: 13, marginBottom: 16,
-            }}
+            className="inline-flex items-center gap-2 text-sm font-bold  transition-colors focus-visible:ring-2 focus-visible:ring-white/50 outline-hidden rounded-md px-2 py-1 w-fit"
           >
-            <ArrowLeft size={14} /> Quay lại danh sách
+            <ArrowLeft size={16} color="black" /> Quay lại danh sách
           </Link>
-          <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: 0, lineHeight: 1.25 }}>
-            Chia sẻ địa điểm cắm trại
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 6, marginBottom: 0 }}>
-            Giúp cộng đồng khám phá những điểm cắm trại miễn phí tuyệt đẹp
-          </p>
+
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Main Form container */}
+      <form onSubmit={handleSubmit} className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Basic info */}
-          <Section title="Thông tin cơ bản">
-            <FormField label="Tên địa điểm *">
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="VD: Bãi cắm trại bờ hồ Tuyền Lâm"
-                style={inputStyle}
-                maxLength={120}
-              />
-            </FormField>
+          {/* LEFT COLUMN: Basic Info, Location picker, Directions */}
+          <div className="lg:col-span-2 space-y-8">
 
-            <FormField label="Mô tả *">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Mô tả chi tiết về địa điểm, cảnh đẹp, đặc điểm nổi bật..."
-                rows={4}
-                style={{ ...inputStyle, resize: 'vertical' }}
-                maxLength={2000}
-              />
-              <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--muted-foreground)', marginTop: 4 }}>
-                {description.length}/2000
+            {/* Basic Info Section */}
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
+              <h2 className="text-base font-extrabold text-foreground border-b border-border pb-3 flex items-center gap-2">
+                📝 Thông tin cơ bản
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">Tên địa điểm *</label>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="VD: Bãi cắm trại bờ hồ Tuyền Lâm"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all"
+                    maxLength={120}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">Mô tả *</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Mô tả chi tiết về cảnh quan, đường đi, đặc điểm nổi bật, lưu ý an toàn..."
+                    rows={5}
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all resize-none"
+                    maxLength={2000}
+                  />
+                  <div className="text-right text-[10px] text-muted-foreground mt-1 font-semibold">
+                    {description.length}/2000
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">Địa chỉ *</label>
+                    <input
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="VD: Phân khu 18, khu du lịch hồ Tuyền Lâm"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">Tỉnh/Thành phố *</label>
+                    <select
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all cursor-pointer"
+                    >
+                      <option value="">-- Chọn tỉnh/thành phố --</option>
+                      {VIETNAM_CITIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
-            </FormField>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <FormField label="Địa chỉ *">
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Số thôn, xã, huyện..."
-                  style={inputStyle}
-                />
-              </FormField>
-              <FormField label="Tỉnh/Thành phố *">
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="">-- Chọn tỉnh/thành phố --</option>
-                  {VIETNAM_CITIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </FormField>
             </div>
-          </Section>
 
-          {/* Terrain */}
-          <Section title="Loại địa hình">
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {TERRAIN_OPTIONS.map((opt) => (
+            {/* Map & Location Section */}
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
+              <h2 className="text-base font-extrabold text-foreground border-b border-border pb-3 flex items-center gap-2">
+                🗺️ Vị trí trên bản đồ
+              </h2>
+
+              <div className="bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 rounded-2xl p-4 flex gap-2.5 text-xs font-medium">
+                <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                <span className="line-height-relaxed">
+                  Bấm trực tiếp vào bản đồ để chọn tọa độ, hoặc kéo marker đến vị trí mong muốn. Tọa độ (Vĩ độ/Kinh độ) sẽ được cập nhật tự động.
+                </span>
+              </div>
+
+              <div className="rounded-2xl overflow-hidden border border-border h-[320px] bg-muted shadow-inner relative">
+                <FreeSpotMap
+                  spots={mapSpot as any}
+                  height={320}
+                  interactive
+                  onLocationChange={handleLocationChange}
+                  center={longitude !== '' && latitude !== '' ? [longitude as number, latitude as number] : undefined}
+                  zoom={5}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-1 min-w-[140px]">
+                  <label className="block text-xs font-bold text-foreground mb-1.5">Vĩ độ (Latitude)</label>
+                  <input
+                    type="number"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value ? parseFloat(e.target.value) : '')}
+                    placeholder="VD: 11.9404"
+                    step="0.000001"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all"
+                  />
+                </div>
+                <div className="flex-1 min-w-[140px]">
+                  <label className="block text-xs font-bold text-foreground mb-1.5">Kinh độ (Longitude)</label>
+                  <input
+                    type="number"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value ? parseFloat(e.target.value) : '')}
+                    placeholder="VD: 108.4358"
+                    step="0.000001"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all"
+                  />
+                </div>
                 <button
-                  key={opt.value}
                   type="button"
-                  onClick={() => setTerrain(opt.value)}
-                  style={{
-                    padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    border: terrain === opt.value ? '2px solid #10b981' : '2px solid var(--border)',
-                    background: terrain === opt.value ? '#f0fdf4' : 'var(--card)',
-                    color: terrain === opt.value ? '#065f46' : 'var(--foreground)',
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}
+                  onClick={handleGetLocation}
+                  disabled={locating}
+                  className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-3 rounded-xl border border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-sm hover:bg-amber-500/20 active:scale-98 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/50 outline-hidden"
                 >
-                  {opt.emoji} {opt.label}
+                  {locating ? <Loader2 size={16} className="animate-spin" /> : <Navigation size={15} />}
+                  Lấy vị trí của tôi
                 </button>
-              ))}
-            </div>
-          </Section>
-
-          {/* Location picker */}
-          <Section title="Vị trí trên bản đồ *">
-            <div
-              style={{
-                padding: '10px 14px', borderRadius: 10, marginBottom: 14,
-                background: '#eff6ff', border: '1px solid #bfdbfe',
-                display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13,
-              }}
-            >
-              <Info size={15} color="#2563eb" style={{ marginTop: 1, flexShrink: 0 }} />
-              <span style={{ color: '#1e40af', lineHeight: 1.5 }}>
-                Click vào bản đồ để đặt marker, hoặc kéo marker đến vị trí chính xác.
-                Bạn cũng có thể nhập tọa độ thủ công bên dưới.
-              </span>
+              </div>
             </div>
 
-            <FreeSpotMap
-              spots={mapSpot as any}
-              height={300}
-              interactive
-              onLocationChange={handleLocationChange}
-              center={longitude !== '' && latitude !== ''
-                ? [longitude as number, latitude as number]
-                : undefined}
-              zoom={5}
-            />
+            {/* Directions Section */}
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
+              <h2 className="text-base font-extrabold text-foreground border-b border-border pb-3 flex items-center gap-2">
+                🧭 Chỉ dẫn di chuyển
+              </h2>
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Cách di chuyển (tùy chọn)</label>
+                <textarea
+                  value={directions}
+                  onChange={(e) => setDirections(e.target.value)}
+                  placeholder="VD: Từ chợ Đà Lạt đi theo hướng đèo Prenn, rẽ vào đường Tuyền Lâm, đi tiếp 3km qua khỏi khu Resort..."
+                  rows={4}
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500 transition-all resize-none"
+                  maxLength={3000}
+                />
+              </div>
+            </div>
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div style={{ flex: 1, minWidth: 140 }}>
-                <label style={labelStyle}>Vĩ độ (Latitude)</label>
-                <input
-                  type="number"
-                  value={latitude}
-                  onChange={(e) => setLatitude(e.target.value ? parseFloat(e.target.value) : '')}
-                  placeholder="VD: 11.9404"
-                  step="0.000001"
-                  style={inputStyle}
-                />
+          </div>
+
+          {/* RIGHT COLUMN: Terrain, Amenities, Image Uploader, Submit */}
+          <div className="space-y-8 lg:col-span-1">
+
+            {/* Terrain & Amenities Card */}
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-6">
+
+              {/* Terrain options */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-extrabold text-foreground border-b border-border pb-2.5">
+                  🏔️ Loại địa hình
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {TERRAIN_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setTerrain(opt.value)}
+                      className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold border transition-all hover:scale-102 focus-visible:ring-2 focus-visible:ring-amber-500/50 outline-hidden ${terrain === opt.value
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold shadow-xs'
+                        : 'border-border bg-background text-foreground hover:bg-muted'
+                        }`}
+                    >
+                      <span className="mr-1">{opt.emoji}</span> {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{ flex: 1, minWidth: 140 }}>
-                <label style={labelStyle}>Kinh độ (Longitude)</label>
-                <input
-                  type="number"
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value ? parseFloat(e.target.value) : '')}
-                  placeholder="VD: 108.4358"
-                  step="0.000001"
-                  style={inputStyle}
-                />
+
+              {/* Amenities options */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-extrabold text-foreground border-b border-border pb-2.5">
+                  🎒 Tiện ích dã ngoại
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {AMENITY_OPTIONS.map((opt) => {
+                    const isSelected = amenities.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => toggleAmenity(opt.value)}
+                        className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold border transition-all hover:scale-102 focus-visible:ring-2 focus-visible:ring-amber-500/50 outline-hidden ${isSelected
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold shadow-xs'
+                          : 'border-border bg-background text-foreground hover:bg-muted'
+                          }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleGetLocation}
-                disabled={locating}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px',
-                  borderRadius: 10, border: '1px solid #2563eb', background: '#eff6ff',
-                  color: '#2563eb', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  whiteSpace: 'nowrap',
+            </div>
+
+            {/* Images Uploader Card */}
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
+              <h2 className="text-base font-extrabold text-foreground border-b border-border pb-3 flex items-center gap-2">
+                📷 Ảnh chụp địa điểm
+              </h2>
+
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-2xl p-6 text-center cursor-pointer bg-muted/50 hover:bg-muted transition-all hover:border-amber-500/50 group"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+                  handleImageSelect({ target: { files } } as any);
                 }}
               >
-                {locating ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
-                Vị trí của tôi
+                <Upload size={28} className="text-muted-foreground group-hover:text-amber-500 transition-colors mx-auto mb-2.5" />
+                <div className="text-xs font-bold text-foreground mb-1">
+                  Chọn ảnh chụp hoặc kéo thả
+                </div>
+                <div className="text-[10px] text-muted-foreground font-semibold">
+                  Chấp nhận PNG, JPG, WebP — Tối đa 8 ảnh
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+              </div>
+
+              {/* Previews grid */}
+              {previews.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  {previews.map((url, i) => (
+                    <div
+                      key={i}
+                      className="relative rounded-xl overflow-hidden aspect-square bg-muted border border-border group"
+                    >
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        aria-label="Xóa ảnh này"
+                        className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center border-none cursor-pointer hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 outline-hidden"
+                      >
+                        <X size={10} />
+                      </button>
+                      {i === 0 && (
+                        <span className="absolute bottom-1 left-1 bg-amber-500 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                          Main
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Submit Action Card */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="cursor-pointer w-full bg-primary hover:bg-amber-600 text-white text-base font-extrabold py-4 px-6 rounded-2xl shadow-lg hover:shadow-amber-500/20 active:scale-98 transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-amber-500/50 outline-hidden disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Đang chia sẻ địa điểm...
+                  </>
+                ) : (
+                  <>🏕️ Chia sẻ địa điểm</>
+                )}
               </button>
             </div>
-          </Section>
 
-          {/* Amenities */}
-          <Section title="Tiện ích có sẵn">
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {AMENITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => toggleAmenity(opt.value)}
-                  style={{
-                    padding: '7px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    border: amenities.includes(opt.value) ? '2px solid #10b981' : '2px solid var(--border)',
-                    background: amenities.includes(opt.value) ? '#f0fdf4' : 'var(--card)',
-                    color: amenities.includes(opt.value) ? '#065f46' : 'var(--foreground)',
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </Section>
+          </div>
 
-          {/* Directions */}
-          <Section title="Hướng dẫn di chuyển">
-            <textarea
-              value={directions}
-              onChange={(e) => setDirections(e.target.value)}
-              placeholder="Mô tả cách đến địa điểm: xuất phát từ đâu, đi theo hướng nào, các mốc đặc biệt trên đường..."
-              rows={5}
-              style={{ ...inputStyle, resize: 'vertical' }}
-              maxLength={3000}
-            />
-          </Section>
-
-          {/* Images */}
-          <Section title="📷 Hình ảnh (tối đa 8 ảnh)">
-            <div
-              onClick={() => fileRef.current?.click()}
-              style={{
-                border: '2px dashed var(--border)', borderRadius: 12,
-                padding: 32, textAlign: 'center', cursor: 'pointer',
-                background: 'var(--muted)', marginBottom: previews.length ? 16 : 0,
-                transition: 'border-color 0.2s, background 0.2s',
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
-                const fakeEvent = { target: { files: { ...files, length: files.length } } } as any;
-                handleImageSelect({ target: { files } } as any);
-              }}
-            >
-              <Upload size={32} color="#9ca3af" style={{ marginBottom: 8 }} />
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>
-                Click để chọn ảnh hoặc kéo thả vào đây
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-                PNG, JPG, WebP — Tối đa 8 ảnh
-              </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                style={{ display: 'none' }}
-                onChange={handleImageSelect}
-              />
-            </div>
-
-            {previews.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
-                {previews.map((url, i) => (
-                  <div
-                    key={i}
-                    style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: '1', background: '#e5e7eb' }}
-                  >
-                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      style={{
-                        position: 'absolute', top: 4, right: 4,
-                        width: 22, height: 22, borderRadius: '50%', border: 'none',
-                        background: 'rgba(0,0,0,0.6)', color: '#fff',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <X size={12} />
-                    </button>
-                    {i === 0 && (
-                      <span
-                        style={{
-                          position: 'absolute', bottom: 4, left: 4,
-                          background: '#10b981', color: '#fff',
-                          fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
-                        }}
-                      >
-                        ẢNH CHÍNH
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </Section>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              width: '100%', padding: '16px', borderRadius: 14, border: 'none',
-              background: submitting ? '#9ca3af' : 'linear-gradient(135deg, #10b981, #059669)',
-              color: '#fff', fontSize: 16, fontWeight: 800, cursor: submitting ? 'not-allowed' : 'pointer',
-              boxShadow: submitting ? 'none' : '0 4px 20px rgba(16,185,129,0.4)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              transition: 'all 0.2s',
-            }}
-          >
-            {submitting ? (
-              <><Loader2 size={18} className="animate-spin" /> Đang chia sẻ...</>
-            ) : (
-              <>🏕️ Chia sẻ địa điểm</>
-            )}
-          </button>
         </div>
       </form>
     </div>
   );
 }
-
-/* ── Helper subcomponents ──────────────────────────────────────── */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: 'var(--card)', borderRadius: 16,
-        border: '1px solid var(--border)', overflow: 'hidden',
-      }}
-    >
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', background: 'var(--muted)' }}>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>{title}</h2>
-      </div>
-      <div style={{ padding: '20px' }}>{children}</div>
-    </div>
-  );
-}
-
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={labelStyle}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
-  border: '1px solid var(--border)',
-  background: 'var(--background)',
-  color: 'var(--foreground)',
-  fontSize: 14,
-  outline: 'none',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-  transition: 'border-color 0.2s',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 13,
-  fontWeight: 600,
-  color: 'var(--foreground)',
-  marginBottom: 6,
-};

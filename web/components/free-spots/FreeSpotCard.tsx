@@ -20,185 +20,87 @@ export default function FreeSpotCard({ spot, highlighted, onHover }: Props) {
   return (
     <Link href={`/free-spots/${spot._id}`} legacyBehavior>
       <a
-        className="free-spot-card"
-        data-highlighted={highlighted}
+        className={`group flex flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 cursor-pointer text-current no-underline focus-visible:ring-4 focus-visible:ring-primary/20 outline-hidden ${
+          highlighted
+            ? 'border-primary ring-4 ring-primary/10 shadow-md scale-101'
+            : 'border-border shadow-xs hover:shadow-md hover:-translate-y-0.5'
+        }`}
         onMouseEnter={() => onHover?.(spot._id)}
         onMouseLeave={() => onHover?.(null)}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          borderRadius: 16,
-          overflow: 'hidden',
-          background: 'var(--card)',
-          border: highlighted
-            ? '2px solid #10b981'
-            : '1px solid var(--border)',
-          boxShadow: highlighted
-            ? '0 0 0 3px #10b98133'
-            : '0 2px 8px rgba(0,0,0,0.06)',
-          transition: 'all 0.2s ease',
-          cursor: 'pointer',
-          textDecoration: 'none',
-          color: 'inherit',
-        }}
       >
         {/* Thumbnail */}
-        <div style={{ position: 'relative', height: 180, background: '#e5e7eb', flexShrink: 0 }}>
+        <div className="relative h-44 w-full bg-muted flex-shrink-0 overflow-hidden">
           {thumb ? (
             <img
               src={thumb}
               alt={spot.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              width={400}
+              height={176}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 40,
-                color: '#9ca3af',
-              }}
-            >
+            <div className="w-full h-full flex items-center justify-center text-4xl text-muted-foreground select-none">
               🏕️
             </div>
           )}
-          <div style={{ position: 'absolute', top: 10, left: 10 }}>
+          <div className="absolute top-3 left-3 z-10">
             <TerrainBadge terrain={spot.terrain} size="sm" />
           </div>
-          {spot.isVerified && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 10,
-                right: 10,
-                background: '#10b981',
-                color: '#fff',
-                borderRadius: 99,
-                padding: '2px 8px',
-                fontSize: 11,
-                fontWeight: 600,
-              }}
-            >
+          {spot.isVerified ? (
+            <div className="absolute top-3 right-3 z-10 bg-emerald-500 text-white rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase shadow-sm">
               ✓ Xác minh
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Content */}
-        <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: 15,
-              fontWeight: 700,
-              lineHeight: 1.3,
-              color: 'var(--foreground)',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
+        <div className="p-4 flex-1 flex flex-col gap-3">
+          <h3 className="font-bold text-sm text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             {spot.title}
           </h3>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 12,
-              color: 'var(--muted-foreground)',
-            }}
-          >
-            <MapPin size={12} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <MapPin size={13} className="shrink-0 text-primary/70" />
+            <span className="truncate">
               {spot.address}, {spot.city}
             </span>
           </div>
 
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              color: 'var(--muted-foreground)',
-              lineHeight: 1.5,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              flex: 1,
-            }}
-          >
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 flex-1">
             {spot.description}
           </p>
 
           {/* Footer */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingTop: 8,
-              borderTop: '1px solid var(--border)',
-            }}
-          >
+          <div className="pt-3 border-t border-border flex items-center justify-between text-xs mt-1">
             {/* Author */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="flex items-center gap-2">
               {spot.author?.avatarUrl ? (
                 <img
                   src={spot.author.avatarUrl}
                   alt={spot.author.username}
-                  style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
+                  width={22}
+                  height={22}
+                  className="w-5.5 h-5.5 rounded-full object-cover border border-border"
                 />
               ) : (
-                <div
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background: '#10b981',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <User size={12} color="#fff" />
+                <div className="w-5.5 h-5.5 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                  {spot.author?.username?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
-              <span style={{ fontSize: 12, color: 'var(--muted-foreground)', fontWeight: 500 }}>
+              <span className="text-muted-foreground font-semibold truncate max-w-[100px]">
                 {spot.author?.username}
               </span>
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  fontSize: 12,
-                  color: '#ef4444',
-                }}
-              >
-                <Heart size={12} fill="#ef4444" />
-                {spot.likeCount ?? 0}
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 text-rose-500 font-semibold">
+                <Heart size={13} fill="#ef4444" />
+                <span>{spot.likeCount ?? 0}</span>
               </span>
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  fontSize: 12,
-                  color: 'var(--muted-foreground)',
-                }}
-              >
-                <Eye size={12} />
-                {spot.viewCount ?? 0}
+              <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                <Eye size={13} />
+                <span>{spot.viewCount ?? 0}</span>
               </span>
             </div>
           </div>

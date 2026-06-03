@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import Loader from "../../../../components/forum/ui/Loader";
 import ReportButton from '../../../../components/forum/ui/ReportButton';
 import CommentList from '../../../../components/forum/ui/CommentList';
-import "../../../../components/forum/style/ForumPostDetail.css";
 import { ConfirmDialog } from '../../../../components/forum/ui/ConfirmDialog';
 import RichTextEditor from '../../../../components/forum/ui/RichTextEditor';
 import { useAuthStore } from '@/store/auth.store';
@@ -507,21 +506,32 @@ const ForumPostDetail: React.FC = () => {
     }
   };
 
-  if (loading) {
+   if (loading) {
     return (
-      <div className="forum-post-detail-loading">
-        <Loader />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="mt-3 text-muted-foreground text-sm font-medium">Đang tải…</p>
+        </div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="forum-post-detail-error">
-        Không tìm thấy bài viết
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="text-center max-w-md bg-card border border-border rounded-3xl p-8 shadow-sm">
+          <div className="text-4xl mb-3">⚠️</div>
+          <h2 className="text-base font-bold text-foreground mb-2">Không tìm thấy bài viết</h2>
+          <p className="text-xs text-muted-foreground mb-6">Bài viết này có thể đã bị xóa hoặc không tồn tại.</p>
+          <Link href="/forum" className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-md hover:bg-primary/95 transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden">
+            Quay lại diễn đàn
+          </Link>
+        </div>
       </div>
     );
   }
+
   const author = post.userId;
   const avatarUrl = author?.avatarUrl || '/unknown-avatar.jpg';
   const authorName = author?.name || author?.username || 'User';
@@ -529,461 +539,486 @@ const ForumPostDetail: React.FC = () => {
   if (post.createdAt && !isNaN(new Date(post.createdAt).getTime())) {
     postTime = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi });
   }
+
   return (
-    <div className="forum-post-detail">
-      <div className="forum-post-detail-article">
-        <div className="forum-post-detail-main">
-          <div className="forum-post-detail-card">
-            {/* Nút quay lại nhỏ gọn trong card */}
-            <button
-              className="back-button-compact"
-              onClick={() => router.back()}
-              aria-label="Quay lại"
-              style={{ position: 'absolute', top: 18, left: 18, zIndex: 2 }}
-            >
-              <FiArrowLeft style={{ marginRight: 4, fontSize: 18 }} />
-              <span className="back-text">Quay lại</span>
-            </button>
-            {/* Cover Image */}
-            {post.imageUrl && (
-              <div className="forum-post-detail-image-wrapper">
-                <img
-                  src={post.imageUrl}
-                  alt={post.title || 'Ảnh bài viết'}
-                  title={post.title || 'Ảnh bài viết'}
-                  className="forum-post-detail-image"
-                />
-              </div>
-            )}
-            {/* Header */}
-            <header className="forum-post-detail-header">
-              <div className="forum-post-detail-author-row">
-                <Link href={`/user/${author?._id || ''}`} className="forum-post-detail-avatar-link">
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      {/* ── Top bar ──────────────────────────────────────────────────── */}
+      <div className="sticky top-16 z-40 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3.5 flex items-center justify-between gap-4">
+        <button
+          onClick={() => router.back()}
+          aria-label="Quay lại trang trước"
+          className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden rounded-md px-2 py-1 cursor-pointer"
+        >
+          <FiArrowLeft size={16} />
+          Quay lại
+        </button>
+
+        <div className="flex items-center gap-2">
+          {user && author && user._id === author._id && !isEditing ? (
+            <>
+              <button
+                className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-blue-500/35 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-500/20 transition-all focus-visible:ring-2 focus-visible:ring-blue-500/50 outline-hidden"
+                onClick={() => router.push(`/forum/edit/${post.slug}`)}
+              >
+                Chỉnh sửa
+              </button>
+              <button
+                className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-500/35 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-500/20 transition-all focus-visible:ring-2 focus-visible:ring-rose-500/50 outline-hidden"
+                onClick={handleDelete}
+              >
+                Xóa bài
+              </button>
+            </>
+          ) : null}
+        </div>
+      </div>
+
+      {/* ── Main layout: 2 columns ───────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* LEFT COLUMN: Main Post Content / Editor, Action Bar */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xs relative">
+              
+              {/* Cover Image */}
+              {post.imageUrl ? (
+                <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl bg-muted mb-6 shadow-xs">
                   <img
-                    src={avatarUrl}
-                    alt={authorName}
-                    className="forum-post-detail-avatar"
+                    src={post.imageUrl}
+                    alt={post.title || 'Ảnh bài viết'}
+                    width={800}
+                    height={343}
+                    className="object-cover w-full h-full"
                   />
-                </Link>
-                <div className="forum-post-detail-author-meta">
-                  <span className="forum-post-detail-author-name">{authorName}</span>
-                  <span className="forum-post-detail-time">{postTime}</span>
                 </div>
-                {author?.badge && (
-                  <span className="forum-post-detail-badge">{author.badge}</span>
-                )}
-              </div>
-              <div className="forum-post-detail-header-actions">
-                {(() => {
+              ) : null}
 
-                  return user && author && user._id === author._id && !isEditing;
-                })() && (
-                    <>
-                      <button
-                        className="forum-post-detail-edit-btn"
-                        onClick={() => router.push(`/forum/edit/${post.slug}`)}
-                        style={{ marginRight: '8px' }}
-                      >
-                        Chỉnh sửa
-                      </button>
-                      <button className="forum-post-detail-delete-btn" onClick={handleDelete}>Xóa</button>
-                    </>
-                  )}
-              </div>
-            </header>
-            {/* Tiêu đề & tags */}
-            <h1 className="forum-post-detail-title">{post.title}</h1>
-
-            {/* Meta */}
-            <div className="forum-post-detail-footer">
-              {post.subject && (
-                <span className={`forum-post-detail-category ${post.subject.toLowerCase()}`}>{getCategoryName(post.subject)}</span>
-              )}
-              {/* Tags */}
-              {(() => {
-                let tagsArray = post.tags;
-
-                // Xử lý trường hợp tags là JSON string
-                if (typeof post.tags === 'string') {
-                  try {
-                    tagsArray = JSON.parse(post.tags);
-                  } catch (e) {
-                    // Nếu không parse được, coi như là string đơn
-                    tagsArray = [post.tags];
-                  }
-                }
-
-                // Đảm bảo tagsArray là array
-                if (!Array.isArray(tagsArray)) {
-                  tagsArray = [];
-                }
-
-                return tagsArray.length > 0 ? (
-                  <div className="forum-post-detail-tags-container">
-                    {tagsArray.map((tag: string, index: number) => (
-                      <Link
-                        key={index}
-                        href={`/forum?tag=${encodeURIComponent(typeof tag === 'string' ? tag : String(tag))}`}
-                        className="forum-post-detail-category other clickable-tag"
-                      >
-                        {typeof tag === 'string' ? tag : String(tag)}
-                      </Link>
-                    ))}
-                  </div>
-                ) : null;
-              })()}
-              <span className="forum-post-detail-view">{viewCount} lượt xem</span>
-              <span className="forum-post-detail-badge">{post.commentCount} bình luận</span>
-              <span className="forum-post-detail-badge">{likeCount} lượt thích</span>
-              <span className={`forum-post-detail-visibility-badge ${post.visibility === 'private' ? 'private' : 'public'}`}>{post.visibility === 'private' ? 'Riêng tư' : 'Công khai'}</span>
-            </div>
-            {/* Nội dung bài viết */}
-            <section className="forum-post-detail-content">
+              {/* Editor mode */}
               {isEditing ? (
-                <div className="forum-post-detail-edit-form">
-                  <div className="modern-form-group">
-                    <label className="modern-label">Tiêu đề *</label>
+                <div className="space-y-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Tiêu đề *</label>
                     <input
-                      className="forum-post-detail-edit-title modern-input"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 transition-all"
                       value={editTitle}
                       onChange={handleEditTitleChange}
                       required
                     />
                   </div>
-                  <div className="modern-form-group">
-                    <label className="modern-label">Slug</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Slug</label>
                     <input
-                      className="modern-input"
+                      className="w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground cursor-not-allowed outline-hidden"
                       value={editSlug}
                       readOnly
-                      style={{ background: '#f3f4f6', color: '#888', cursor: 'not-allowed' }}
                     />
                   </div>
-                  <div className="modern-form-group">
-                    <label className="modern-label">Mô tả ngắn</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Mô tả ngắn</label>
                     <textarea
-                      className="modern-input modern-textarea"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 transition-all"
                       value={editSummary}
                       onChange={e => setEditSummary(e.target.value)}
                       rows={3}
                     />
                   </div>
-                  <div className="modern-form-group">
-                    <label className="modern-label">Chủ đề</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Chủ đề</label>
                     <input
-                      className="modern-input"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 transition-all"
                       value={editSubject}
                       onChange={e => setEditSubject(e.target.value)}
                     />
                   </div>
-                  <div className="modern-form-group">
-                    <label className="modern-label">Tags (phân cách bởi dấu phẩy)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Tags (phân cách bởi dấu phẩy)</label>
                     <input
-                      className="modern-input"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 transition-all"
                       value={editTags.join(', ')}
                       onChange={e => setEditTags(e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
                     />
                   </div>
-                  <div className="modern-form-group">
-                    <label className="modern-label">Ảnh chủ đề</label>
+                  <div className="space-y-2">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Ảnh chủ đề</label>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={e => setEditCoverImage(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                      className="modern-input"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                       aria-label="Chọn ảnh chủ đề"
                       title="Chọn ảnh chủ đề"
                     />
                     {editCoverImage ? (
-                      <img src={URL.createObjectURL(editCoverImage)} alt="cover" style={{ maxWidth: 200, marginTop: 8, borderRadius: 8 }} />
-                    ) : post.imageUrl && (
-                      <img src={post.imageUrl} alt={post.title || 'Ảnh chủ đề'} title={post.title || 'Ảnh chủ đề'} style={{ maxWidth: 200, marginTop: 8, borderRadius: 8 }} />
-                    )}
+                      <img src={URL.createObjectURL(editCoverImage)} alt="cover" className="max-w-[200px] mt-2 rounded-xl border border-border" />
+                    ) : post.imageUrl ? (
+                      <img src={post.imageUrl} alt={post.title || 'Ảnh chủ đề'} className="max-w-[200px] mt-2 rounded-xl border border-border" />
+                    ) : null}
                   </div>
-                  <div className="modern-form-group">
-                    <label className="modern-label">Nội dung bài viết</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Nội dung bài viết</label>
                     <RichTextEditor
                       value={editContent}
                       onChange={setEditContent}
-                      placeholder="Nhập nội dung bài viết..."
+                      placeholder="Nhập nội dung bài viết…"
                       style={{ minHeight: 200, maxHeight: 500, overflowY: 'auto', lineHeight: '1.6', position: 'relative', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, background: '#fff' }}
                     />
                   </div>
-                  <div className="forum-post-detail-edit-actions">
-                    <button className="forum-post-detail-edit-btn" onClick={handleSaveEdit} type="button">Lưu</button>
-                    <button className="forum-post-detail-delete-btn" onClick={handleCancelEdit} type="button">Hủy</button>
+                  <div className="flex items-center gap-2.5 pt-4">
+                    <button className="cursor-pointer px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm shadow-md hover:bg-primary/95 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden" onClick={handleSaveEdit} type="button">Lưu lại</button>
+                    <button className="cursor-pointer px-5 py-2.5 rounded-xl border border-border bg-card text-foreground font-bold text-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-hidden" onClick={handleCancelEdit} type="button">Hủy bỏ</button>
                   </div>
                 </div>
               ) : (
-                <div
-                  className="forum-post-detail-html-content"
-                  style={{ whiteSpace: 'normal' }}
-                  dangerouslySetInnerHTML={{
-                    __html: (() => {
-                      if (!post?.content) return '';
-                      let content = String(post.content);
+                <div className="space-y-4">
+                  {/* Category & Visibility Badge */}
+                  <div className="flex items-center gap-2 flex-wrap text-xs font-bold">
+                    {post.subject ? (
+                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
+                        {getCategoryName(post.subject)}
+                      </span>
+                    ) : null}
+                    <span className={`px-3 py-1 rounded-full border ${post.visibility === 'private' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'}`}>
+                      {post.visibility === 'private' ? '🔒 Riêng tư' : '🌐 Công khai'}
+                    </span>
+                  </div>
 
-                      // Xử lý URL Giphy dạng text - convert thành thẻ <img>
-                      const giphyUrlPattern = /https?:\/\/(?:media\d?\.)?giphy\.com\/media\/[^\s<>"'\)\]&]+/gi;
-                      const giphyUrls = content.match(giphyUrlPattern);
+                  {/* Title */}
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight">{post.title}</h1>
 
-                      if (giphyUrls && giphyUrls.length > 0) {
-                        const uniqueUrls = [...new Set(giphyUrls)].sort((a, b) => b.length - a.length);
+                  {/* Date & Views */}
+                  <div className="flex items-center gap-4 text-xs font-semibold text-muted-foreground border-b border-border pb-4">
+                    <span>Đăng {postTime}</span>
+                    <span>•</span>
+                    <span>{viewCount} lượt xem</span>
+                  </div>
 
-                        uniqueUrls.forEach((url: string) => {
-                          const cleanUrl = url.trim();
+                  {/* Content HTML */}
+                  <section className="text-sm md:text-base leading-relaxed text-foreground/90 whitespace-normal prose dark:prose-invert max-w-none pt-2">
+                    <div
+                      className="forum-post-detail-html-content"
+                      dangerouslySetInnerHTML={{
+                        __html: (() => {
+                          if (!post?.content) return '';
+                          let content = String(post.content);
 
-                          // Bỏ qua nếu URL đã nằm trong thẻ <img> src
-                          const escaped = cleanUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                          if (new RegExp(`<img[^>]+src=["']${escaped}`, 'i').test(content)) {
-                            return;
+                          // Xử lý URL Giphy dạng text - convert thành thẻ <img>
+                          const giphyUrlPattern = /https?:\/\/(?:media\d?\.)?giphy\.com\/media\/[^\s<>"'\)\]&]+/gi;
+                          const giphyUrls = content.match(giphyUrlPattern);
+
+                          if (giphyUrls && giphyUrls.length > 0) {
+                            const uniqueUrls = [...new Set(giphyUrls)].sort((a, b) => b.length - a.length);
+
+                            uniqueUrls.forEach((url: string) => {
+                              const cleanUrl = url.trim();
+
+                              // Bỏ qua nếu URL đã nằm trong thẻ <img> src
+                              const escaped = cleanUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                              if (new RegExp(`<img[^>]+src=["']${escaped}`, 'i').test(content)) {
+                                return;
+                              }
+
+                              const imgTag = `<img src="${cleanUrl}" alt="sticker" width="150" height="150" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 8px 0; display: block;" />`;
+
+                              // Replace URL trong content (tránh replace trong HTML attributes)
+                              content = content.replace(new RegExp(escaped, 'gi'), (match, offset, string) => {
+                                const before = string.substring(0, offset);
+                                const lastOpen = before.lastIndexOf('<');
+                                const lastClose = before.lastIndexOf('>');
+
+                                if (lastOpen > lastClose) {
+                                  const tagPart = before.substring(lastOpen);
+                                  const doubleQuotes = (tagPart.match(/"/g) || []).length;
+                                  const singleQuotes = (tagPart.match(/'/g) || []).length;
+                                  if (doubleQuotes % 2 !== 0 || singleQuotes % 2 !== 0) {
+                                    return match;
+                                  }
+                                }
+
+                                return imgTag;
+                              });
+                            });
                           }
 
-                          const imgTag = `<img src="${cleanUrl}" alt="sticker" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 8px 0; display: block;" />`;
+                          return content;
+                        })()
+                      }}
+                    />
+                  </section>
 
-                          // Replace URL trong content (tránh replace trong HTML attributes)
-                          content = content.replace(new RegExp(escaped, 'gi'), (match, offset, string) => {
-                            const before = string.substring(0, offset);
-                            const lastOpen = before.lastIndexOf('<');
-                            const lastClose = before.lastIndexOf('>');
+                  {/* Tags */}
+                  {(() => {
+                    let tagsArray = post.tags;
+                    if (typeof post.tags === 'string') {
+                      try { tagsArray = JSON.parse(post.tags); } catch { tagsArray = [post.tags]; }
+                    }
+                    if (!Array.isArray(tagsArray)) tagsArray = [];
 
-                            if (lastOpen > lastClose) {
-                              const tagPart = before.substring(lastOpen);
-                              const doubleQuotes = (tagPart.match(/"/g) || []).length;
-                              const singleQuotes = (tagPart.match(/'/g) || []).length;
-                              if (doubleQuotes % 2 !== 0 || singleQuotes % 2 !== 0) {
-                                return match;
-                              }
-                            }
+                    return tagsArray.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 pt-4 border-t border-border mt-6">
+                        {tagsArray.map((tag: string, index: number) => (
+                          <Link
+                            key={index}
+                            href={`/forum?tag=${encodeURIComponent(typeof tag === 'string' ? tag : String(tag))}`}
+                            className="px-3 py-1 bg-muted hover:bg-primary hover:text-white transition-all text-xs font-semibold text-muted-foreground rounded-full"
+                          >
+                            #{typeof tag === 'string' ? tag : String(tag)}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
 
-                            return imgTag;
-                          });
-                        });
-                      }
+                </div>
+              )}
+            </div>
 
-                      return content;
-                    })()
-                  }}
+            {/* Action buttons below card */}
+            {!isEditing ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={handleLike}
+                  aria-label={isLiked ? 'Bỏ thích bài viết này' : 'Thích bài viết này'}
+                  className={`cursor-pointer inline-flex items-center gap-1.5 px-5 py-3 rounded-2xl border text-xs font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-rose-500/50 outline-hidden ${
+                    isLiked
+                      ? 'border-rose-500 bg-rose-500/10 text-rose-500 font-extrabold'
+                      : 'border-border bg-card text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <FaHeart className={isLiked ? 'text-rose-500' : ''} />
+                  <span>Thích ({likeCount})</span>
+                </button>
+                <button
+                  onClick={handleBookmark}
+                  aria-label={isBookmarked ? 'Bỏ lưu bài viết này' : 'Lưu bài viết này'}
+                  className={`cursor-pointer inline-flex items-center gap-1.5 px-5 py-3 rounded-2xl border text-xs font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500/50 outline-hidden ${
+                    isBookmarked
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-500 font-extrabold'
+                      : 'border-border bg-card text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <FaBookmark className={isBookmarked ? 'text-amber-500' : ''} />
+                  <span>Lưu lại ({saveCount})</span>
+                </button>
+                <button
+                  onClick={handleShare}
+                  aria-label="Chia sẻ liên kết đến bài viết này"
+                  className="cursor-pointer inline-flex items-center gap-1.5 px-5 py-3 rounded-2xl border border-border bg-card text-xs font-bold text-foreground hover:bg-muted transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden"
+                >
+                  Chia sẻ
+                </button>
+                <ReportButton
+                  itemId={post._id}
+                  itemType="post"
+                  className="px-5 py-3 text-xs font-bold cursor-pointer rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground"
                 />
-              )}
-            </section>
-            {/* Hành động */}
-            <div className="forum-post-detail-footer forum-post-detail-actions">
-              <button
-                onClick={handleLike}
-                className={`forum-post-detail-action-btn${isLiked ? ' active like' : ''}`}
-              >
-                <FaHeart style={{ marginRight: 4 }} /> {likeCount}
-              </button>
-              <button
-                onClick={handleBookmark}
-                className={`forum-post-detail-action-btn${isBookmarked ? ' active bookmark' : ''}`}
-              >
-                <FaBookmark style={{ marginRight: 4 }} /> {saveCount}
-              </button>
-              <button
-                onClick={handleShare}
-                className="forum-post-detail-action-btn"
-              >
-                Chia sẻ
-              </button>
-              <ReportButton
-                itemId={post._id}
-                itemType="post"
-                onReported={() => { }}
-              />
-            </div>
-          </div>
-        </div>
+              </div>
+            ) : null}
 
-        {/* Sidebar */}
-        <aside>
-          <div className="forum-post-detail-author-card">
-            {/* Header */}
-            <div className="author-header">
-              <div className="author-avatar-container">
-                <Link href={`/profile/${author?.username || author?._id}`} className="author-avatar-link">
-                  <img src={avatarUrl} alt={authorName} className="author-avatar" />
-                </Link>
-              </div>
-              <div className="author-name-container">
-                <Link href={`/profile/${author?.username || author?._id}`} className="author-name-link">
-                  <h3 className="author-name">{authorName}</h3>
-                </Link>
-              </div>
-              <div className="author-level">
-                <span className="level-badge">Level {author?.level || 1}</span>
-                <span className="level-title">{author?.levelTitle || 'Mới tham gia'}</span>
-              </div>
-              {author?.school && (
-                <div className="academic-info">
-                  <span className="school">{author.school}</span>
-                  {author.faculty && <span className="faculty">• {author.faculty}</span>}
-                  {author.major && <span className="major">• {author.major}</span>}
-                </div>
-              )}
-              {author?.bio && <p className="author-bio">{author.bio}</p>}
-            </div>
-
-            {/* Stats Grid */}
-            <div className="author-stats">
-              <div className="stat-item">
-                <span className="stat-number">{authorStats?.points ?? author?.points ?? 0}</span>
-                <span className="stat-label">Điểm</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">{authorStats?.documentsCount ?? author?.stats?.documentsCount ?? 0}</span>
-                <span className="stat-label">Tài liệu</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">{authorStats?.followersCount ?? followersCount}</span>
-                <span className="stat-label">Theo dõi</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">{authorStats?.postsCount ?? author?.stats?.postsCount ?? 0}</span>
-                <span className="stat-label">Bài viết</span>
-              </div>
-            </div>
-
-            {/* Recent Achievements */}
-            {author?.achievements && author.achievements.length > 0 && (
-              <div className="author-achievements">
-                <h4>Thành tích gần đây</h4>
-                <div className="achievements-list">
-                  {author.achievements.slice(0, 3).map((achievement: any, index: number) => (
-                    <div key={index} className="achievement-item">
-                      <span className="achievement-icon">{achievement.achievementId?.icon || '🏆'}</span>
-                      <span className="achievement-name">{achievement.achievementId?.name || 'Thành tích'}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Social Links */}
-            {(author?.socialLinks_github || author?.socialLinks_youtube || author?.socialLinks_facebook || author?.socialLinks_tiktok) && (
-              <div className="author-social">
-                <div className="social-links">
-                  {author.socialLinks_github && (
-                    <a href={author.socialLinks_github} target="_blank" rel="noopener">
-                      <i className="fab fa-github"></i>
-                    </a>
-                  )}
-                  {author.socialLinks_youtube && (
-                    <a href={author.socialLinks_youtube} target="_blank" rel="noopener">
-                      <i className="fab fa-youtube"></i>
-                    </a>
-                  )}
-                  {author.socialLinks_facebook && (
-                    <a href={author.socialLinks_facebook} target="_blank" rel="noopener">
-                      <i className="fab fa-facebook"></i>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Actions - chỉ hiện khi không phải người đăng bài */}
-            {(() => {
-
-              const isOwnPost = user && author && user._id === author._id;
-
-              if (isOwnPost) {
-                return null; // Ẩn hoàn toàn nếu là người đăng bài
-              }
-
-              return (
-                <div className="author-actions">
-                  <button className="btn-follow" onClick={handleFollow}>
-                    {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
-                  </button>
-                  <button className="btn-chat">
-                    <FiMessageSquare />
-                    Nhắn tin
-                  </button>
-                </div>
-              );
-            })()}
           </div>
 
-
-          {/* Bài viết liên quan */}
-          <div className="forum-post-detail-card forum-post-detail-related">
-            <h3 className="related-posts-title">Bài viết liên quan</h3>
-            {loadingRelated ? (
-              <div className="related-posts-loading">
-                <div className="loading-spinner-small"></div>
-                <span>Đang tải...</span>
-              </div>
-            ) : relatedPosts.length > 0 ? (
-              <div className="related-posts-list">
-                {relatedPosts.map((relatedPost) => {
-                  const postSlug = relatedPost.slug || relatedPost._id;
-                  const postAuthor = relatedPost.userId?.name || relatedPost.userId?.username || 'User';
-                  const postTime = relatedPost.createdAt
-                    ? formatDistanceToNow(new Date(relatedPost.createdAt), { addSuffix: true, locale: vi })
-                    : '';
-                  // Try multiple image fields
-                  const thumbnail = relatedPost.imageUrl
-                    || relatedPost.coverImage
-                    || relatedPost.thumbnail
-                    || (relatedPost.images && relatedPost.images.length > 0 ? relatedPost.images[0] : null)
-                    || '/unknown-avatar.jpg';
-
-                  return (
-                    <Link
-                      href={`/forum/${postSlug}`}
-                      key={relatedPost._id}
-                      className="related-post-item"
-                    >
-                      <div className="related-post-thumbnail">
-                        <img
-                          src={thumbnail}
-                          alt={relatedPost.title}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/unknown-avatar.jpg';
-                          }}
-                        />
-                      </div>
-                      <div className="related-post-content">
-                        <h4 className="related-post-title">{relatedPost.title}</h4>
-                        <div className="related-post-meta">
-                          <span className="related-post-author">{postAuthor}</span>
-                          {postTime && <span className="related-post-time">• {postTime}</span>}
-                        </div>
-                        {relatedPost.viewCount !== undefined && (
-                          <div className="related-post-stats">
-                            <span><FiMessageSquare size={12} /> {relatedPost.commentCount || relatedPost.comments?.length || 0}</span>
-                            <span>👁 {relatedPost.viewCount || 0}</span>
-                          </div>
-                        )}
-                      </div>
+          {/* RIGHT COLUMN: Sidebar (Author stats, related posts) */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-24 space-y-6">
+              
+              {/* Author Widget Card */}
+              <div className="bg-card border border-border rounded-3xl p-6 shadow-sm text-center space-y-4">
+                
+                {/* Header info */}
+                <div className="space-y-3">
+                  <div className="relative inline-block">
+                    <Link href={`/profile/${author?.username || author?._id}`} className="block focus-visible:ring-4 focus-visible:ring-primary/20 outline-hidden rounded-full">
+                      <img 
+                        src={avatarUrl} 
+                        alt={authorName} 
+                        width={80}
+                        height={80}
+                        className="h-20 w-20 rounded-full mx-auto object-cover border-3 border-primary/20 bg-muted hover:scale-102 transition-transform duration-300" 
+                      />
                     </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="related-posts-empty">
-                <p>Chưa có bài viết liên quan</p>
-              </div>
-            )}
-          </div>
-        </aside>
-      </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Link href={`/profile/${author?.username || author?._id}`} className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden rounded-sm px-1.5 py-0.5">
+                      <h3 className="author-name font-bold text-base text-foreground leading-snug">{authorName}</h3>
+                    </Link>
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                      <span className="px-2 py-0.5 rounded-sm bg-primary/10 text-primary font-bold">Level {author?.level || 1}</span>
+                      <span>•</span>
+                      <span>{author?.levelTitle || 'Mới tham gia'}</span>
+                    </div>
+                  </div>
 
-      {/* Bình luận tách riêng ở dưới */}
-      <section className="forum-post-detail-comments-section">
-        <div className="forum-post-detail-comments-container">
-          <h3 className="forum-post-detail-comments-title">Bình luận ({commentCount})</h3>
-          <CommentList
-            targetId={post._id}
-            onCommentCountChange={handleCommentCountChange}
-            // authorId={post.userId._id}
-            commentApi={forumApi}
-          />
+                  {author?.school ? (
+                    <div className="text-[11px] text-muted-foreground font-semibold bg-muted/40 p-2 rounded-xl border border-border/50 text-left space-y-0.5">
+                      <div className="truncate">🏫 Trường: {author.school}</div>
+                      {author.faculty ? <div className="truncate">🏢 Khoa: {author.faculty}</div> : null}
+                      {author.major ? <div className="truncate">📚 Ngành: {author.major}</div> : null}
+                    </div>
+                  ) : null}
+
+                  {author?.bio ? (
+                    <p className="text-xs text-muted-foreground italic leading-relaxed line-clamp-3 px-1">{author.bio}</p>
+                  ) : null}
+                </div>
+
+                {/* Stats widget grid */}
+                <div className="grid grid-cols-2 gap-px bg-border/50 rounded-2xl border border-border/50 overflow-hidden text-xs">
+                  <div className="bg-card p-3 flex flex-col items-center justify-center">
+                    <span className="font-extrabold text-base text-foreground">{authorStats?.points ?? author?.points ?? 0}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Điểm</span>
+                  </div>
+                  <div className="bg-card p-3 flex flex-col items-center justify-center">
+                    <span className="font-extrabold text-base text-foreground">{authorStats?.documentsCount ?? author?.stats?.documentsCount ?? 0}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Tài liệu</span>
+                  </div>
+                  <div className="bg-card p-3 flex flex-col items-center justify-center">
+                    <span className="font-extrabold text-base text-foreground">{authorStats?.followersCount ?? followersCount}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Theo dõi</span>
+                  </div>
+                  <div className="bg-card p-3 flex flex-col items-center justify-center">
+                    <span className="font-extrabold text-base text-foreground">{authorStats?.postsCount ?? author?.stats?.postsCount ?? 0}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Bài viết</span>
+                  </div>
+                </div>
+
+                {/* Achievements block */}
+                {author?.achievements && author.achievements.length > 0 ? (
+                  <div className="text-left space-y-2 pt-2 border-t border-border">
+                    <h4 className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Thành tích gần đây</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {author.achievements.slice(0, 3).map((achievement: any, index: number) => (
+                        <div key={index} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold">
+                          <span>{achievement.achievementId?.icon || '🏆'}</span>
+                          <span className="text-[10px] truncate max-w-[80px]">{achievement.achievementId?.name || 'Thành tích'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Social media links */}
+                {(author?.socialLinks_github || author?.socialLinks_youtube || author?.socialLinks_facebook || author?.socialLinks_tiktok) ? (
+                  <div className="flex justify-center items-center gap-2 pt-2 border-t border-border">
+                    {author.socialLinks_github ? (
+                      <a href={author.socialLinks_github} target="_blank" rel="noopener" className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden">
+                        <i className="fab fa-github text-sm"></i>
+                      </a>
+                    ) : null}
+                    {author.socialLinks_youtube ? (
+                      <a href={author.socialLinks_youtube} target="_blank" rel="noopener" className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-rose-500 hover:bg-rose-50 transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden">
+                        <i className="fab fa-youtube text-sm"></i>
+                      </a>
+                    ) : null}
+                    {author.socialLinks_facebook ? (
+                      <a href={author.socialLinks_facebook} target="_blank" rel="noopener" className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden">
+                        <i className="fab fa-facebook text-sm"></i>
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* Social interaction buttons */}
+                {(() => {
+                  const isOwnPost = user && author && user._id === author._id;
+                  if (isOwnPost) return null;
+                  
+                  return (
+                    <div className="flex items-center gap-2 pt-2">
+                      <button className="flex-1 cursor-pointer inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-xs shadow-md hover:bg-primary/95 transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden" onClick={handleFollow}>
+                        {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                      </button>
+                      <button className="flex-1 cursor-pointer inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-border bg-card text-foreground font-bold text-xs hover:bg-muted transition-all focus-visible:ring-2 focus-visible:ring-primary/50 outline-hidden">
+                        <FiMessageSquare size={13} />
+                        <span>Nhắn tin</span>
+                      </button>
+                    </div>
+                  );
+                })()}
+
+              </div>
+
+              {/* Related Posts Card */}
+              <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-wider border-b border-border pb-2.5">Bài viết liên quan</h3>
+                
+                {loadingRelated ? (
+                  <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground text-sm font-semibold">
+                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                    <span>Đang tải…</span>
+                  </div>
+                ) : relatedPosts.length > 0 ? (
+                  <div className="space-y-3.5">
+                    {relatedPosts.map((relatedPost) => {
+                      const postSlug = relatedPost.slug || relatedPost._id;
+                      const postAuthor = relatedPost.userId?.name || relatedPost.userId?.username || 'User';
+                      const postTime = relatedPost.createdAt
+                        ? formatDistanceToNow(new Date(relatedPost.createdAt), { addSuffix: true, locale: vi })
+                        : '';
+                      const thumbnail = relatedPost.imageUrl
+                        || relatedPost.coverImage
+                        || relatedPost.thumbnail
+                        || (relatedPost.images && relatedPost.images.length > 0 ? relatedPost.images[0] : null)
+                        || '/unknown-avatar.jpg';
+
+                      return (
+                        <Link
+                          href={`/forum/${postSlug}`}
+                          key={relatedPost._id}
+                          className="group flex items-start gap-3 p-1.5 rounded-xl hover:bg-muted/50 transition-all duration-200 outline-hidden focus-visible:ring-2 focus-visible:ring-primary/30"
+                        >
+                          <div className="related-post-thumbnail shrink-0 w-16 h-12 rounded-lg overflow-hidden bg-muted">
+                            <img
+                              src={thumbnail}
+                              alt={relatedPost.title}
+                              width={64}
+                              height={48}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/unknown-avatar.jpg';
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <h4 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                              {relatedPost.title}
+                            </h4>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-semibold">
+                              <span className="truncate max-w-[80px]">{postAuthor}</span>
+                              {postTime ? <span>• {postTime}</span> : null}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-xs text-muted-foreground font-medium italic">
+                    Chưa có bài viết liên quan
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+
         </div>
-      </section>
+
+        {/* BOTTOM SECTION: Comments */}
+        <section className="mt-12 pt-8 border-t border-border">
+          <div className="max-w-4xl">
+            <h3 className="text-lg font-extrabold text-foreground mb-6">Bình luận & Thảo luận ({commentCount})</h3>
+            <CommentList
+              targetId={post._id}
+              onCommentCountChange={handleCommentCountChange}
+              commentApi={forumApi}
+            />
+          </div>
+        </section>
+
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

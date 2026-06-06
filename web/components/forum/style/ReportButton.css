@@ -37,17 +37,21 @@
   border-radius: 12px;
   width: 90%;
   max-width: 500px;
-  max-height: 80vh;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  z-index: 100000;
 }
 
 .report-modal-header {
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .report-modal-header h3 {
@@ -74,41 +78,95 @@
 
 .report-form {
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.form-group label {
+.form-group label.form-label-title {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
   color: var(--text-primary);
 }
 
-.form-group select,
-.form-group textarea {
+/* Reason Options List */
+.reason-options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.reason-option-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.reason-option-label:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
+}
+
+.reason-option-label.selected {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  font-weight: 600;
+}
+
+[data-theme="dark"] .reason-option-label.selected {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.reason-radio-input {
+  accent-color: #ef4444;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.reason-label-text {
+  user-select: none;
+}
+
+/* Textarea styling */
+.report-textarea {
   width: 100%;
-  padding: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.9rem;
   font-family: inherit;
-}
-
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-.form-group textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 90px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.report-textarea:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
 .char-count {
@@ -122,15 +180,16 @@
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  margin-top: 1.5rem;
 }
 
 .cancel-button,
 .submit-button {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -146,17 +205,20 @@
 }
 
 .submit-button {
-  background: var(--primary);
+  background: #ef4444;
   color: white;
 }
 
 .submit-button:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: #dc2626;
   transform: translateY(-1px);
 }
 
 .submit-button:disabled {
-  opacity: 0.6;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
@@ -167,16 +229,16 @@
     width: 95%;
     margin: 1rem;
   }
-  
+
   .report-modal-header,
   .report-form {
     padding: 1rem;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .cancel-button,
   .submit-button {
     width: 100%;

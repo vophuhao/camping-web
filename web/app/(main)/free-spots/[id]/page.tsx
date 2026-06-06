@@ -137,7 +137,7 @@ export default function FreeSpotDetailPage() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       {/* ── Top bar ──────────────────────────────────────────────────── */}
-      <div className="sticky top-16 z-40 bg-background/90 backdrop-blur-md  border-border py-3.5">
+      <div className=" top-16 z-40 bg-background/90 backdrop-blur-md  border-border py-3.5">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
           <Link
             href="/free-spots"

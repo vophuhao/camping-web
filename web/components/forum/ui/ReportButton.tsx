@@ -100,24 +100,12 @@ const ReportButton: React.FC<ReportButtonProps> = ({ itemId, itemType, onReporte
 
             <form onSubmit={handleSubmit} className="report-form">
               <div className="form-group">
-                <label>Lý do báo cáo <span style={{ color: '#ef4444' }}>*</span></label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                <label className="form-label-title">Lý do báo cáo <span style={{ color: '#ef4444' }}>*</span></label>
+                <div className="reason-options-group">
                   {REASONS.map((r) => (
                     <label
                       key={r.value}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: '10px 14px',
-                        borderRadius: 10,
-                        border: reason === r.value ? '2px solid #ef4444' : '2px solid #e5e7eb',
-                        background: reason === r.value ? '#fef2f2' : '#fff',
-                        cursor: 'pointer',
-                        fontSize: 14,
-                        fontWeight: reason === r.value ? 600 : 400,
-                        transition: 'all 0.15s',
-                      }}
+                      className={`reason-option-label ${reason === r.value ? 'selected' : ''}`}
                     >
                       <input
                         type="radio"
@@ -125,36 +113,25 @@ const ReportButton: React.FC<ReportButtonProps> = ({ itemId, itemType, onReporte
                         value={r.value}
                         checked={reason === r.value}
                         onChange={() => setReason(r.value)}
-                        style={{ accentColor: '#ef4444' }}
+                        className="reason-radio-input"
                       />
-                      {r.label}
+                      <span className="reason-label-text">{r.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="form-group" style={{ marginTop: 16 }}>
-                <label>Mô tả chi tiết <span style={{ color: '#9ca3af', fontSize: 12 }}>(tùy chọn)</span></label>
+                <label className="form-label-title">Mô tả chi tiết <span style={{ color: '#9ca3af', fontSize: 12 }}>(tùy chọn)</span></label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Mô tả thêm về vấn đề bạn gặp phải..."
                   rows={3}
                   maxLength={500}
-                  style={{
-                    width: '100%',
-                    marginTop: 8,
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    border: '1px solid #e5e7eb',
-                    fontSize: 14,
-                    resize: 'vertical',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
+                  className="report-textarea"
                 />
-                <div style={{ fontSize: 12, color: '#9ca3af', textAlign: 'right', marginTop: 4 }}>
+                <div className="char-count">
                   {description.length}/500
                 </div>
               </div>
@@ -171,7 +148,6 @@ const ReportButton: React.FC<ReportButtonProps> = ({ itemId, itemType, onReporte
                   type="submit"
                   className="submit-button"
                   disabled={!reason || submitting}
-                  style={{ background: !reason || submitting ? '#fca5a5' : '#ef4444' }}
                 >
                   {submitting ? 'Đang gửi...' : 'Gửi báo cáo'}
                 </button>

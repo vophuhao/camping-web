@@ -58,7 +58,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {cancelText}
           </button>
           <button 
-            className={`dialog-button dialog-button-confirm dialog-button-${type}`} 
+            className="dialog-button dialog-button-confirm" 
             onClick={onConfirm}
           >
             {confirmText}

@@ -13,6 +13,7 @@ walletRoutes.get("/withdrawals", authenticate, walletController.getWithdrawals);
 
 // Admin routes
 walletRoutes.get("/admin/withdrawals", requireAdmin, walletController.adminGetAllWithdrawals);
+walletRoutes.get("/admin/hosts-balances", requireAdmin, walletController.adminGetHostBalances);
 walletRoutes.post(
   "/admin/withdrawals/:id/process",
   requireAdmin,

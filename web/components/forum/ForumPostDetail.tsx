@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useChatModal } from '@/store/chatstore';
 import { FaHeart, FaBookmark } from 'react-icons/fa';
 import { FiArrowLeft, FiMessageSquare } from 'react-icons/fi';
 import { forumApi } from '../../lib/forumApi';
-import { userApi } from '../../services/api/user';
+import * as userApi from '../../services/user.service';
 import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 import vi from 'date-fns/locale/vi';
 import { toast } from 'react-toastify';
 import Loader from './ui/Loader';
 import ReportButton from './ui/ReportButton';
 import CommentList from './ui/CommentList';
-import { api } from '../../services/api/config';
+import api from '../../lib/api-client';
 // import styled from 'styled-components';
 import '../../styles/pages/forum/ForumPostDetail.css';
 import { ConfirmDialog } from './ui/ConfirmDialog';
@@ -20,6 +21,7 @@ import RichTextEditor from './ui/RichTextEditor';
 const ForumPostDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { openChat } = useChatModal();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -904,7 +906,7 @@ const ForumPostDetail: React.FC = () => {
                   <button className="btn-follow" onClick={handleFollow}>
                     {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                   </button>
-                  <button className="btn-chat">
+                  <button className="btn-chat" onClick={() => openChat(author._id, { username: authorName, avatarUrl })}>
                     <FiMessageSquare />
                     Nhắn tin
                   </button>

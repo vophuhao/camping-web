@@ -130,30 +130,35 @@
 .dialog-button-confirm {
   border: none;
   color: white;
+  background: var(--primary, #8DB883);
+}
+
+.dialog-button-confirm:hover {
+  background: var(--primary-dark, #6A9B6A);
 }
 
 .dialog-button-warning {
-  background: var(--warning);
+  background: var(--warning, #f59e0b);
 }
 
 .dialog-button-warning:hover {
-  background: var(--warning-dark);
+  background: var(--warning-dark, #d97706);
 }
 
 .dialog-button-danger {
-  background: var(--error);
+  background: var(--error, #ef4444);
 }
 
 .dialog-button-danger:hover {
-  background: var(--error-dark);
+  background: var(--error-dark, #dc2626);
 }
 
 .dialog-button-info {
-  background: var(--info);
+  background: var(--info, #3b82f6);
 }
 
 .dialog-button-info:hover {
-  background: var(--info-dark);
+  background: var(--info-dark, #2563eb);
 }
 
 .dialog-icon {

@@ -38,10 +38,12 @@ export const useCommentPermissions = () => {
     return !comment.isBest;
   }, []);
 
-  // Check if user can report comment
   const canReportComment = useCallback((comment: Comment, currentUserId?: string): boolean => {
     if (!currentUserId) return false;
-    return comment.userId._id !== currentUserId; // Can't report own comment
+    const commentUserId = typeof comment.userId === 'string' 
+      ? comment.userId 
+      : comment.userId?._id;
+    return commentUserId !== currentUserId; // Can't report own comment
   }, []);
 
   // Get all permissions for a comment
@@ -61,7 +63,10 @@ export const useCommentPermissions = () => {
   // Check if user is comment author
   const isCommentAuthor = useCallback((comment: Comment, currentUserId?: string): boolean => {
     if (!currentUserId) return false;
-    return comment.userId._id === currentUserId;
+    const commentUserId = typeof comment.userId === 'string' 
+      ? comment.userId 
+      : comment.userId?._id;
+    return commentUserId === currentUserId;
   }, []);
 
   // Check if user is post author

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Loader2, Send, User } from 'lucide-react';
 import { getComments, addComment, type FreeSpotComment } from '@/lib/free-spot-api';
 import { useAuthStore } from '@/store/auth.store';
+import { useChatModal } from '@/store/chatstore';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -32,6 +33,7 @@ export default function FreeSpotComments({ spotId, initialCount = 0 }: Props) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { user, isAuthenticated } = useAuthStore();
+  const { openChat } = useChatModal();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -131,21 +133,58 @@ export default function FreeSpotComments({ spotId, initialCount = 0 }: Props) {
             >
               {/* Avatar */}
               {c.user?.avatarUrl ? (
-                <img
-                  src={c.user.avatarUrl}
-                  alt={c.user.username}
-                  style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                />
+                c.user._id === user?._id ? (
+                  <img
+                    src={c.user.avatarUrl}
+                    alt={c.user.username}
+                    style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                ) : (
+                  <button
+                    onClick={() => openChat(c.user._id, {
+                      username: c.user.username,
+                      avatarUrl: c.user.avatarUrl
+                    })}
+                    style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'block', borderRadius: '50%', overflow: 'hidden', width: 38, height: 38, flexShrink: 0 }}
+                    title={`Nhắn tin với ${c.user.username}`}
+                  >
+                    <img
+                      src={c.user.avatarUrl}
+                      alt={c.user.username}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </button>
+                )
               ) : (
-                <div
-                  style={{
-                    width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                    background: 'linear-gradient(135deg, #10b981, #059669)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <User size={18} color="#fff" />
-                </div>
+                c.user?._id === user?._id ? (
+                  <div
+                    style={{
+                      width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <User size={18} color="#fff" />
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => openChat(c.user?._id || '', {
+                      username: c.user?.username,
+                    })}
+                    style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'block', borderRadius: '50%', overflow: 'hidden', width: 38, height: 38, flexShrink: 0 }}
+                    title={`Nhắn tin với ${c.user?.username || 'Ẩn danh'}`}
+                  >
+                    <div
+                      style={{
+                        width: '100%', height: '100%',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <User size={18} color="#fff" />
+                    </div>
+                  </button>
+                )
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>

@@ -721,14 +721,14 @@ export function BookingGanttView({
           )}
         </div>
       </Card>
-
+      \
       {/* Block Dates Dialog */}
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Khóa ngày</DialogTitle>
             <DialogDescription>
-              Chọn phạm vi và khoảng ngày bạn muốn khóa
+              Chọn phạm vi và khoảng ngày bạn muốn khóa ( chỉ cho phép khóa từ 2 ngày trở lên)
             </DialogDescription>
           </DialogHeader>
 

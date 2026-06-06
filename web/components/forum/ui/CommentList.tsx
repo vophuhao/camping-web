@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import  Link  from 'next/link';
+import Link from 'next/link';
 import { MessageCircle, Reply, Trash2, MoreVertical, ArrowUp, ArrowDown, Search, Filter, Download, BarChart3, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 // import { useAuth } from '../../../hooks/useAuth';
@@ -22,6 +22,7 @@ import '../../../components/forum/style/CommentList.css';
 import '../../../components/forum/style/CommentInputNew.css';
 import '../../../components/forum/style/StickerPicker.css';
 import { useAuthStore } from '@/store/auth.store';
+import { useChatModal } from '@/store/chatstore';
 
 // API interface để dùng chung cho forum và document
 interface CommentApi {
@@ -42,6 +43,7 @@ interface CommentListProps {
 const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChange, authorId, commentApi }) => {
   // Use existing hooks
   const { user } = useAuthStore(); // Sử dụng useAuthStore thay vì useAuth để tránh lỗi context
+  const { openChat } = useChatModal();
   const {
     state,
     updateState,
@@ -51,7 +53,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
     addReply,
     loadAllComments
   } = useCommentState(targetId);
-  
+
   const {
     actions,
     startReply,
@@ -67,13 +69,14 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
     toggleMenu,
     closeMenu
   } = useCommentActions();
-  
+
   const {
     formatTime,
     getVoteScore,
-    getVoteStatus
+    getVoteStatus,
+    getTotalCommentCount
   } = useCommentUtils();
-  
+
   const {
     // canEditComment, // Edit disabled, only delete is available
     canDeleteComment
@@ -87,22 +90,22 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   const [isFilterBarExpanded, setIsFilterBarExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
-  
+
   // Sticker and image upload for main comment
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const stickerButtonRef = useRef<HTMLButtonElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const [stickerAnchor, setStickerAnchor] = useState<{top:number;left:number} | null>(null);
-  
+  const [stickerAnchor, setStickerAnchor] = useState<{ top: number; left: number } | null>(null);
+
   // Sticker and image upload for replies (stored by replyId)
   const [replyImages, setReplyImages] = useState<Record<string, string[]>>({});
   const [replyPreviewImages, setReplyPreviewImages] = useState<Record<string, string[]>>({});
   const [replyStickerPickers, setReplyStickerPickers] = useState<Record<string, boolean>>({});
   const replyStickerButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const replyImageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const replyStickerAnchors = useRef<Record<string, {top:number;left:number} | null>>({});
+  const replyStickerAnchors = useRef<Record<string, { top: number; left: number } | null>>({});
 
   // Load comments
   const loadComments = async () => {
@@ -112,8 +115,8 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       // Handle both response.data and direct response
 
       const data = response.data || response;
-      const comments =  response.data || [];
-      
+      const comments = response.data || [];
+
       // Process comments data
       const processedComments = comments.map((comment: any) => ({
         ...comment,
@@ -122,9 +125,9 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
         childrenCount: comment.childrenCount || 0,
         replies: comment.replies || []
       }));
-      
+
       updateState({ comments: processedComments });
-      
+
       // Update displayed comments
       const sortedComments = sortComments(processedComments, state.sortBy);
       const initialDisplayCount = 5;
@@ -133,7 +136,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
         hasMoreComments: sortedComments.length > initialDisplayCount,
         showAllComments: false
       });
-      
+
       // Update comment count
       const totalComments = data.totalComments || 0;
       onCommentCountChange(totalComments);
@@ -149,11 +152,11 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   // Handle image upload for main comment
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    
+
     try {
       const newPreviews: string[] = [];
       const filesArray = Array.from(files);
-      
+
       for (const file of filesArray.slice(0, 5)) {
         if (!file.type.startsWith('image/')) {
           toast.warning(`Chỉ hỗ trợ file ảnh: ${file.name}`);
@@ -165,9 +168,9 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
         }
         newPreviews.push(URL.createObjectURL(file));
       }
-      
+
       setPreviewImages(prev => [...prev, ...newPreviews]);
-      
+
       // Upload to Cloudinary
       // const uploaded = await chatApi.uploadFiles(filesArray.slice(0, 5).filter((f: any) => f.type.startsWith('image/')));
       // setUploadedImages(prev => [...prev, ...uploaded.map((f: any) => f.url)]);
@@ -179,11 +182,11 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   // Handle image upload for reply
   const handleReplyImageUpload = async (replyId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
-    
+
     try {
       const newPreviews: string[] = [];
       const filesArray = Array.from(files);
-      
+
       for (const file of filesArray.slice(0, 5)) {
         if (!file.type.startsWith('image/')) {
           toast.warning(`Chỉ hỗ trợ file ảnh: ${file.name}`);
@@ -195,12 +198,12 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
         }
         newPreviews.push(URL.createObjectURL(file));
       }
-      
+
       setReplyPreviewImages(prev => ({
         ...prev,
         [replyId]: [...(prev[replyId] || []), ...newPreviews]
       }));
-      
+
       // const uploaded = await chatApi.uploadFiles(filesArray.slice(0, 5).filter((f: any) => f.type.startsWith('image/')));
       // setReplyImages(prev => ({
       //   ...prev,
@@ -248,7 +251,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newComment.trim() && uploadedImages.length === 0 || state.submitting) return;
     if (!user) {
       toast.warning('Vui lòng đăng nhập để bình luận');
@@ -265,24 +268,25 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       }
 
       const response = await commentApi.createComment(targetId, content);
-      
+
       // Handle both response.data and direct response
       const data = response.data || response;
-      const comment = data.comment;
-      
+      const comment = data.comment || data.data || data;
+
       const newCommentData = {
         ...comment,
         upvotes: [],
         downvotes: [],
         childrenCount: 0
       };
-      
+
       addComment(newCommentData);
       setNewComment('');
       setPreviewImages([]);
       setUploadedImages([]);
-      const totalComments = data.totalComments || 0;
-      onCommentCountChange(totalComments);
+      
+      const newCommentsList = [newCommentData, ...state.comments];
+      onCommentCountChange(getTotalCommentCount(newCommentsList));
       toast.success('Đã gửi bình luận thành công!');
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -300,7 +304,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   // Submit reply
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!actions.replyContent.trim() && !replyImages[actions.replyingTo || '']?.length || !actions.replyingTo || state.submitting) return;
     if (!user) {
       toast.warning('Vui lòng đăng nhập để trả lời');
@@ -318,20 +322,20 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       }
 
       const response = await commentApi.createComment(targetId, content, actions.replyingTo);
-      
+
       // Handle both response.data and direct response
       const data = response.data || response;
-      const comment = data.comment;
-      
+      const comment = data.comment || data.data || data;
+
       const newReplyData = {
         ...comment,
         upvotes: [],
         downvotes: [],
         childrenCount: 0
       };
-      
+
       addReply(actions.replyingTo, newReplyData);
-      
+
       // Clean up reply images
       const replyingToId = actions.replyingTo;
       setReplyImages(prev => {
@@ -347,10 +351,19 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
         }
         return newState;
       });
-      
+
       cancelReply();
-      const totalComments = data.totalComments || 0;
-      onCommentCountChange(totalComments);
+      const updatedComments = state.comments.map((c: any) => {
+        if (c._id === actions.replyingTo) {
+          return {
+            ...c,
+            childrenCount: (c.childrenCount || 0) + 1,
+            replies: [...(c.replies || []), newReplyData],
+          };
+        }
+        return c;
+      });
+      onCommentCountChange(getTotalCommentCount(updatedComments));
       toast.success('Đã gửi trả lời thành công!');
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -368,7 +381,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   // Submit reply to reply
   const handleSubmitReplyToReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!actions.replyToReplyContent.trim() || !actions.replyToReply || state.submitting) return;
     if (!user) {
       toast.warning('Vui lòng đăng nhập để trả lời');
@@ -378,18 +391,18 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
     updateState({ submitting: true });
     try {
       const response = await commentApi.createComment(targetId, actions.replyToReplyContent.trim(), actions.replyToReply);
-      
+
       // Handle both response.data and direct response
       const data = response.data || response;
-      const comment = data.comment;
-      
+      const comment = data.comment || data.data || data;
+
       const newReplyData = {
         ...comment,
         upvotes: [],
         downvotes: [],
         childrenCount: 0
       };
-      
+
       // Find and update the parent comment/reply
       const updatedComments = state.comments.map((comment: any) => {
         if (comment._id === actions.replyToReply) {
@@ -399,7 +412,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             replies: [...(comment.replies || []), newReplyData]
           };
         }
-        
+
         if (comment.replies && comment.replies.length > 0) {
           const updatedReplies = comment.replies.map((reply: any) => {
             if (reply._id === actions.replyToReply) {
@@ -411,18 +424,18 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             }
             return reply;
           });
-          
+
           return {
             ...comment,
             replies: updatedReplies
           };
         }
-        
+
         return comment;
       });
-      
+
       updateState({ comments: updatedComments });
-      
+
       // Update displayed comments
       const sortedUpdatedComments = sortComments(updatedComments, state.sortBy);
       const initialDisplayCount = 5;
@@ -431,9 +444,9 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
         hasMoreComments: sortedUpdatedComments.length > initialDisplayCount,
         showAllComments: false
       });
-      
+
       cancelReplyToReply();
-      onCommentCountChange(response.data.totalComments || 0);
+      onCommentCountChange(getTotalCommentCount(updatedComments));
       toast.success('Đã gửi trả lời thành công!');
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -460,10 +473,10 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       if (comment._id === commentId) {
         const upvotes = comment.upvotes || [];
         const downvotes = comment.downvotes || [];
-        
+
         let newUpvotes = [...upvotes];
         let newDownvotes = [...downvotes];
-        
+
         if (voteType === 'upvote') {
           if (upvotes.includes(user._id)) {
             newUpvotes = upvotes.filter((id: string) => id !== user._id);
@@ -479,24 +492,24 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             newUpvotes = upvotes.filter((id: string) => id !== user._id);
           }
         }
-        
+
         return {
           ...comment,
           upvotes: newUpvotes,
           downvotes: newDownvotes
         };
       }
-      
+
       // Kiểm tra replies (cấp 1)
       if (comment.replies && comment.replies.length > 0) {
         const updatedReplies = comment.replies.map((reply: any) => {
           if (reply._id === commentId) {
             const upvotes = reply.upvotes || [];
             const downvotes = reply.downvotes || [];
-            
+
             let newUpvotes = [...upvotes];
             let newDownvotes = [...downvotes];
-            
+
             if (voteType === 'upvote') {
               if (upvotes.includes(user._id)) {
                 newUpvotes = upvotes.filter((id: string) => id !== user._id);
@@ -512,7 +525,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                 newUpvotes = upvotes.filter((id: string) => id !== user._id);
               }
             }
-            
+
             return {
               ...reply,
               upvotes: newUpvotes,
@@ -521,20 +534,20 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
           }
           return reply;
         });
-        
+
         return {
           ...comment,
           replies: updatedReplies
         };
       }
-      
+
       return comment;
     });
-    
+
     const sortedUpdatedComments = sortComments(updatedComments, state.sortBy);
-    
+
     updateState({ comments: updatedComments });
-    
+
     // Update displayed comments
     const initialDisplayCount = 5;
     updateState({
@@ -549,16 +562,16 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       }
     } catch (error: any) {
       toast.error('Có lỗi xảy ra khi vote. Vui lòng thử lại.');
-      
+
       // Revert optimistic update
       const revertedComments = state.comments.map((comment: any) => {
         if (comment._id === commentId) {
           const upvotes = comment.upvotes || [];
           const downvotes = comment.downvotes || [];
-          
+
           let newUpvotes = [...upvotes];
           let newDownvotes = [...downvotes];
-          
+
           if (voteType === 'upvote') {
             if (upvotes.includes(user._id)) {
               newUpvotes = upvotes.filter((id: string) => id !== user._id);
@@ -574,24 +587,24 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
               newUpvotes = upvotes.filter((id: string) => id !== user._id);
             }
           }
-          
+
           return {
             ...comment,
             upvotes: newUpvotes,
             downvotes: newDownvotes
           };
         }
-        
+
         // Kiểm tra replies (cấp 1)
         if (comment.replies && comment.replies.length > 0) {
           const updatedReplies = comment.replies.map((reply: any) => {
             if (reply._id === commentId) {
               const upvotes = reply.upvotes || [];
               const downvotes = reply.downvotes || [];
-              
+
               let newUpvotes = [...upvotes];
               let newDownvotes = [...downvotes];
-              
+
               if (voteType === 'upvote') {
                 if (upvotes.includes(user._id)) {
                   newUpvotes = upvotes.filter((id: string) => id !== user._id);
@@ -607,7 +620,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                   newUpvotes = upvotes.filter((id: string) => id !== user._id);
                 }
               }
-              
+
               return {
                 ...reply,
                 upvotes: newUpvotes,
@@ -616,18 +629,18 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             }
             return reply;
           });
-          
+
           return {
             ...comment,
             replies: updatedReplies
           };
         }
-        
+
         return comment;
       });
-      
+
       updateState({ comments: revertedComments });
-      
+
       // Update displayed comments
       const sortedRevertedComments = sortComments(revertedComments, state.sortBy);
       const initialDisplayCount = 5;
@@ -724,7 +737,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   // Handle sort change
   const handleSortChange = (newSortBy: SortType) => {
     updateState({ sortBy: newSortBy });
-    
+
     // Update displayed comments
     const sortedComments = sortComments(state.comments, newSortBy);
     const initialDisplayCount = 5;
@@ -757,12 +770,12 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       const searchTerm = searchQuery.toLowerCase();
       result = result.filter((comment: any) => {
         const matchesContent = comment.content.toLowerCase().includes(searchTerm);
-        const matchesAuthor = comment.userId.name.toLowerCase().includes(searchTerm);
-        const matchesReplies = comment.replies?.some((reply: any) => 
+        const matchesAuthor = comment.userId?.username ? comment.userId.username.toLowerCase().includes(searchTerm) : false;
+        const matchesReplies = comment.replies?.some((reply: any) =>
           reply.content.toLowerCase().includes(searchTerm) ||
-          reply.userId.name.toLowerCase().includes(searchTerm)
-        );
-        
+          (reply.userId?.username ? reply.userId.username.toLowerCase().includes(searchTerm) : false)
+        ) || false;
+
         return matchesContent || matchesAuthor || matchesReplies;
       });
     }
@@ -823,14 +836,14 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
     if (!hash || !hash.startsWith('#comment-')) return;
 
     const commentId = hash.replace('#comment-', '');
-    
+
     // Check if this is a main comment (not a reply)
     const isMainComment = state.comments.some((comment: any) => comment._id === commentId);
-    
+
     // Check if this is a reply (not a main comment)
-    const isReply = state.comments.some((comment: any) => 
+    const isReply = state.comments.some((comment: any) =>
       comment.replies?.some((reply: any) => reply._id === commentId) ||
-      comment.replies?.some((reply: any) => 
+      comment.replies?.some((reply: any) =>
         reply.replies?.some((nested: any) => nested._id === commentId)
       )
     );
@@ -847,9 +860,9 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
     // If it's a reply, expand parent comment
     if (isReply) {
       // Find parent comment and expand it
-      const parentComment = state.comments.find((comment: any) => 
+      const parentComment = state.comments.find((comment: any) =>
         comment.replies?.some((reply: any) => reply._id === commentId) ||
-        comment.replies?.some((reply: any) => 
+        comment.replies?.some((reply: any) =>
           reply.replies?.some((nested: any) => nested._id === commentId)
         )
       );
@@ -875,63 +888,63 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
   // Helper functions
   const getDisplayedReplies = (replies: Comment[], commentId: string) => {
     if (!replies || !Array.isArray(replies)) return [];
-    
+
     const isExpanded = state.expandedReplies.has(commentId);
-    
+
     // Mặc định ẩn hết replies, chỉ hiện khi expanded
     if (isExpanded) {
       return replies;
     }
-    
+
     return []; // Không hiển thị replies nào mặc định
   };
 
   const shouldShowLoadMoreReplies = (replies: Comment[], commentId: string) => {
     if (!replies || !Array.isArray(replies)) return false;
-    
+
     const totalReplies = replies.length;
     const isExpanded = state.expandedReplies.has(commentId);
-    
+
     // Hiện nút "Xem replies" nếu có replies và chưa expanded
     return totalReplies > 0 && !isExpanded;
   };
 
   const shouldShowCollapseReplies = (replies: Comment[], commentId: string) => {
     if (!replies || !Array.isArray(replies)) return false;
-    
+
     const totalReplies = replies.length;
     const isExpanded = state.expandedReplies.has(commentId);
-    
+
     // Hiện nút "Thu gọn" nếu có replies và đã expanded
     return totalReplies > 0 && isExpanded;
   };
 
   const getTotalRepliesCount = (replies: Comment[]) => {
     if (!replies || !Array.isArray(replies)) return 0;
-    
+
     let total = replies.length;
     replies.forEach(reply => {
       if (reply.replies && reply.replies.length > 0) {
         total += getTotalRepliesCount(reply.replies);
       }
     });
-    
+
     return total;
   };
- 
+
   // Calculate stats
   const stats = useMemo(() => {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     const userCounts: { [key: string]: number } = {};
     let withRepliesCount = 0;
     let mostVotedCount = 0;
     let recentCount = 0;
 
     state.comments.forEach((comment: any) => {
-      
-      const userName = comment.userId?.username;
+
+      const userName = comment.userId?.username || 'Người dùng đã xóa';
       userCounts[userName] = (userCounts[userName] || 0) + 1;
 
       if (comment.replies && comment.replies.length > 0) {
@@ -967,14 +980,14 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       comments: state.comments.map((comment: any) => ({
         id: comment._id,
         content: comment.content,
-        author: comment.userId.name,
+        author: comment.userId?.name || comment.userId?.username || 'Người dùng đã xóa',
         createdAt: comment.createdAt,
         upvotes: comment.upvotes?.length || 0,
         downvotes: comment.downvotes?.length || 0,
         replies: comment.replies?.length || 0
       }))
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -984,7 +997,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast.success('Đã xuất bình luận thành công!');
   };
 
@@ -996,15 +1009,15 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
       </div>
     );
   }
-
+  console.log('displayedComments', state.displayedComments)
   return (
     <div className="comment-list-container">
       {/* Comment Input - New Layout */}
       <div className="comment-input-section">
         <form onSubmit={handleSubmitComment} className="comment-input-form-new">
           <div className="comment-input-header">
-            <img 
-              src={user?.avatarUrl || '/unknown-avatar.jpg'} 
+            <img
+              src={user?.avatarUrl || '/unknown-avatar.jpg'}
               alt={user?.username || 'Unknown User'}
               className="comment-avatar-small"
             />
@@ -1020,7 +1033,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
               />
             </div>
           </div>
-          
+
           {/* Image Preview */}
           {previewImages.length > 0 && (
             <div className="comment-preview-section">
@@ -1048,7 +1061,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
               </div>
             </div>
           )}
-          
+
           <div className="comment-input-footer">
             <div className="comment-toolbar">
               <button
@@ -1070,7 +1083,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                 aria-label="Tải lên hình ảnh cho bình luận"
                 title="Tải lên hình ảnh cho bình luận"
               />
-              
+
               <button
                 type="button"
                 ref={stickerButtonRef}
@@ -1082,9 +1095,9 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                 <span>Sticker</span>
               </button>
             </div>
-            
-            <button 
-              type="submit" 
+
+            <button
+              type="submit"
               className="comment-send-btn"
               disabled={(!newComment.trim() && uploadedImages.length === 0) || state.submitting}
               title="Gửi bình luận"
@@ -1124,7 +1137,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             {isFilterBarExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
         </div>
-        
+
         <div className={`search-filter-content ${isFilterBarExpanded ? 'expanded' : 'collapsed'}`}>
           <div className="search-section">
             <Search size={20} />
@@ -1146,7 +1159,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
               </button>
             )}
           </div>
-          
+
           <div className="filter-section">
             <Filter size={20} />
             <select
@@ -1162,7 +1175,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
               <option value="withReplies">Có trả lời</option>
             </select>
           </div>
-          
+
           <div className="sort-section">
             <select
               value={state.sortBy}
@@ -1178,7 +1191,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
           </div>
         </div>
       </div>
-      
+
       {/* Sticker Picker Portal */}
       {showStickerPicker && stickerAnchor && createPortal(
         <StickerPicker
@@ -1196,9 +1209,9 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             Hiển thị {state.displayedComments.length} / {sortedFilteredComments.length} bình luận
             {searchQuery.trim() || filterType !== 'all' ? ` (đã lọc từ ${state.comments.length} bình luận)` : ''}
           </div>
-          
+
           <div className="comments-actions">
-            <button 
+            <button
               className="stats-btn"
               onClick={() => setShowStats(!showStats)}
               title="Thống kê bình luận"
@@ -1206,8 +1219,8 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
               <BarChart3 size={16} />
               <span>Thống kê</span>
             </button>
-            
-            <button 
+
+            <button
               className="export-btn"
               onClick={exportComments}
               title="Xuất bình luận"
@@ -1240,7 +1253,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                 <span className="stat-value">{stats.recent}</span>
               </div>
             </div>
-            
+
             {Object.keys(stats.byUser).length > 0 && (
               <div className="user-stats">
                 <h5>Bình luận theo người dùng:</h5>
@@ -1254,7 +1267,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             )}
           </div>
         )}
-      
+
         {/* Comments */}
         {state.displayedComments.length === 0 ? (
           <div className="no-comments">
@@ -1262,23 +1275,50 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             <p>Chưa có bình luận nào. Hãy là người đầu tiên!</p>
           </div>
         ) : (
-          state.displayedComments.map((comment : any) => (
+          state.displayedComments.map((comment: any) => (
             <div key={comment._id} id={`comment-${comment._id}`} className="comment-item">
               <div className="comment-avatar">
-                <Link href={`/profile/${comment.userId.username || comment.userId._id}`}>
-                  <img 
-                    src={comment.userId.avatarUrl || '/default-avatar.png'} 
-                    alt={comment.userId.name}
+                {comment.userId ? (
+                  comment.userId._id === user?._id ? (
+                    <img
+                      src={comment.userId.avatarUrl || '/default-avatar.png'}
+                      alt={comment.userId.username || 'Người dùng đã xóa'}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => openChat(comment.userId._id, {
+                        username: comment.userId.username,
+                        avatarUrl: comment.userId.avatarUrl
+                      })}
+                      className="comment-avatar-btn-trigger"
+                      style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'block', borderRadius: '50%', overflow: 'hidden', width: '100%', height: '100%' }}
+                      title={`Nhắn tin với ${comment.userId.name || comment.userId.username}`}
+                    >
+                      <img
+                        src={comment.userId.avatarUrl || '/default-avatar.png'}
+                        alt={comment.userId.username || 'Người dùng đã xóa'}
+                        style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </button>
+                  )
+                ) : (
+                  <img
+                    src="/default-avatar.png"
+                    alt="Người dùng đã xóa"
                   />
-                </Link>
+                )}
               </div>
               <div className="comment-content">
                 <div className="comment-header">
                   <div className="comment-author-row">
-                    <Link href={`/profile/${comment.userId.username || comment.userId._id}`} className="comment-author-link">
-                      <span className="comment-author">{comment.userId.name}</span>
-                    </Link>
-                    {authorId && comment.userId._id === authorId && (
+                    {comment.userId ? (
+                      <Link href={`/profile/${comment.userId.username || comment.userId._id}`} className="comment-author-link">
+                        <span className="comment-author">{comment.userId.name || comment.userId.username || 'Người dùng đã xóa'}</span>
+                      </Link>
+                    ) : (
+                      <span className="comment-author deleted-user" style={{ color: '#888', fontStyle: 'italic' }}>Người dùng đã xóa</span>
+                    )}
+                    {authorId && comment.userId && comment.userId._id === authorId && (
                       <span className="author-badge">Tác giả</span>
                     )}
                     {comment.isBest && (
@@ -1287,14 +1327,14 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                   </div>
                   <div className="comment-time">{formatTime(comment.createdAt)}</div>
                 </div>
-                
-                <div 
-                  className="comment-text" 
-                  dangerouslySetInnerHTML={{ 
+
+                <div
+                  className="comment-text"
+                  dangerouslySetInnerHTML={{
                     __html: (() => {
                       if (!comment?.content) return '';
                       let content = String(comment.content);
-                      
+
                       // Unescape HTML entities nếu content bị escape
                       if (content.includes('&lt;') || content.includes('&gt;') || content.includes('&amp;')) {
                         content = content
@@ -1306,31 +1346,31 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                           .replace(/&#x27;/g, "'")
                           .replace(/&#x2F;/g, '/');
                       }
-                      
+
                       // Convert URL Giphy dạng text thành <img> tag
                       const giphyUrlPattern = /https?:\/\/(?:media\d?\.)?giphy\.com\/media\/[^\s<>"'\)\]&]+/gi;
                       const giphyUrls = content.match(giphyUrlPattern);
-                      
+
                       if (giphyUrls && giphyUrls.length > 0) {
                         const uniqueUrls = [...new Set(giphyUrls)].sort((a, b) => b.length - a.length);
-                        
+
                         uniqueUrls.forEach((url: string) => {
                           const cleanUrl = url.trim();
                           const escaped = cleanUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                          
+
                           // Bỏ qua nếu URL đã nằm trong thẻ <img> src
                           if (new RegExp(`<img[^>]+src=["']${escaped}`, 'i').test(content)) {
                             return;
                           }
-                          
+
                           const imgTag = `<img src="${cleanUrl}" alt="sticker" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 8px 0; display: block;" />`;
-                          
+
                           // Replace URL trong content
                           content = content.replace(new RegExp(escaped, 'gi'), (match, offset, string) => {
                             const before = string.substring(0, offset);
                             const lastOpen = before.lastIndexOf('<');
                             const lastClose = before.lastIndexOf('>');
-                            
+
                             if (lastOpen > lastClose) {
                               const tagPart = before.substring(lastOpen);
                               const doubleQuotes = (tagPart.match(/"/g) || []).length;
@@ -1339,21 +1379,21 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                 return match;
                               }
                             }
-                            
+
                             return imgTag;
                           });
                         });
                       }
-                      
+
                       return content;
                     })()
                   }}
                 ></div>
-                
+
                 <div className="comment-actions">
                   {/* Vote buttons */}
                   <div className="vote-buttons-horizontal">
-                    <button 
+                    <button
                       className={`vote-btn upvote ${getVoteStatus(comment) === 'upvoted' ? 'active' : ''}`}
                       onClick={() => handleVote(comment._id, 'upvote')}
                       title="Upvote"
@@ -1361,7 +1401,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                       <ArrowUp size={16} />
                     </button>
                     <span className="vote-score">{getVoteScore(comment)}</span>
-                    <button 
+                    <button
                       className={`vote-btn downvote ${getVoteStatus(comment) === 'downvoted' ? 'active' : ''}`}
                       onClick={() => handleVote(comment._id, 'downvote')}
                       title="Downvote"
@@ -1369,25 +1409,27 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                       <ArrowDown size={16} />
                     </button>
                   </div>
-                  
-                  <button 
+
+                  <button
                     className="comment-action-btn"
                     onClick={() => startReply(comment._id)}
                   >
                     <Reply size={14} />
                     <span>Trả lời</span>
                   </button>
-                  
-                  <ReportButton 
-                    itemId={comment._id} 
-                    itemType="comment"
-                    onReported={() => {}}
-                  />
-                  
+
+                  {(comment.userId?._id || comment.userId) !== user?._id && (
+                    <ReportButton
+                      itemId={comment._id}
+                      itemType="comment"
+                      onReported={() => { }}
+                    />
+                  )}
+
                   {/* Menu cho xóa */}
                   {canDeleteComment(comment, user?._id) && (
                     <div className="comment-menu">
-                      <button 
+                      <button
                         className="comment-menu-btn"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1397,10 +1439,10 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                       >
                         <MoreVertical size={14} />
                       </button>
-                      
+
                       {actions.showMenu === comment._id && (
                         <div className="comment-menu-dropdown">
-                          <button 
+                          <button
                             className="comment-menu-item comment-menu-item-danger"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1422,8 +1464,8 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                   <div className="reply-input-section-new">
                     <form onSubmit={handleSubmitReply} className="reply-input-form-new">
                       <div className="reply-input-header">
-                        <img 
-                          src={user?.avatarUrl || '/unknown-avatar.jpg'} 
+                        <img
+                          src={user?.avatarUrl || '/unknown-avatar.jpg'}
                           alt={user?.username || 'Unknown User'}
                           className="reply-avatar-small"
                         />
@@ -1432,14 +1474,14 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                             type="text"
                             value={actions.replyContent}
                             onChange={(e) => updateReplyContent(e.target.value)}
-                            placeholder={`Trả lời ${comment.userId.name}...`}
+                            placeholder={`Trả lời ${comment.userId?.name || comment.userId?.username || 'Người dùng đã xóa'}...`}
                             className="reply-input-new"
                             disabled={state.submitting}
                             maxLength={1000}
                           />
                         </div>
                       </div>
-                      
+
                       {/* Reply Image Preview */}
                       {actions.replyingTo && replyPreviewImages[actions.replyingTo] && replyPreviewImages[actions.replyingTo].length > 0 && (
                         <div className="reply-preview-section">
@@ -1471,7 +1513,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                           </div>
                         </div>
                       )}
-                      
+
                       <div className="reply-input-footer">
                         <div className="reply-toolbar">
                           <button
@@ -1517,7 +1559,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                               }
                             }}
                           />
-                          
+
                           <button
                             type="button"
                             ref={(el) => {
@@ -1537,17 +1579,17 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                             <span>Sticker</span>
                           </button>
                         </div>
-                        
+
                         <div className="reply-actions-group">
-                          <button 
+                          <button
                             type="button"
                             className="reply-cancel-btn"
                             onClick={cancelReply}
                           >
                             Hủy
                           </button>
-                          <button 
-                            type="submit" 
+                          <button
+                            type="submit"
                             className="reply-send-btn"
                             disabled={(!actions.replyContent.trim() && !(actions.replyingTo && replyImages[actions.replyingTo]?.length)) || state.submitting}
                             title="Gửi trả lời"
@@ -1567,7 +1609,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                         </div>
                       </div>
                     </form>
-                    
+
                     {/* Reply Sticker Picker */}
                     {actions.replyingTo && replyStickerPickers[actions.replyingTo] && replyStickerAnchors.current[actions.replyingTo] && (() => {
                       const replyId = actions.replyingTo;
@@ -1590,32 +1632,59 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                       {getDisplayedReplies(comment.replies, comment._id).map((reply) => (
                         <div key={reply._id} id={`comment-${reply._id}`} className="reply-item">
                           <div className="reply-avatar">
-                            <Link href={`/profile/${reply.userId?.username || reply.userId._id}`}>
-                              <img 
-                                src={reply.userId.avatarUrl || '/default-avatar.png'} 
-                                alt={reply.userId.name}
+                            {reply.userId ? (
+                              reply.userId._id === user?._id ? (
+                                <img
+                                  src={reply.userId.avatarUrl || '/default-avatar.png'}
+                                  alt={reply.userId.name || reply.userId.username || 'Người dùng đã xóa'}
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => openChat(reply.userId._id, {
+                                    username: reply.userId.username,
+                                    avatarUrl: reply.userId.avatarUrl
+                                  })}
+                                  className="comment-avatar-btn-trigger"
+                                  style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'block', borderRadius: '50%', overflow: 'hidden', width: '100%', height: '100%' }}
+                                  title={`Nhắn tin với ${reply.userId.name || reply.userId.username}`}
+                                >
+                                  <img
+                                    src={reply.userId.avatarUrl || '/default-avatar.png'}
+                                    alt={reply.userId.name || reply.userId.username || 'Người dùng đã xóa'}
+                                    style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                </button>
+                              )
+                            ) : (
+                              <img
+                                src="/default-avatar.png"
+                                alt="Người dùng đã xóa"
                               />
-                            </Link>
+                            )}
                           </div>
                           <div className="reply-content">
                             <div className="reply-header">
                               <div className="reply-author-row">
-                                <Link href={`/profile/${reply.userId.username || reply.userId._id}`} className="reply-author-link">
-                                  <span className="reply-author">{reply.userId.name}</span>
-                                </Link>
-                                {authorId && reply.userId._id === authorId && (
+                                {reply.userId ? (
+                                  <Link href={`/profile/${reply.userId.username || reply.userId._id}`} className="reply-author-link">
+                                    <span className="reply-author">{reply.userId.name || reply.userId.username || 'Người dùng đã xóa'}</span>
+                                  </Link>
+                                ) : (
+                                  <span className="reply-author deleted-user" style={{ color: '#888', fontStyle: 'italic' }}>Người dùng đã xóa</span>
+                                )}
+                                {authorId && reply.userId && reply.userId._id === authorId && (
                                   <span className="author-badge">Tác giả</span>
                                 )}
                               </div>
                               <div className="reply-time">{formatTime(reply.createdAt)}</div>
                             </div>
-                            <div 
-                              className="reply-text" 
-                              dangerouslySetInnerHTML={{ 
+                            <div
+                              className="reply-text"
+                              dangerouslySetInnerHTML={{
                                 __html: (() => {
                                   if (!reply?.content) return '';
                                   let content = String(reply.content);
-                                  
+
                                   // Unescape HTML entities
                                   if (content.includes('&lt;') || content.includes('&gt;') || content.includes('&amp;')) {
                                     content = content
@@ -1627,11 +1696,11 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                       .replace(/&#x27;/g, "'")
                                       .replace(/&#x2F;/g, '/');
                                   }
-                                  
+
                                   // Convert Giphy URLs
                                   const giphyUrlPattern = /https?:\/\/(?:media\d?\.)?giphy\.com\/media\/[^\s<>"'\)\]&]+/gi;
                                   const giphyUrls = content.match(giphyUrlPattern);
-                                  
+
                                   if (giphyUrls && giphyUrls.length > 0) {
                                     const uniqueUrls = [...new Set(giphyUrls)].sort((a, b) => b.length - a.length);
                                     uniqueUrls.forEach((url: string) => {
@@ -1654,7 +1723,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                       }
                                     });
                                   }
-                                  
+
                                   return content;
                                 })()
                               }}
@@ -1662,7 +1731,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                             <div className="reply-actions">
                               {/* Vote buttons for replies */}
                               <div className="vote-buttons-horizontal">
-                                <button 
+                                <button
                                   className={`vote-btn upvote ${getVoteStatus(reply) === 'upvoted' ? 'active' : ''}`}
                                   onClick={() => handleVote(reply._id, 'upvote')}
                                   title="Upvote"
@@ -1670,7 +1739,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                   <ArrowUp size={12} />
                                 </button>
                                 <span className="vote-score">{getVoteScore(reply)}</span>
-                                <button 
+                                <button
                                   className={`vote-btn downvote ${getVoteStatus(reply) === 'downvoted' ? 'active' : ''}`}
                                   onClick={() => handleVote(reply._id, 'downvote')}
                                   title="Downvote"
@@ -1678,28 +1747,28 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                   <ArrowDown size={12} />
                                 </button>
                               </div>
-                              
-                              <button 
+
+                              <button
                                 className="reply-action-btn"
                                 onClick={() => startReplyToReply(reply._id)}
                               >
                                 <Reply size={12} />
                                 <span>Trả lời</span>
                               </button>
-                              
+
                               {/* Menu cho xóa reply */}
                               {canDeleteComment(reply, user?._id) && (
                                 <div className="reply-menu">
-                                  <button 
+                                  <button
                                     className="reply-menu-btn"
                                     onClick={() => toggleMenu(actions.showMenu === reply._id ? null : reply._id)}
                                   >
                                     <MoreVertical size={12} />
                                   </button>
-                                  
+
                                   {actions.showMenu === reply._id && (
                                     <div className="reply-menu-dropdown">
-                                      <button 
+                                      <button
                                         className="reply-menu-item reply-menu-item-danger"
                                         onClick={() => {
                                           handleDeleteComment(reply._id);
@@ -1720,8 +1789,8 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                               <div className="reply-to-reply-input-new">
                                 <form onSubmit={handleSubmitReplyToReply} className="reply-input-form-new">
                                   <div className="reply-input-header">
-                                    <img 
-                                      src={user?.avatarUrl || '/unknown-avatar.jpg'} 
+                                    <img
+                                      src={user?.avatarUrl || '/unknown-avatar.jpg'}
                                       alt={user?.username || 'Unknown User'}
                                       className="reply-avatar-small"
                                     />
@@ -1730,14 +1799,14 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                         type="text"
                                         value={actions.replyToReplyContent}
                                         onChange={(e) => updateReplyToReplyContent(e.target.value)}
-                                        placeholder={`Trả lời ${reply.userId.name}...`}
+                                        placeholder={`Trả lời ${reply.userId?.name || reply.userId?.username || 'Người dùng đã xóa'}...`}
                                         className="reply-input-new"
                                         disabled={state.submitting}
                                         maxLength={1000}
                                       />
                                     </div>
                                   </div>
-                                  
+
                                   {/* Reply-to-Reply Image Preview */}
                                   {actions.replyToReply && replyPreviewImages[actions.replyToReply] && replyPreviewImages[actions.replyToReply].length > 0 && (
                                     <div className="reply-preview-section">
@@ -1769,7 +1838,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   <div className="reply-input-footer">
                                     <div className="reply-toolbar">
                                       <button
@@ -1815,7 +1884,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                           }
                                         }}
                                       />
-                                      
+
                                       <button
                                         type="button"
                                         ref={(el) => {
@@ -1835,17 +1904,17 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                         <span>Sticker</span>
                                       </button>
                                     </div>
-                                    
+
                                     <div className="reply-actions-group">
-                                      <button 
+                                      <button
                                         type="button"
                                         className="reply-cancel-btn"
                                         onClick={cancelReplyToReply}
                                       >
                                         Hủy
                                       </button>
-                                      <button 
-                                        type="submit" 
+                                      <button
+                                        type="submit"
                                         className="reply-send-btn"
                                         disabled={(!actions.replyToReplyContent.trim() && !(actions.replyToReply && replyImages[actions.replyToReply]?.length)) || state.submitting}
                                         title="Gửi trả lời"
@@ -1865,7 +1934,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                     </div>
                                   </div>
                                 </form>
-                                
+
                                 {/* Reply-to-Reply Sticker Picker */}
                                 {actions.replyToReply && replyStickerPickers[actions.replyToReply] && replyStickerAnchors.current[actions.replyToReply] && (() => {
                                   const replyId = actions.replyToReply;
@@ -1887,32 +1956,59 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                 {reply.replies.map((nestedReply: any) => (
                                   <div key={nestedReply._id} id={`comment-${nestedReply._id}`} className="nested-reply-item">
                                     <div className="nested-reply-avatar">
-                                      <Link href={`/profile/${nestedReply.userId.username || nestedReply.userId._id}`}>
-                                        <img 
-                                          src={nestedReply.userId.avatarUrl || '/default-avatar.png'} 
-                                          alt={nestedReply.userId.name}
+                                      {nestedReply.userId ? (
+                                        nestedReply.userId._id === user?._id ? (
+                                          <img
+                                            src={nestedReply.userId.avatarUrl || '/default-avatar.png'}
+                                            alt={nestedReply.userId.name || nestedReply.userId.username || 'Người dùng đã xóa'}
+                                          />
+                                        ) : (
+                                          <button
+                                            onClick={() => openChat(nestedReply.userId._id, {
+                                              username: nestedReply.userId.username,
+                                              avatarUrl: nestedReply.userId.avatarUrl
+                                            })}
+                                            className="comment-avatar-btn-trigger"
+                                            style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'block', borderRadius: '50%', overflow: 'hidden', width: '100%', height: '100%' }}
+                                            title={`Nhắn tin với ${nestedReply.userId.name || nestedReply.userId.username}`}
+                                          >
+                                            <img
+                                              src={nestedReply.userId.avatarUrl || '/default-avatar.png'}
+                                              alt={nestedReply.userId.name || nestedReply.userId.username || 'Người dùng đã xóa'}
+                                              style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                          </button>
+                                        )
+                                      ) : (
+                                        <img
+                                          src="/default-avatar.png"
+                                          alt="Người dùng đã xóa"
                                         />
-                                      </Link>
+                                      )}
                                     </div>
                                     <div className="nested-reply-content">
                                       <div className="nested-reply-header">
                                         <div className="nested-reply-author-row">
-                                          <Link href={`/profile/${nestedReply.userId.username || nestedReply.userId._id}`} className="nested-reply-author-link">
-                                            <span className="nested-reply-author">{nestedReply.userId.name}</span>
-                                          </Link>
-                                          {authorId && nestedReply.userId._id === authorId && (
+                                          {nestedReply.userId ? (
+                                            <Link href={`/profile/${nestedReply.userId.username || nestedReply.userId._id}`} className="nested-reply-author-link">
+                                              <span className="nested-reply-author">{nestedReply.userId.name || nestedReply.userId.username || 'Người dùng đã xóa'}</span>
+                                            </Link>
+                                          ) : (
+                                            <span className="nested-reply-author deleted-user" style={{ color: '#888', fontStyle: 'italic' }}>Người dùng đã xóa</span>
+                                          )}
+                                          {authorId && nestedReply.userId && nestedReply.userId._id === authorId && (
                                             <span className="author-badge">Tác giả</span>
                                           )}
                                         </div>
                                         <div className="nested-reply-time">{formatTime(nestedReply.createdAt)}</div>
                                       </div>
-                                      <div 
-                                        className="nested-reply-text" 
-                                        dangerouslySetInnerHTML={{ 
+                                      <div
+                                        className="nested-reply-text"
+                                        dangerouslySetInnerHTML={{
                                           __html: (() => {
                                             if (!nestedReply?.content) return '';
                                             let content = String(nestedReply.content);
-                                            
+
                                             // Unescape HTML entities
                                             if (content.includes('&lt;') || content.includes('&gt;') || content.includes('&amp;')) {
                                               content = content
@@ -1924,11 +2020,11 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                                 .replace(/&#x27;/g, "'")
                                                 .replace(/&#x2F;/g, '/');
                                             }
-                                            
+
                                             // Convert Giphy URLs
                                             const giphyUrlPattern = /https?:\/\/(?:media\d?\.)?giphy\.com\/media\/[^\s<>"'\)\]&]+/gi;
                                             const giphyUrls = content.match(giphyUrlPattern);
-                                            
+
                                             if (giphyUrls && giphyUrls.length > 0) {
                                               const uniqueUrls = [...new Set(giphyUrls)].sort((a, b) => b.length - a.length);
                                               uniqueUrls.forEach((url: string) => {
@@ -1951,7 +2047,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                                 }
                                               });
                                             }
-                                            
+
                                             return content;
                                           })()
                                         }}
@@ -1959,7 +2055,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                       <div className="nested-reply-actions">
                                         {/* Vote buttons for nested replies */}
                                         <div className="vote-buttons-horizontal">
-                                          <button 
+                                          <button
                                             className={`vote-btn upvote ${getVoteStatus(nestedReply) === 'upvoted' ? 'active' : ''}`}
                                             onClick={() => handleVote(nestedReply._id, 'upvote')}
                                             title="Upvote"
@@ -1967,7 +2063,7 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                             <ArrowUp size={10} />
                                           </button>
                                           <span className="vote-score">{getVoteScore(nestedReply)}</span>
-                                          <button 
+                                          <button
                                             className={`vote-btn downvote ${getVoteStatus(nestedReply) === 'downvoted' ? 'active' : ''}`}
                                             onClick={() => handleVote(nestedReply._id, 'downvote')}
                                             title="Downvote"
@@ -1975,20 +2071,20 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                                             <ArrowDown size={10} />
                                           </button>
                                         </div>
-                                        
+
                                         {/* Menu cho xóa nested reply */}
                                         {canDeleteComment(nestedReply, user?._id) && (
                                           <div className="nested-reply-menu">
-                                            <button 
+                                            <button
                                               className="nested-reply-menu-btn"
                                               onClick={() => toggleMenu(actions.showMenu === nestedReply._id ? null : nestedReply._id)}
                                             >
                                               <MoreVertical size={10} />
                                             </button>
-                                            
+
                                             {actions.showMenu === nestedReply._id && (
                                               <div className="nested-reply-menu-dropdown">
-                                                <button 
+                                                <button
                                                   className="nested-reply-menu-item nested-reply-menu-item-danger"
                                                   onClick={() => {
                                                     handleDeleteComment(nestedReply._id);
@@ -2011,20 +2107,20 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
                           </div>
                         </div>
                       ))}
-                      
+
                       {/* Load More Replies Button */}
                       {shouldShowLoadMoreReplies(comment.replies, comment._id) && (
-                        <button 
+                        <button
                           className="load-more-replies-btn"
                           onClick={() => handleExpandReplies(comment._id)}
                         >
                           Xem {getTotalRepliesCount(comment.replies)} trả lời
                         </button>
                       )}
-                      
+
                       {/* Collapse Replies Button */}
                       {shouldShowCollapseReplies(comment.replies, comment._id) && (
-                        <button 
+                        <button
                           className="collapse-replies-btn"
                           onClick={() => handleCollapseReplies(comment._id)}
                         >
@@ -2038,10 +2134,10 @@ const CommentList: React.FC<CommentListProps> = ({ targetId, onCommentCountChang
             </div>
           ))
         )}
-        
+
         {/* Load More Comments Button */}
         {state.hasMoreComments && !state.showAllComments && (
-          <button 
+          <button
             className="load-more-comments-btn"
             onClick={handleLoadMoreComments}
             disabled={state.loading}

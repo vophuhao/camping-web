@@ -15,8 +15,11 @@ export async function getWalletTransactions(
   return apiClient.get('/wallet/transactions', { params: { page, limit } });
 }
 
-export async function createWithdrawalRequest(amount: number): Promise<ApiResponse> {
-  return apiClient.post('/wallet/withdraw', { amount });
+export async function createWithdrawalRequest(
+  amount: number,
+  bankInfo: { bankName: string; accountNumber: string; accountHolderName: string }
+): Promise<ApiResponse> {
+  return apiClient.post('/wallet/withdraw', { amount, bankInfo });
 }
 
 export async function getMyWithdrawals(
@@ -24,6 +27,12 @@ export async function getMyWithdrawals(
   limit = 20,
 ): Promise<ApiResponse> {
   return apiClient.get('/wallet/withdrawals', { params: { page, limit } });
+}
+
+export async function adminGetHostBalances(
+  params?: Record<string, unknown>,
+): Promise<ApiResponse> {
+  return apiClient.get('/wallet/admin/hosts-balances', { params });
 }
 
 // ================== ADMIN ==================

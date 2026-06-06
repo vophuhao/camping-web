@@ -28,12 +28,13 @@ export default class WalletController {
   // Host: tạo lệnh rút tiền
   createWithdrawal = catchErrors(async (req: any, res: any) => {
     const hostUserId = mongoIdSchema.parse(req.userId);
-    const { amount } = req.body;
+    const { amount, bankInfo } = req.body;
     const withdrawal = await walletService.createWithdrawalRequest(
       hostUserId,
-      Number(amount)
+      Number(amount),
+      bankInfo
     );
-    return ResponseUtil.success(res, withdrawal, "Đã tạo lệnh rút tiền thành công");
+    return ResponseUtil.success(res, withdrawal, "Đã rút tiền thành công");
   });
 
   // Host: xem lịch sử lệnh rút
@@ -50,14 +51,26 @@ export default class WalletController {
 
   // Admin: xem tất cả lệnh rút
   adminGetAllWithdrawals = catchErrors(async (req: any, res: any) => {
-    const { status, hostId, page, limit } = req.query;
+    const { status, hostId, search, page, limit } = req.query;
     const result = await walletService.adminGetAllWithdrawals({
       status,
       hostId,
+      search,
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 20,
     });
     return ResponseUtil.success(res, result, "Lấy danh sách lệnh rút thành công");
+  });
+
+  // Admin: xem danh sách số dư host
+  adminGetHostBalances = catchErrors(async (req: any, res: any) => {
+    const { search, page, limit } = req.query;
+    const result = await walletService.adminGetHostBalances({
+      search,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 20,
+    });
+    return ResponseUtil.success(res, result, "Lấy danh sách số dư host thành công");
   });
 
   // Admin: xử lý lệnh rút

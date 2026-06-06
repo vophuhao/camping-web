@@ -1,6 +1,7 @@
 import NotificationModel, { NotificationDocument } from "@/models/notification.model";
 import UserModel from "@/models/user.model";
 import mongoose from "mongoose";
+import { link } from "node:fs";
 
 
 export default class NotificationService {
@@ -197,7 +198,8 @@ export default class NotificationService {
     bookingId: string,
     bookingCode: string,
     type: "booking_confirmed" | "booking_cancelled",
-    customMessage?: string
+    customMessage?: string,
+    link?: string
   ) {
     const messages = {
       booking_confirmed: `Đặt chỗ ${bookingCode} đã được xác nhận`,
@@ -215,7 +217,7 @@ export default class NotificationService {
       title: titles[type],
       message: customMessage || messages[type],
       booking: bookingId,
-      link: `/booking/${bookingId}`,
+      link: link || `/booking/detail/${bookingCode}`,
       actionType: "view_booking",
       role: "guest",
       metadata: {
@@ -270,7 +272,7 @@ export default class NotificationService {
       title: "Thanh toán đã nhận",
       message: `Đã nhận ${amount.toLocaleString("vi-VN")}đ từ đơn ${bookingCode}`,
       booking: bookingId,
-      link: `/host/bookings/${bookingId}`,
+      link: `/host/bookings/detail/${bookingCode}`,
       actionType: "view_booking",
       priority: "medium",
       role: "host",
@@ -297,7 +299,7 @@ export default class NotificationService {
       title: "Khách đã check-in",
       message: `${guestName} đã check-in tại ${propertyName}`,
       booking: bookingId,
-      link: `/host/bookings/${bookingId}`,
+      link: `/host/bookings/detail/${bookingCode}`,
       actionType: "view_booking",
       priority: "medium",
       role: "host",
@@ -324,7 +326,7 @@ export default class NotificationService {
       title: "Khách đã check-out",
       message: `${guestName} đã check-out khỏi ${propertyName}`,
       booking: bookingId,
-      link: `/host/bookings/${bookingId}`,
+      link: `/host/bookings/detail/${bookingCode}`,
       actionType: "view_booking",
       priority: "medium",
       role: "host",
@@ -352,7 +354,7 @@ export default class NotificationService {
       title: "Khách đã hủy đặt chỗ",
       message: `${guestName} đã hủy đặt chỗ ${propertyName}${reason ? `: ${reason}` : ""}`,
       booking: bookingId,
-      link: `/host/bookings/${bookingId}`,
+      link: `/host/bookings/detail/${bookingCode}`,
       actionType: "view_booking",
       priority: "high",
       role: "host",
@@ -735,6 +737,38 @@ export default class NotificationService {
       },
     });
   }
+
+  // Thông báo lệnh rút tiền mới cho các Admin
+  async createWithdrawalNotificationForAdmins(
+    hostUserId: string,
+    hostName: string,
+    amount: number,
+    withdrawalId: string
+  ) {
+    const admins = await UserModel.find({ role: "admin" }).select("_id");
+    if (admins.length === 0) return;
+
+    const notifications = admins.map((admin) => ({
+      recipient: admin._id,
+      sender: new mongoose.Types.ObjectId(hostUserId),
+      type: "system",
+      title: "Yêu cầu rút tiền mới",
+      message: `Host ${hostName} vừa rút thành công số tiền ${amount.toLocaleString("vi-VN")}₫`,
+      link: `/admin/payouts`,
+      actionType: "none",
+      role: "admin",
+      priority: "high",
+      metadata: {
+        hostUserId,
+        hostName,
+        amount,
+        withdrawalId,
+      },
+    }));
+
+    await NotificationModel.insertMany(notifications);
+  }
+
   // ==================== ADMIN SEND TO HOST HELPERS ====================
 
   // Lấy danh sách tất cả host

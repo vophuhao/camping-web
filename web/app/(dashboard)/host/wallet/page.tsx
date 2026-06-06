@@ -64,6 +64,10 @@ export default function HostWalletPage() {
   const [withdrawDialog, setWithdrawDialog] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawStep, setWithdrawStep] = useState<1 | 2>(1);
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
 
   async function fetchAll() {
     setLoading(true);
@@ -73,7 +77,15 @@ export default function HostWalletPage() {
         getWalletTransactions(1, 50),
         getMyWithdrawals(1, 50),
       ]);
-      if (balRes.success) setBalance(balRes.data);
+      if (balRes.success) {
+        const balData = balRes.data as any;
+        setBalance(balData);
+        if (balData?.bankInfo) {
+          setBankName(balData.bankInfo.bankName || "");
+          setAccountNumber(balData.bankInfo.accountNumber || "");
+          setAccountHolderName(balData.bankInfo.accountHolderName || "");
+        }
+      }
       if (txRes.success) setTransactions((txRes.data as any)?.transactions || []);
       if (wdRes.success) setWithdrawals((wdRes.data as any)?.withdrawals || []);
     } catch {
@@ -87,6 +99,17 @@ export default function HostWalletPage() {
     fetchAll();
   }, []);
 
+  const openWithdrawDialog = () => {
+    setWithdrawStep(1);
+    setWithdrawAmount("");
+    if (balance?.bankInfo) {
+      setBankName(balance.bankInfo.bankName || "");
+      setAccountNumber(balance.bankInfo.accountNumber || "");
+      setAccountHolderName(balance.bankInfo.accountHolderName || "");
+    }
+    setWithdrawDialog(true);
+  };
+
   async function handleWithdraw() {
     const amount = parseInt(withdrawAmount.replace(/[^0-9]/g, ""));
     if (!amount || amount < 50000) {
@@ -98,19 +121,29 @@ export default function HostWalletPage() {
       return;
     }
 
+    if (!bankName.trim() || !accountNumber.trim() || !accountHolderName.trim()) {
+      toast.error("Vui lòng điền đầy đủ thông tin ngân hàng");
+      return;
+    }
+
     setWithdrawing(true);
     try {
-      const res = await createWithdrawalRequest(amount);
+      const res = await createWithdrawalRequest(amount, {
+        bankName: bankName.trim(),
+        accountNumber: accountNumber.trim(),
+        accountHolderName: accountHolderName.trim(),
+      });
       if (res.success) {
-        toast.success("Đã tạo lệnh rút tiền thành công! Admin sẽ xử lý sớm.");
+        toast.success("Rút tiền thành công! Số dư đã được trừ trực tiếp.");
         setWithdrawDialog(false);
         setWithdrawAmount("");
+        setWithdrawStep(1);
         await fetchAll();
       } else {
         toast.error(res.message || "Có lỗi xảy ra");
       }
-    } catch {
-      toast.error("Có lỗi xảy ra");
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Có lỗi xảy ra");
     } finally {
       setWithdrawing(false);
     }
@@ -126,7 +159,7 @@ export default function HostWalletPage() {
 
   const availableBalance = balance?.availableBalance ?? 0;
   const totalBalance = balance?.walletBalance ?? 0;
-  const pendingAmount = balance?.pendingWithdrawalAmount ?? 0;
+  const totalWithdrawn = balance?.totalWithdrawn ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 space-y-6">
@@ -140,7 +173,7 @@ export default function HostWalletPage() {
           <p className="text-sm text-slate-500 mt-1">Quản lý số dư và lệnh rút tiền</p>
         </div>
         <Button
-          onClick={() => setWithdrawDialog(true)}
+          onClick={openWithdrawDialog}
           disabled={availableBalance < 50000}
           className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
         >
@@ -164,9 +197,9 @@ export default function HostWalletPage() {
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p className="text-slate-500 text-sm font-medium">Đang chờ xử lý</p>
-          <p className="text-3xl font-black mt-1 text-amber-500">{fmt(pendingAmount)}₫</p>
-          <p className="text-slate-400 text-xs mt-2">Lệnh rút đang chờ admin duyệt</p>
+          <p className="text-slate-500 text-sm font-medium">Tổng số tiền đã rút</p>
+          <p className="text-3xl font-black mt-1 text-amber-500">{fmt(totalWithdrawn)}₫</p>
+          <p className="text-slate-400 text-xs mt-2">Lệnh rút tiền đã hoàn tất</p>
         </div>
       </div>
 
@@ -286,7 +319,13 @@ export default function HostWalletPage() {
       </div>
 
       {/* Withdraw Dialog */}
-      <Dialog open={withdrawDialog} onOpenChange={setWithdrawDialog}>
+      <Dialog open={withdrawDialog} onOpenChange={(open) => {
+        if (!open) {
+          setWithdrawDialog(false);
+        } else {
+          openWithdrawDialog();
+        }
+      }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -298,44 +337,119 @@ export default function HostWalletPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="withdraw-amount">Số tiền muốn rút (tối thiểu 50,000₫)</Label>
-              <Input
-                id="withdraw-amount"
-                type="text"
-                placeholder="VD: 500000"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                className="mt-1.5"
-              />
-              {withdrawAmount && (
-                <p className="text-xs text-slate-500 mt-1">
-                  = {fmt(parseInt(withdrawAmount) || 0)}₫
+          {withdrawStep === 1 ? (
+            <div className="space-y-4 py-2">
+              <div>
+                <Label htmlFor="withdraw-amount">Số tiền muốn rút (tối thiểu 50,000₫)</Label>
+                <Input
+                  id="withdraw-amount"
+                  type="text"
+                  placeholder="VD: 500000"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="mt-1.5"
+                />
+                {withdrawAmount && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    = {fmt(parseInt(withdrawAmount) || 0)}₫
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-xs text-amber-700 flex items-start gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                  Bấm Tiếp tục để điền thông tin ngân hàng nhận tiền.
                 </p>
-              )}
-            </div>
+              </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-700 flex items-start gap-1.5">
-                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                Tiền sẽ được chuyển tới tài khoản ngân hàng đã đăng ký. Admin sẽ xử lý trong 1-2 ngày làm việc.
-              </p>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setWithdrawDialog(false)}>
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => {
+                    const amt = parseInt(withdrawAmount);
+                    if (!amt || amt < 50000) {
+                      toast.error("Số tiền rút tối thiểu là 50,000₫");
+                      return;
+                    }
+                    if (amt > availableBalance) {
+                      toast.error("Số tiền vượt quá số dư khả dụng");
+                      return;
+                    }
+                    setWithdrawStep(2);
+                  }}
+                  disabled={!withdrawAmount}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  Tiếp tục
+                </Button>
+              </DialogFooter>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs mb-2">
+                Số tiền rút: <strong className="text-indigo-600 font-bold">{fmt(parseInt(withdrawAmount))}₫</strong>
+              </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setWithdrawDialog(false)} disabled={withdrawing}>
-              Hủy
-            </Button>
-            <Button
-              onClick={handleWithdraw}
-              disabled={withdrawing || !withdrawAmount}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              {withdrawing ? "Đang tạo..." : "Xác nhận rút tiền"}
-            </Button>
-          </DialogFooter>
+              <div>
+                <Label htmlFor="bank-name">Tên ngân hàng</Label>
+                <Input
+                  id="bank-name"
+                  type="text"
+                  placeholder="VD: Vietcombank, Techcombank..."
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="account-number">Số tài khoản</Label>
+                <Input
+                  id="account-number"
+                  type="text"
+                  placeholder="Nhập số tài khoản ngân hàng"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="account-holder-name">Họ và tên chủ tài khoản</Label>
+                <Input
+                  id="account-holder-name"
+                  type="text"
+                  placeholder="Nhập họ tên viết hoa không dấu"
+                  value={accountHolderName}
+                  onChange={(e) => setAccountHolderName(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-xs text-amber-700 flex items-start gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                  Số tiền sẽ tự động trừ trực tiếp khỏi ví của bạn sau khi xác nhận.
+                </p>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setWithdrawStep(1)} disabled={withdrawing}>
+                  Quay lại
+                </Button>
+                <Button
+                  onClick={handleWithdraw}
+                  disabled={withdrawing || !bankName.trim() || !accountNumber.trim() || !accountHolderName.trim()}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  {withdrawing ? "Đang xử lý..." : "Xác nhận rút tiền"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

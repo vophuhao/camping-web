@@ -87,7 +87,7 @@ export class CommentService {
     }
 
     // Populate user info trước khi trả về
-    await comment.populate("userId", "name avatarUrl");
+    await comment.populate("userId", "username avatarUrl");
 
     return comment;
   }
@@ -116,7 +116,7 @@ export class CommentService {
       .sort({ createdAt: 1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
-      .populate("userId", "name avatarUrl");
+      .populate("userId", "username avatarUrl");
 
     // Lấy tất cả replies (cả depth = 1 và depth = 2)
     const allReplies = await Comment.find({
@@ -125,7 +125,7 @@ export class CommentService {
       status: "active",
     })
       .sort({ createdAt: 1 })
-      .populate("userId", "name avatarUrl");
+      .populate("userId", "username avatarUrl");
 
     // Tổ chức comments thành cấu trúc đơn giản - tất cả replies cùng cấp
     const commentsWithReplies = rootComments.map((comment: any) => {

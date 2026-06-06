@@ -1,6 +1,8 @@
 import { ErrorFactory } from "@/errors";
 import { BookingModel } from "@/models";
 import HostModel from "@/models/host.modal";
+import UserModel from "../models/user.model";
+import NotificationService from "./notification.service";
 import { WalletTransactionModel } from "@/models/wallet-transaction.model";
 import { WithdrawalModel } from "@/models/withdrawal.model";
 import appAssert from "../utils/app-assert";
@@ -129,14 +131,23 @@ export default class WalletService {
         walletBalance: 0,
         pendingWithdrawalAmount: 0,
         availableBalance: 0,
+        totalWithdrawn: 0,
       };
     }
+
+    const completedWithdrawals = await WithdrawalModel.aggregate([
+      { $match: { host: new mongoose.Types.ObjectId(hostUserId), status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const totalWithdrawn = completedWithdrawals[0]?.total || 0;
 
     return {
       walletBalance: hostRecord.walletBalance,
       pendingWithdrawalAmount: hostRecord.pendingWithdrawalAmount,
       availableBalance:
         hostRecord.walletBalance - hostRecord.pendingWithdrawalAmount,
+      bankInfo: hostRecord.bankInfo,
+      totalWithdrawn,
     };
   }
 
@@ -169,20 +180,22 @@ export default class WalletService {
   }
 
   /**
-   * Host tạo lệnh rút tiền
+   * Host tạo lệnh rút tiền (trừ tiền trực tiếp và hoàn thành ngay)
    */
-  async createWithdrawalRequest(hostUserId: string, amount: number) {
+  async createWithdrawalRequest(
+    hostUserId: string,
+    amount: number,
+    bankInfo: { bankName: string; accountNumber: string; accountHolderName: string }
+  ) {
     const hostRecord = await HostModel.findOne({ user: hostUserId });
     appAssert(hostRecord, ErrorFactory.resourceNotFound("Host"));
-    appAssert(
-      hostRecord.bankInfo?.accountNumber,
-      ErrorFactory.badRequest(
-        "Vui lòng cập nhật thông tin ngân hàng trước khi rút tiền"
-      )
-    );
+    
+    appAssert(bankInfo, ErrorFactory.badRequest("Vui lòng điền thông tin ngân hàng"));
+    appAssert(bankInfo.bankName?.trim(), ErrorFactory.badRequest("Tên ngân hàng là bắt buộc"));
+    appAssert(bankInfo.accountNumber?.trim(), ErrorFactory.badRequest("Số tài khoản là bắt buộc"));
+    appAssert(bankInfo.accountHolderName?.trim(), ErrorFactory.badRequest("Tên chủ tài khoản là bắt buộc"));
 
-    const available =
-      hostRecord.walletBalance - hostRecord.pendingWithdrawalAmount;
+    const available = hostRecord.walletBalance;
     appAssert(
       amount <= available,
       ErrorFactory.badRequest(
@@ -191,32 +204,59 @@ export default class WalletService {
     );
     appAssert(amount >= 50000, ErrorFactory.badRequest("Số tiền rút tối thiểu là 50,000₫"));
 
-    // Kiểm tra không có lệnh rút đang pending
-    const existingPending = await WithdrawalModel.findOne({
-      host: hostUserId,
-      status: { $in: ["pending", "processing"] },
-    });
-    appAssert(
-      !existingPending,
-      ErrorFactory.badRequest("Bạn đang có lệnh rút tiền đang xử lý")
-    );
+    // Cập nhật thông tin ngân hàng của host
+    hostRecord.bankInfo = {
+      bankName: bankInfo.bankName.trim(),
+      accountNumber: bankInfo.accountNumber.trim(),
+      accountHolderName: bankInfo.accountHolderName.trim(),
+    };
 
-    // Tạo lệnh rút
+    // Trừ số dư ví ngay lập tức
+    const balanceBefore = hostRecord.walletBalance;
+    const balanceAfter = balanceBefore - amount;
+    hostRecord.walletBalance = balanceAfter;
+    await hostRecord.save();
+
+    // Tạo lệnh rút tiền với status = "completed" (trừ tiền trực tiếp)
     const withdrawal = await WithdrawalModel.create({
       host: new mongoose.Types.ObjectId(hostUserId),
       hostRecord: hostRecord._id,
       amount,
-      status: "pending",
+      status: "completed",
       bankInfo: {
-        bankName: hostRecord.bankInfo.bankName,
-        accountNumber: hostRecord.bankInfo.accountNumber,
-        accountHolderName: hostRecord.bankInfo.accountHolderName,
+        bankName: bankInfo.bankName.trim(),
+        accountNumber: bankInfo.accountNumber.trim(),
+        accountHolderName: bankInfo.accountHolderName.trim(),
       },
+      processedAt: new Date(),
     });
 
-    // Khoá số tiền chờ rút
-    hostRecord.pendingWithdrawalAmount += amount;
-    await hostRecord.save();
+    // Ghi log giao dịch debit
+    const tx = await WalletTransactionModel.create({
+      host: hostUserId,
+      type: "debit",
+      amount,
+      withdrawalId: withdrawal._id,
+      description: `Rút tiền - Lệnh #${(withdrawal._id as mongoose.Types.ObjectId).toString().slice(-6).toUpperCase()}`,
+      balanceBefore,
+      balanceAfter,
+    });
+
+    withdrawal.walletTransactionId = tx._id as mongoose.Types.ObjectId;
+    await withdrawal.save();
+
+    // Gửi thông báo đến Admin
+    try {
+      const notificationService = new NotificationService();
+      await notificationService.createWithdrawalNotificationForAdmins(
+        hostUserId,
+        hostRecord.name,
+        amount,
+        (withdrawal._id as mongoose.Types.ObjectId).toString()
+      );
+    } catch (error) {
+      console.error("Lỗi khi gửi thông báo rút tiền cho admin:", error);
+    }
 
     return withdrawal;
   }
@@ -246,14 +286,33 @@ export default class WalletService {
   async adminGetAllWithdrawals(filters: {
     status?: string | undefined;
     hostId?: string | undefined;
+    search?: string | undefined;
     page?: number;
     limit?: number;
   }) {
-    const { status, hostId, page = 1, limit = 20 } = filters;
-    const query: Record<string, unknown> = {};
+    const { status, hostId, search, page = 1, limit = 20 } = filters;
+    const query: Record<string, any> = {};
 
     if (status) query.status = status;
     if (hostId) query.host = new mongoose.Types.ObjectId(hostId);
+
+    if (search) {
+      const matchingUsers = await UserModel.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ]
+      }).select("_id");
+      
+      const userIds = matchingUsers.map(u => u._id);
+      
+      query.$or = [
+        { host: { $in: userIds } },
+        { "bankInfo.accountNumber": { $regex: search, $options: "i" } },
+        { "bankInfo.bankName": { $regex: search, $options: "i" } },
+        { "bankInfo.accountHolderName": { $regex: search, $options: "i" } },
+      ];
+    }
 
     const skip = (page - 1) * limit;
     const [withdrawals, total] = await Promise.all([
@@ -286,6 +345,53 @@ export default class WalletService {
       page,
       pendingCount: pendingStats?.count || 0,
       pendingAmount: pendingStats?.totalAmount || 0,
+    };
+  }
+
+  /**
+   * Admin lấy danh sách số dư ví host và thông tin ngân hàng
+   */
+  async adminGetHostBalances(filters: {
+    search?: string | undefined;
+    page?: number;
+    limit?: number;
+  }) {
+    const { search, page = 1, limit = 20 } = filters;
+    const query: Record<string, any> = { status: "approved" };
+
+    if (search) {
+      const matchingUsers = await UserModel.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ]
+      }).select("_id");
+      
+      const userIds = matchingUsers.map(u => u._id);
+
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { gmail: { $regex: search, $options: "i" } },
+        { user: { $in: userIds } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [hosts, total] = await Promise.all([
+      HostModel.find(query)
+        .populate("user", "username email avatarUrl")
+        .sort({ walletBalance: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      HostModel.countDocuments(query),
+    ]);
+
+    return {
+      hosts,
+      total,
+      totalPages: Math.ceil(total / limit),
+      page,
     };
   }
 

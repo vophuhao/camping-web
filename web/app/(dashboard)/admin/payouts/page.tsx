@@ -9,8 +9,10 @@ import {
   DollarSign, RefreshCw, CheckCircle2, Clock, Play,
   ChevronLeft, ChevronRight, AlertCircle, TrendingUp, Users, Wallet,
   ChevronDown, ChevronUp, Building2, CreditCard, AlertTriangle,
-  ListCheck,
+  ListCheck, Search, Eye
 } from 'lucide-react';
+import { adminGetAllWithdrawals, adminGetHostBalances } from '@/services/wallet.service';
+import { Input } from '@/components/ui/input';
 
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
   pending: { label: 'Chờ chuyển', class: 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30' },
@@ -34,7 +36,7 @@ type UnpaidGroup = {
 };
 
 export default function AdminPayoutsPage() {
-  const [tab, setTab] = useState<'unpaid' | 'history'>('unpaid');
+  const [tab, setTab] = useState<'unpaid' | 'history' | 'withdrawals' | 'balances'>('withdrawals');
 
   // Unpaid bookings state
   const [unpaidData, setUnpaidData] = useState<{ groups: UnpaidGroup[]; totalHosts: number; totalBookings: number; totalAmount: number } | null>(null);
@@ -52,6 +54,21 @@ export default function AdminPayoutsPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmNote, setConfirmNote] = useState('');
   const [acting, setActing] = useState(false);
+
+  // Withdrawals tab state
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
+  const [withdrawalSearch, setWithdrawalSearch] = useState('');
+  const [withdrawalStatus, setWithdrawalStatus] = useState('all');
+  const [withdrawalPage, setWithdrawalPage] = useState(1);
+  const [withdrawalTotalPages, setWithdrawalTotalPages] = useState(1);
+
+  // Host balances tab state
+  const [hostBalances, setHostBalances] = useState<any[]>([]);
+  const [balancesLoading, setBalancesLoading] = useState(true);
+  const [balancesSearch, setBalancesSearch] = useState('');
+  const [balancesPage, setBalancesPage] = useState(1);
+  const [balancesTotalPages, setBalancesTotalPages] = useState(1);
 
   const fetchUnpaid = useCallback(async () => {
     setUnpaidLoading(true);
@@ -75,8 +92,45 @@ export default function AdminPayoutsPage() {
     finally { setHistoryLoading(false); }
   }, [page, statusFilter]);
 
+  const fetchWithdrawals = useCallback(async () => {
+    setWithdrawalsLoading(true);
+    try {
+      const params: any = { page: withdrawalPage, limit: 15 };
+      if (withdrawalStatus !== 'all') params.status = withdrawalStatus;
+      if (withdrawalSearch.trim()) params.search = withdrawalSearch.trim();
+      const res: any = await adminGetAllWithdrawals(params);
+      if (res.success) {
+        setWithdrawals(res.data?.withdrawals || []);
+        setWithdrawalTotalPages(res.data?.totalPages || 1);
+      }
+    } catch {
+      toast.error('Không thể tải lịch sử rút tiền');
+    } finally {
+      setWithdrawalsLoading(false);
+    }
+  }, [withdrawalPage, withdrawalStatus, withdrawalSearch]);
+
+  const fetchHostBalances = useCallback(async () => {
+    setBalancesLoading(true);
+    try {
+      const params: any = { page: balancesPage, limit: 15 };
+      if (balancesSearch.trim()) params.search = balancesSearch.trim();
+      const res: any = await adminGetHostBalances(params);
+      if (res.success) {
+        setHostBalances(res.data?.hosts || []);
+        setBalancesTotalPages(res.data?.totalPages || 1);
+      }
+    } catch {
+      toast.error('Không thể tải số dư ví Host');
+    } finally {
+      setBalancesLoading(false);
+    }
+  }, [balancesPage, balancesSearch]);
+
   useEffect(() => { fetchUnpaid(); }, [fetchUnpaid]);
   useEffect(() => { if (tab === 'history') fetchHistory(); }, [tab, fetchHistory]);
+  useEffect(() => { if (tab === 'withdrawals') fetchWithdrawals(); }, [tab, fetchWithdrawals]);
+  useEffect(() => { if (tab === 'balances') fetchHostBalances(); }, [tab, fetchHostBalances]);
 
   const runMonthlyPayout = async () => {
     if (!window.confirm('Xác nhận chạy tổng kết? Hệ thống sẽ tạo payout cho tất cả host có booking chưa thanh toán.')) return;
@@ -118,24 +172,28 @@ export default function AdminPayoutsPage() {
             Thanh toán Host
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Quản lý thanh toán cho host · Tổng kết doanh thu và xác nhận chuyển tiền.
+            Quản lý thanh toán cho host · Lịch sử rút tiền, số dư ví và tổng kết doanh thu.
           </p>
         </div>
-        <button
-          onClick={runMonthlyPayout}
-          disabled={running}
-          className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-primary hover:bg-primary/95 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Play className="h-3.5 w-3.5 fill-white" />
-          {running ? 'Đang tổng kết...' : 'Chạy tổng kết & tạo payout'}
-        </button>
+        {tab === 'unpaid' && (
+          <button
+            onClick={runMonthlyPayout}
+            disabled={running}
+            className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-primary hover:bg-primary/95 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Play className="h-3.5 w-3.5 fill-white" />
+            {running ? 'Đang tổng kết...' : 'Chạy tổng kết & tạo payout'}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1.5 border-b border-slate-200 dark:border-slate-800">
         {([
-          { key: 'unpaid', label: 'Chưa thanh toán', icon: AlertCircle, badge: unpaidData?.totalHosts },
-          { key: 'history', label: 'Lịch sử payout', icon: Clock, badge: null },
+          { key: 'withdrawals', label: 'Lịch sử rút tiền', icon: Clock, badge: null },
+          { key: 'balances', label: 'Số dư ví Host', icon: Wallet, badge: null },
+          // { key: 'unpaid', label: 'Kỳ hạn thanh toán (Chưa kết)', icon: AlertCircle, badge: unpaidData?.totalHosts },
+          // { key: 'history', label: 'Lịch sử Kỳ hạn (Đã kết)', icon: DollarSign, badge: null },
         ] as const).map(t => (
           <button
             key={t.key}
@@ -157,6 +215,251 @@ export default function AdminPayoutsPage() {
           </button>
         ))}
       </div>
+
+      {/* ===== TAB: WITHDRAWALS (Lịch sử rút tiền) ===== */}
+      {tab === 'withdrawals' && (
+        <div className="space-y-4">
+          {/* Filters & Search */}
+          <div className="flex flex-wrap gap-3 items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Tìm host, số TK..."
+                value={withdrawalSearch}
+                onChange={(e) => {
+                  setWithdrawalSearch(e.target.value);
+                  setWithdrawalPage(1);
+                }}
+                className="pl-9 text-xs rounded-xl border-slate-200 dark:border-slate-800"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <select
+                value={withdrawalStatus}
+                onChange={(e) => {
+                  setWithdrawalStatus(e.target.value);
+                  setWithdrawalPage(1);
+                }}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-700 dark:text-slate-300"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="completed">Đã chuyển tiền (Thành công)</option>
+                <option value="pending">Chờ duyệt</option>
+                <option value="processing">Đang xử lý</option>
+                <option value="rejected">Bị từ chối</option>
+              </select>
+
+              <button
+                onClick={fetchWithdrawals}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Làm mới
+              </button>
+            </div>
+          </div>
+
+          {/* List */}
+          {withdrawalsLoading ? (
+            <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : withdrawals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-center space-y-2">
+              <Clock className="h-12 w-12 text-slate-200 dark:text-slate-800" />
+              <p className="text-sm font-semibold">Chưa có lịch sử rút tiền nào</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                      <th className="px-4 py-3.5">Host</th>
+                      <th className="px-4 py-3.5">Số tiền rút</th>
+                      <th className="px-4 py-3.5">Thông tin tài khoản NH</th>
+                      <th className="px-4 py-3.5">Ngày thực hiện</th>
+                      <th className="px-4 py-3.5">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                    {withdrawals.map((w: any) => {
+                      const periodDate = new Date(w.createdAt);
+                      return (
+                        <tr key={w._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                          <td className="px-4 py-3.5">
+                            <div className="font-bold text-slate-900 dark:text-slate-100">{w.host?.username || '—'}</div>
+                            <div className="text-[10px] text-slate-400">{w.host?.email || ''}</div>
+                          </td>
+                          <td className="px-4 py-3.5 font-black text-primary text-base">
+                            {fmt(w.amount)}₫
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {w.bankInfo?.bankName ? (
+                              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 min-w-[160px] max-w-xs text-xs">
+                                <div className="font-bold text-slate-800 dark:text-slate-200">{w.bankInfo.bankName}</div>
+                                <div className="font-mono text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 select-all">{w.bankInfo.accountNumber}</div>
+                                <div className="text-[10px] text-slate-400 truncate mt-0.5 uppercase">{w.bankInfo.accountHolderName}</div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 dark:text-slate-700 italic">Không khả dụng</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                            {periodDate.toLocaleString('vi-VN')}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className={cn(
+                              'inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-extrabold',
+                              w.status === 'completed'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30'
+                                : w.status === 'pending'
+                                  ? 'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/30'
+                                  : 'bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30'
+                            )}>
+                              {w.status === 'completed' ? 'Thành công (Trực tiếp)' : w.status === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {withdrawalTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <button
+                onClick={() => setWithdrawalPage(p => Math.max(1, p - 1))}
+                disabled={withdrawalPage === 1}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" /> Trước
+              </button>
+              <span className="text-xs text-slate-500 font-semibold">
+                Trang <strong className="text-slate-800 dark:text-slate-200 font-black">{withdrawalPage}</strong> / {withdrawalTotalPages}
+              </span>
+              <button
+                onClick={() => setWithdrawalPage(p => Math.min(withdrawalTotalPages, p + 1))}
+                disabled={withdrawalPage === withdrawalTotalPages}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Sau <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== TAB: BALANCES (Số dư ví Host) ===== */}
+      {tab === 'balances' && (
+        <div className="space-y-4">
+          {/* Filters & Search */}
+          <div className="flex flex-wrap gap-3 items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Tìm tên host, email..."
+                value={balancesSearch}
+                onChange={(e) => {
+                  setBalancesSearch(e.target.value);
+                  setBalancesPage(1);
+                }}
+                className="pl-9 text-xs rounded-xl border-slate-200 dark:border-slate-800"
+              />
+            </div>
+
+            <button
+              onClick={fetchHostBalances}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Làm mới
+            </button>
+          </div>
+
+          {/* List */}
+          {balancesLoading ? (
+            <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : hostBalances.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-center space-y-2">
+              <Users className="h-12 w-12 text-slate-200 dark:text-slate-800" />
+              <p className="text-sm font-semibold">Chưa có dữ liệu ví Host nào</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                      <th className="px-4 py-3.5">Host</th>
+                      <th className="px-4 py-3.5">Số dư ví hiện tại</th>
+                      <th className="px-4 py-3.5">Đang chờ rút</th>
+                      <th className="px-4 py-3.5">Thông tin tài khoản NH</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                    {hostBalances.map((host: any) => {
+                      return (
+                        <tr key={host._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                          <td className="px-4 py-3.5">
+                            <div className="font-bold text-slate-900 dark:text-slate-100">{host.name || host.user?.username || '—'}</div>
+                            <div className="text-[10px] text-slate-400">{host.gmail || host.user?.email || ''}</div>
+                          </td>
+                          <td className="px-4 py-3.5 font-black text-emerald-600 text-base">
+                            {fmt(host.walletBalance)}₫
+                          </td>
+                          <td className="px-4 py-3.5 font-semibold text-amber-500 text-xs">
+                            {fmt(host.pendingWithdrawalAmount)}₫
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {host.bankInfo?.bankName ? (
+                              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 min-w-[160px] max-w-xs text-xs">
+                                <div className="font-bold text-slate-800 dark:text-slate-200">{host.bankInfo.bankName}</div>
+                                <div className="font-mono text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 select-all">{host.bankInfo.accountNumber}</div>
+                                <div className="text-[10px] text-slate-400 truncate mt-0.5 uppercase">{host.bankInfo.accountHolderName}</div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 dark:text-slate-700 italic">Chưa đăng ký</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {balancesTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <button
+                onClick={() => setBalancesPage(p => Math.max(1, p - 1))}
+                disabled={balancesPage === 1}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" /> Trước
+              </button>
+              <span className="text-xs text-slate-500 font-semibold">
+                Trang <strong className="text-slate-800 dark:text-slate-200 font-black">{balancesPage}</strong> / {balancesTotalPages}
+              </span>
+              <button
+                onClick={() => setBalancesPage(p => Math.min(balancesTotalPages, p + 1))}
+                disabled={balancesPage === balancesTotalPages}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Sau <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ===== TAB: UNPAID ===== */}
       {tab === 'unpaid' && (

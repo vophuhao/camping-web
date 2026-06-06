@@ -14,7 +14,7 @@ import {
 
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
   pending: { label: 'Chờ chuyển', class: 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30' },
-  processing: { label: 'Đang xử lý', class: 'bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30' },
+  processing: { label: 'Đang xử lý', class: 'bg-primary/10 dark:bg-primary/20 text-primary border border-primary/20' },
   completed: { label: 'Đã chuyển', class: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30' },
   failed: { label: 'Thất bại', class: 'bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30' },
 };
@@ -103,9 +103,9 @@ export default function AdminPayoutsPage() {
   };
 
   const statCards = stats ? [
-    { label: 'Tổng doanh thu (gross)', value: `${fmt(stats.totalGross || 0)}₫`, icon: TrendingUp, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+    { label: 'Tổng doanh thu (gross)', value: `${fmt(stats.totalGross || 0)}₫`, icon: TrendingUp, color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20' },
     { label: 'Phí platform', value: `${fmt(stats.totalFee || 0)}₫`, icon: DollarSign, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/40' },
-    { label: 'Đã chuyển cho host', value: `${fmt(stats.totalNet || 0)}₫`, icon: Wallet, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/40' },
+    { label: 'Đã chuyển cho host', value: `${fmt(stats.totalNet || 0)}₫`, icon: Wallet, color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20' },
     { label: 'Số bản ghi payout', value: stats.totalPayouts || 0, icon: Users, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-950/40' },
   ] : [];
 
@@ -114,7 +114,7 @@ export default function AdminPayoutsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-extrabold tracking-tight text-primary">
             Thanh toán Host
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -124,7 +124,7 @@ export default function AdminPayoutsPage() {
         <button
           onClick={runMonthlyPayout}
           disabled={running}
-          className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-primary hover:bg-primary/95 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Play className="h-3.5 w-3.5 fill-white" />
           {running ? 'Đang tổng kết...' : 'Chạy tổng kết & tạo payout'}
@@ -143,7 +143,7 @@ export default function AdminPayoutsPage() {
             className={cn(
               'flex items-center gap-1.5 px-4 py-2.5 text-xs font-extrabold transition-all border-b-2 rounded-t-lg -mb-[2px] cursor-pointer',
               tab === t.key
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/10 dark:bg-indigo-950/10'
+                ? 'border-primary text-primary bg-primary/10'
                 : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
             )}
           >
@@ -163,7 +163,7 @@ export default function AdminPayoutsPage() {
         <>
           {unpaidLoading ? (
             <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : !unpaidData || unpaidData.groups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs text-center space-y-2">
@@ -178,7 +178,7 @@ export default function AdminPayoutsPage() {
                 {[
                   { label: 'Số host chờ thanh toán', value: unpaidData.totalHosts, icon: Users, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/40' },
                   { label: 'Tổng booking chưa kết', value: unpaidData.totalBookings, icon: ListCheck, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/40' },
-                  { label: 'Tổng cần thanh toán', value: `${fmt(unpaidData.totalAmount * 0.95)}₫`, icon: Wallet, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/40' },
+                  { label: 'Tổng cần thanh toán', value: `${fmt(unpaidData.totalAmount * 0.95)}₫`, icon: Wallet, color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20' },
                 ].map(s => {
                   const Icon = s.icon;
                   return (
@@ -208,7 +208,7 @@ export default function AdminPayoutsPage() {
                         className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-black text-sm flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary font-black text-sm flex-shrink-0">
                             {(group.host?.username || 'H').charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
@@ -224,7 +224,7 @@ export default function AdminPayoutsPage() {
                           </div>
                           <div className="text-right">
                             <div className="text-[10px] text-slate-400 font-semibold">Cần chuyển</div>
-                            <div className="text-base font-black text-indigo-600 dark:text-indigo-400">{fmt(group.netAmount)}₫</div>
+                            <div className="text-base font-black text-primary">{fmt(group.netAmount)}₫</div>
                           </div>
                           {hasBankInfo ? (
                             <span title="Đã có thông tin ngân hàng"><CreditCard className="h-4 w-4 text-emerald-500 flex-shrink-0" /></span>
@@ -270,7 +270,7 @@ export default function AdminPayoutsPage() {
                                 </div>
                                 <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-1.5 mt-1">
                                   <span className="text-slate-700 dark:text-slate-300 font-bold">Số tiền cần chuyển:</span>
-                                  <span className="font-black text-indigo-600 dark:text-indigo-400 text-sm">{fmt(group.netAmount)}₫</span>
+                                  <span className="font-black text-primary text-sm">{fmt(group.netAmount)}₫</span>
                                 </div>
                               </div>
                             </div>
@@ -331,7 +331,7 @@ export default function AdminPayoutsPage() {
                 <button
                   onClick={runMonthlyPayout}
                   disabled={running}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-extrabold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-extrabold text-white bg-primary hover:bg-primary/95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Play className="h-4 w-4 fill-white" />
                   {running ? 'Đang tổng kết...' : `Tạo payout cho ${unpaidData.totalHosts} host`}
@@ -370,7 +370,7 @@ export default function AdminPayoutsPage() {
             <select
               value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-700 dark:text-slate-300"
+              className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-700 dark:text-slate-300"
             >
               <option value="">Tất cả trạng thái</option>
               {Object.entries(STATUS_MAP).map(([k, v]) => (
@@ -388,7 +388,7 @@ export default function AdminPayoutsPage() {
           {/* Table */}
           {historyLoading ? (
             <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : payouts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs text-slate-400 text-center space-y-2">
@@ -431,7 +431,7 @@ export default function AdminPayoutsPage() {
                           </td>
                           <td className="px-4 py-3.5 font-semibold text-slate-700 dark:text-slate-300">{fmt(p.grossAmount)}₫</td>
                           <td className="px-4 py-3.5 text-xs text-rose-600 dark:text-rose-400 font-medium">-{fmt(p.platformFee)}₫</td>
-                          <td className="px-4 py-3.5 font-black text-indigo-600 dark:text-indigo-400">{fmt(p.netAmount)}₫</td>
+                          <td className="px-4 py-3.5 font-black text-primary">{fmt(p.netAmount)}₫</td>
                           <td className="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400">
                             {p.bankInfo?.bankName ? (
                               <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 min-w-[140px]">
@@ -455,7 +455,7 @@ export default function AdminPayoutsPage() {
                             {p.status === 'pending' && (
                               <button
                                 onClick={() => setConfirmId(p._id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-xs font-bold cursor-pointer transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold cursor-pointer transition-colors"
                               >
                                 <CheckCircle2 className="h-3.5 w-3.5" /> Đã chuyển
                               </button>
@@ -514,7 +514,7 @@ export default function AdminPayoutsPage() {
               onChange={e => setConfirmNote(e.target.value)}
               placeholder="Nhập mã giao dịch ngân hàng, ghi chú (tùy chọn)..."
               rows={3}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:text-slate-200"
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-slate-200"
             />
             <div className="flex gap-2.5 justify-end mt-5">
               <button
@@ -526,7 +526,7 @@ export default function AdminPayoutsPage() {
               <button
                 onClick={markCompleted}
                 disabled={acting}
-                className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-primary hover:bg-primary/95 shadow-md cursor-pointer disabled:opacity-50"
               >
                 {acting ? 'Đang xử lý...' : 'Xác nhận đã chuyển'}
               </button>

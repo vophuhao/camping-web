@@ -50,7 +50,7 @@ function fmtDate(d: string) {
 
 const STATUS = {
   pending: { label: "Chờ duyệt", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300", icon: Clock },
-  processing: { label: "Đang xử lý", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300", icon: RefreshCw },
+  processing: { label: "Đang xử lý", color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary", icon: RefreshCw },
   completed: { label: "Hoàn tất", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300", icon: CheckCircle2 },
   rejected: { label: "Bị từ chối", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300", icon: XCircle },
 };
@@ -133,7 +133,7 @@ export default function AdminWithdrawalsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <Wallet className="h-6 w-6 text-indigo-500" />
+          <Wallet className="h-6 w-6 text-primary" />
           Quản lý Rút tiền Host
         </h1>
         <p className="text-sm text-slate-500 mt-1">Duyệt các lệnh rút tiền từ ví host</p>
@@ -145,9 +145,9 @@ export default function AdminWithdrawalsPage() {
           <p className="text-amber-600 text-sm font-medium">Đang chờ duyệt</p>
           <p className="text-3xl font-black text-amber-700 dark:text-amber-300 mt-1">{stats.pendingCount} lệnh</p>
         </div>
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-5">
-          <p className="text-indigo-600 text-sm font-medium">Tổng tiền chờ rút</p>
-          <p className="text-3xl font-black text-indigo-700 dark:text-indigo-300 mt-1">{fmt(stats.pendingAmount)}₫</p>
+        <div className="bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-2xl p-5">
+          <p className="text-primary text-sm font-medium">Tổng tiền chờ rút</p>
+          <p className="text-3xl font-black text-primary mt-1">{fmt(stats.pendingAmount)}₫</p>
         </div>
       </div>
 
@@ -179,7 +179,7 @@ export default function AdminWithdrawalsPage() {
       {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -202,7 +202,7 @@ export default function AdminWithdrawalsPage() {
                   <div className="flex items-start justify-between gap-4">
                     {/* Host info */}
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
                         {wd.host?.username?.[0]?.toUpperCase() || "H"}
                       </div>
                       <div>
@@ -216,7 +216,7 @@ export default function AdminWithdrawalsPage() {
 
                     {/* Amount + status */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                      <p className="text-2xl font-black text-primary">
                         {fmt(wd.amount)}₫
                       </p>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mt-1 ${st.color}`}>
@@ -298,7 +298,7 @@ export default function AdminWithdrawalsPage() {
               {processDialog.withdrawal && (
                 <>
                   Host: <strong>{processDialog.withdrawal.host?.username}</strong> — Số tiền:{" "}
-                  <strong className="text-indigo-600">{fmt(processDialog.withdrawal.amount)}₫</strong>
+                  <strong className="text-primary">{fmt(processDialog.withdrawal.amount)}₫</strong>
                   <br />
                   {processDialog.approved ? (
                     <span className="text-emerald-600">
@@ -326,8 +326,8 @@ export default function AdminWithdrawalsPage() {
             </div>
 
             {processDialog.approved && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-700 flex items-start gap-1.5">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                <p className="text-xs text-primary flex items-start gap-1.5">
                   <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
                   Sau khi xác nhận, số tiền sẽ bị trừ khỏi ví host. Hãy chắc chắn đã thực hiện chuyển khoản thực tế.
                 </p>

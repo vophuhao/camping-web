@@ -962,7 +962,7 @@ export class BookingService {
 
   async cancelExpiredPendingBookings() {
     const REMINDER_HOURS = 6;
-    const CANCEL_HOURS = 24;
+    const CANCEL_HOURS = 12;
 
     const now = new Date();
     const reminderTime = new Date(now.getTime() - REMINDER_HOURS * 60 * 60 * 1000);
@@ -1065,7 +1065,7 @@ export class BookingService {
                 
                 <div class="warning-box">
                   <p style="margin: 0; color: #dc2626;">
-                    <strong>⚠️ Lưu ý quan trọng:</strong> Booking sẽ tự động bị hủy sau <strong>18 giờ nữa</strong> nếu không được thanh toán.
+                    <strong>⚠️ Lưu ý quan trọng:</strong> Booking sẽ tự động bị hủy sau <strong>6 giờ nữa</strong> nếu không được thanh toán.
                   </p>
                 </div>
                 
@@ -1113,7 +1113,7 @@ export class BookingService {
         console.error(`❌ Lỗi gửi email nhắc nhở Booking ${booking.code}:`, err);
       }
     }
-    // 2) TÌM VÀ HỦY BOOKING QUÁ HẠN 24 GIỜ
+    // 2) TÌM VÀ HỦY BOOKING QUÁ HẠN 12 GIỜ
     const expiredBookings = await BookingModel.find({
       paymentStatus: "pending",
       status: "pending",
@@ -1124,25 +1124,19 @@ export class BookingService {
       .populate("property", "name");
 
     for (const booking of expiredBookings) {
-      const session = await mongoose.startSession();
-      session.startTransaction();
-
       try {
-        const bookingId = (booking._id as mongoose.Types.ObjectId).toString();
-        const siteId = booking.site.toString();
+        const siteId = (booking.site as any)._id.toString();
+
+        // Hủy booking trực tiếp qua method của instance
+        await booking.cancel(
+          (booking.guest as any)?._id || booking.guest,
+          "Auto-cancelled: Payment timeout after 12 hours"
+        );
 
         // Unblock dates (giải phóng lịch)
         await this.unblockDatesForBooking(siteId, booking.checkIn, booking.checkOut);
 
-        // Hủy booking (sử dụng logic existing)
-        await this.cancelBooking(bookingId, booking.guest as mongoose.Types.ObjectId, {
-          cancellationReason: "Auto-cancelled: Payment timeout after 24 hours",
-        });
-        await booking.save();
-        await session.commitTransaction();
-        session.endSession();
-
-        console.log(`⛔ Đã tự động hủy và xóa booking quá hạn 24h: ${booking.code}`);
+        console.log(`⛔ Đã tự động hủy booking quá hạn 12h: ${booking.code}`);
 
         // Gửi email thông báo hủy
         try {
@@ -1210,7 +1204,7 @@ export class BookingService {
                 <div class="content">
                   <p>Xin chào <strong>${guestName}</strong>,</p>
                   
-                  <p>Rất tiếc, booking <strong>${booking.code}</strong> của bạn đã bị hủy tự động do không được thanh toán trong vòng 24 giờ.</p>
+                  <p>Rất tiếc, booking <strong>${booking.code}</strong> của bạn đã bị hủy tự động do không được thanh toán trong vòng 12 giờ.</p>
                   
                   <div class="info-box">
                     <h3 style="margin-top: 0; color: #ef4444;">📋 Thông tin booking đã hủy</h3>
@@ -1218,7 +1212,7 @@ export class BookingService {
                     <p><strong>Địa điểm:</strong> ${siteName} - ${propertyName}</p>
                     <p><strong>Check-in:</strong> ${new Date(booking.checkIn).toLocaleDateString("vi-VN")}</p>
                     <p><strong>Check-out:</strong> ${new Date(booking.checkOut).toLocaleDateString("vi-VN")}</p>
-                    <p><strong>Lý do hủy:</strong> <span style="color: #ef4444;">Quá thời gian thanh toán (24 giờ)</span></p>
+                    <p><strong>Lý do hủy:</strong> <span style="color: #ef4444;">Quá thời gian thanh toán (12 giờ)</span></p>
                   </div>
                   
                   <div class="tips-box">
@@ -1261,8 +1255,6 @@ export class BookingService {
           console.error(`❌ Lỗi gửi email thông báo hủy Booking ${booking.code}:`, emailErr);
         }
       } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
         console.error(`❌ Lỗi khi hủy booking ${booking.code}:`, err);
       }
     }
@@ -2183,7 +2175,7 @@ export class BookingService {
     for (const booking of unpaidBookings) {
       try {
         // Mở khóa availability (xóa block đã tạo khi booking)
-        await AvailabilityModel.deleteMany({ booking: booking._id });
+        await this.unblockDatesForBooking(booking.site.toString(), booking.checkIn, booking.checkOut);
 
         // Xóa booking
         await BookingModel.findByIdAndDelete(booking._id);

@@ -131,6 +131,7 @@ export interface BookingDocument extends mongoose.Document {
   phone?: string;
   email?: string;
   isSentMail?: boolean;
+  reminderSent?: boolean;
 
   // Methods
   confirm(): Promise<BookingDocument>;
@@ -165,6 +166,7 @@ const bookingSchema = new mongoose.Schema<BookingDocument>(
     numberOfPets: { type: Number, min: 0, default: 0 },
     numberOfVehicles: { type: Number, min: 0, default: 0 },
     isSentMail: { type: Boolean, default: false },
+    reminderSent: { type: Boolean, default: false },
     pricing: {
       basePrice: { type: Number, required: true, min: 0 },
       weekendPrice: { type: Number, min: 0 },

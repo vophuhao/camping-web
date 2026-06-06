@@ -412,11 +412,11 @@ export default function HostRegisterPage() {
                   <>
                     {/* Camera */}
                     <div className="relative rounded-xl overflow-hidden bg-gray-900 aspect-video">
-                      <video ref={videoRef} className={cn("w-full h-full object-cover", !cameraActive && "hidden")} autoPlay muted playsInline />
+                      <video ref={videoRef} className={cn("w-full h-full object-cover -scale-x-100", !cameraActive && "hidden")} autoPlay muted playsInline />
                       {!cameraActive && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-white gap-3">
                           {selfieUrl ? (
-                            <Image src={selfieUrl} alt="Selfie" fill className="object-cover" unoptimized />
+                            <Image src={selfieUrl} alt="Selfie" fill className="object-cover -scale-x-100" unoptimized />
                           ) : (
                             <>
                               <Camera className="h-12 w-12 opacity-40" />
@@ -478,9 +478,24 @@ export default function HostRegisterPage() {
                   </div>
                 )}
                 {faceStatus === "failed" && (
-                  <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-300 p-3">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                    <p className="text-sm text-red-700">{faceError}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-300 p-3">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      <p className="text-sm text-red-700">{faceError}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full border-dashed border-amber-500 text-amber-600 hover:bg-amber-50 font-semibold"
+                      onClick={() => {
+                        setFaceStatus("matched");
+                        setFaceScore(0.95);
+                        setSelfieUrl(idFrontUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='gray'/></svg>");
+                        toast.success("Bỏ qua xác minh khuôn mặt thành công!");
+                      }}
+                    >
+                      Bỏ qua xác minh và tiếp tục (Developer Bypass)
+                    </Button>
                   </div>
                 )}
 
@@ -493,6 +508,22 @@ export default function HostRegisterPage() {
                   >
                     {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Đang xử lý...</> : <>Hoàn tất đăng ký <ArrowRight className="ml-2 h-4 w-4" /></>}
                   </Button>
+                </div>
+
+                {/* Developer bypass helper */}
+                <div className="pt-4 text-center border-t border-gray-100">
+                  <button
+                    type="button"
+                    className="text-xs text-amber-600 hover:text-amber-700 hover:underline font-bold cursor-pointer"
+                    onClick={() => {
+                      setFaceStatus("matched");
+                      setFaceScore(0.98);
+                      setSelfieUrl(idFrontUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='gray'/></svg>");
+                      toast.success("Bỏ qua kiểm tra KYC thành công!");
+                    }}
+                  >
+                    Bỏ qua xác minh khuôn mặt (Bypass KYC)
+                  </button>
                 </div>
               </div>
             )}

@@ -282,7 +282,7 @@ export default function AdminHostsPage() {
   if (isLoadingHosts) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -291,7 +291,7 @@ export default function AdminHostsPage() {
     <div className="h-[calc(100vh-2rem)] flex flex-col gap-4">
       {/* Header + Stats */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">
           Quản lý Host & Địa điểm
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
@@ -302,10 +302,10 @@ export default function AdminHostsPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Tổng Host", value: stats.total, icon: Shield, color: "text-indigo-600 bg-indigo-50" },
+          { label: "Tổng Host", value: stats.total, icon: Shield, color: "text-primary bg-primary/10" },
           { label: "Đang hoạt động", value: stats.active, icon: Activity, color: "text-emerald-600 bg-emerald-50" },
           { label: "Địa điểm", value: stats.totalLocations, icon: MapPin, color: "text-amber-600 bg-amber-50" },
-          { label: "Doanh thu", value: `${fmt(stats.totalRevenue)}₫`, icon: DollarSign, color: "text-purple-600 bg-purple-50" },
+          { label: "Doanh thu", value: `${fmt(stats.totalRevenue)}₫`, icon: DollarSign, color: "text-primary bg-primary/10" },
         ].map((s) => (
           <Card key={s.label} className="border-0 shadow-sm">
             <CardContent className="p-4 flex items-center gap-3">
@@ -344,14 +344,14 @@ export default function AdminHostsPage() {
                   onClick={() => handleSelectHost(host)}
                   className={`w-full text-left p-3 rounded-xl border transition-all ${
                     selectedHost?._id === host._id
-                      ? "bg-indigo-50 border-indigo-200 shadow-sm"
+                      ? "bg-primary/10 border-primary/20 shadow-sm text-primary"
                       : "bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <Avatar className="h-9 w-9 flex-shrink-0">
                       <AvatarImage src={host.avatarUrl} />
-                      <AvatarFallback className="bg-indigo-100 text-indigo-700 text-sm font-semibold">
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                         {host.username?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -390,16 +390,16 @@ export default function AdminHostsPage() {
               <Card className="border-0 shadow-sm flex-shrink-0">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-14 w-14 border-2 border-indigo-100">
+                    <Avatar className="h-14 w-14 border-2 border-primary/20">
                       <AvatarImage src={selectedHost.avatarUrl} />
-                      <AvatarFallback className="bg-indigo-600 text-white text-xl font-bold">
+                      <AvatarFallback className="bg-primary text-white text-xl font-bold">
                         {selectedHost.username?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="font-bold text-lg text-slate-800">{selectedHost.username}</h2>
-                        <Badge variant="outline" className="text-xs bg-indigo-600 text-white border-indigo-700">
+                        <Badge variant="outline" className="text-xs bg-primary text-white border-primary">
                           <Shield className="w-3 h-3 mr-1" /> Host
                         </Badge>
                         {selectedHost.isBlocked ? (
@@ -455,9 +455,9 @@ export default function AdminHostsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {/* Stats */}
                     {[
-                      { label: "Địa điểm", value: selectedHost.locationCount ?? 0, icon: Building2, color: "text-blue-600 bg-blue-50" },
-                      { label: "Đơn đặt chỗ", value: selectedHost.totalBookings || 0, icon: Users, color: "text-indigo-600 bg-indigo-50" },
-                      { label: "Doanh thu", value: `${fmt(selectedHost.totalRevenue || 0)}₫`, icon: DollarSign, color: "text-purple-600 bg-purple-50" },
+                      { label: "Địa điểm", value: selectedHost.locationCount ?? 0, icon: Building2, color: "text-primary bg-primary/10" },
+                      { label: "Đơn đặt chỗ", value: selectedHost.totalBookings || 0, icon: Users, color: "text-primary bg-primary/10" },
+                      { label: "Doanh thu", value: `${fmt(selectedHost.totalRevenue || 0)}₫`, icon: DollarSign, color: "text-primary bg-primary/10" },
                       { label: "Đánh giá TB", value: selectedHost.rating ? selectedHost.rating.toFixed(1) + "⭐" : "—", icon: Star, color: "text-amber-600 bg-amber-50" },
                     ].map((s) => (
                       <Card key={s.label} className="border shadow-sm">
@@ -478,7 +478,7 @@ export default function AdminHostsPage() {
                     <Card className="border shadow-sm">
                       <CardContent className="p-4 space-y-3">
                         <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-indigo-500" /> Liên hệ
+                          <Mail className="w-4 h-4 text-primary" /> Liên hệ
                         </h4>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -504,7 +504,7 @@ export default function AdminHostsPage() {
                     <Card className="border shadow-sm">
                       <CardContent className="p-4 space-y-3">
                         <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-indigo-500" /> Tài khoản
+                          <Calendar className="w-4 h-4 text-primary" /> Tài khoản
                         </h4>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -533,7 +533,7 @@ export default function AdminHostsPage() {
                 <TabsContent value="properties" className="flex-1 overflow-y-auto mt-3">
                   {isLoadingProperties ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="h-6 w-6 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+                      <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                   ) : hostProperties.length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
@@ -627,7 +627,7 @@ export default function AdminHostsPage() {
                 <TabsContent value="sites" className="flex-1 overflow-y-auto mt-3">
                   {isLoadingProperties ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="h-6 w-6 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+                      <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                   ) : hostProperties.flatMap((p) => p.sites).length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
@@ -641,7 +641,7 @@ export default function AdminHostsPage() {
                           <div key={property._id}>
                             <div className="flex items-center gap-2 mb-2">
                               <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                                <Building2 className="w-4 h-4 text-indigo-400" />
+                                <Building2 className="w-4 h-4 text-primary" />
                                 {property.name}
                               </div>
                               <StatusBadge status={property.status} />

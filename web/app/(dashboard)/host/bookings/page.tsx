@@ -225,7 +225,7 @@ export default function BookingsPage() {
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors',
                       viewMode === mode
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-primary text-white'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                     )}
                   >
@@ -272,7 +272,7 @@ export default function BookingsPage() {
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                   activeTab === tab.value
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-primary text-white shadow-sm'
                     : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
                 )}
               >
@@ -397,7 +397,7 @@ export default function BookingsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle className={cn('h-5 w-5', actionDialog.type === 'confirm' ? 'text-indigo-600' : 'text-blue-600')} />
+              <CheckCircle className="h-5 w-5 text-primary" />
               {actionDialog.type === 'confirm' ? 'Xác nhận booking' : 'Hoàn thành booking'}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -406,7 +406,7 @@ export default function BookingsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={executeAction} className={actionDialog.type === 'confirm' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}>
+            <AlertDialogAction onClick={executeAction} className="bg-primary hover:bg-primary/90">
               Xác nhận
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -419,7 +419,7 @@ export default function BookingsPage() {
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
 }
@@ -530,17 +530,17 @@ function BookingCard({ booking, formatPrice, formatDate, onAction, onDetail }: a
             <div className="mb-3">
               <button
                 onClick={generateQR}
-                className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                className="flex items-center gap-1.5 text-xs text-primary font-medium transition-colors"
               >
                 <span>{showQr ? 'Ẩn mã QR' : 'Hiển mã QR check-in'}</span>
               </button>
               {showQr && qrDataUrl && (
-                <div className="mt-2 flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                <div className="mt-2 flex items-center gap-3 p-3 bg-primary/10 dark:bg-primary/20 rounded-xl border border-primary/20">
                   <img src={qrDataUrl} alt="QR check-in" className="w-24 h-24 rounded-lg" />
                   <div>
-                    <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-200">Mã QR Check-in</p>
-                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5">Cho khách quét để xác nhận đã đến</p>
-                    <p className="text-[10px] text-indigo-500 mt-1 break-all">{confirmUrl}</p>
+                    <p className="text-xs font-semibold text-primary">Mã QR Check-in</p>
+                    <p className="text-[10px] text-primary/80 mt-0.5">Cho khách quét để xác nhận đã đến</p>
+                    <p className="text-[10px] text-primary mt-1 break-all">{confirmUrl}</p>
                   </div>
                 </div>
               )}

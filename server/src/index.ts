@@ -129,6 +129,21 @@ cron.schedule("0 */6 * * *", async () => {
   }
 });
 
+// Cron: Tự động hủy/xóa các booking chưa thanh toán quá hạn 12 tiếng và giải phóng ngày (mỗi 15 phút)
+cron.schedule("*/15 * * * *", async () => {
+  console.log("🔄 Running cancel expired pending bookings job (12h timeout)...");
+  try {
+    const result = await bookingService.cancelExpiredPendingBookings();
+    if (result.remindersSent > 0 || result.bookingsCancelled > 0) {
+      console.log(
+        `✅ Expired bookings job: sent ${result.remindersSent} reminders, cancelled ${result.bookingsCancelled} bookings`
+      );
+    }
+  } catch (err) {
+    console.error("❌ Expired bookings job failed:", err);
+  }
+});
+
 // Cron: Tự động xóa các booking chưa thanh toán có check-in bằng ngày hiện tại (mỗi ngày lúc 1:00 AM)
 cron.schedule("0 1 * * *", async () => {
   console.log("🔄 Running cleanup unpaid bookings job...");

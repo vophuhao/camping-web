@@ -37,7 +37,7 @@ const REASON_LABELS: Record<string, string> = {
 const STATUS_BADGE: Record<string, { label: string; class: string }> = {
   pending: { label: 'Chờ xử lý', class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
   reviewed: { label: 'Đang xem xét', class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' },
-  resolved: { label: 'Đã xử lý', class: 'bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 border-indigo-500/20' },
+  resolved: { label: 'Đã xử lý', class: 'bg-primary/10 text-primary border-primary/20' },
   dismissed: { label: 'Từ chối', class: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' },
 };
 
@@ -125,7 +125,7 @@ export default function AdminReportsPage() {
               className={cn(
                 'px-4 py-2.5 text-xs font-extrabold transition-all border-b-2 rounded-t-lg -mb-[2px] cursor-pointer',
                 isActive
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-455 bg-indigo-50/10 dark:bg-indigo-950/10'
+                  ? 'border-primary text-primary bg-primary/5 dark:bg-primary/5'
                   : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               )}
             >
@@ -142,7 +142,7 @@ export default function AdminReportsPage() {
           <select
             value={typeFilter}
             onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-650 dark:text-slate-350 cursor-pointer"
+            className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-650 dark:text-slate-350 cursor-pointer"
           >
             {TYPE_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -166,7 +166,7 @@ export default function AdminReportsPage() {
       {/* Table Data View */}
       {loading ? (
         <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
       ) : reports.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl shadow-xs text-slate-400">
@@ -215,7 +215,7 @@ export default function AdminReportsPage() {
                         <span className={cn(
                           'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold border uppercase tracking-wider',
                           report.targetType === 'post'
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                            ? 'bg-primary/10 text-primary border-primary/20'
                             : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20'
                         )}>
                           {report.targetType === 'post' ? '📝 Bài viết' : '🏕️ Địa điểm'}
@@ -293,7 +293,7 @@ export default function AdminReportsPage() {
                               <button
                                 onClick={() => openNoteModal(report._id, 'resolved', 'none')}
                                 disabled={!!actionLoading}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-205 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary dark:border-primary/30 dark:bg-primary/5 dark:hover:bg-primary/10 text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
                                 title="Phê duyệt không ẩn nội dung"
                               >
                                 <CheckCircle2 className="h-3 w-3" /> Giải quyết
@@ -348,7 +348,7 @@ export default function AdminReportsPage() {
                   ? "bg-rose-50 dark:bg-rose-950 text-rose-650 dark:text-rose-455"
                   : pendingAction?.status === 'dismissed'
                     ? "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                    : "bg-indigo-50 dark:bg-indigo-950 text-indigo-650 dark:text-indigo-400"
+                    : "bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary"
               )}>
                 {pendingAction?.action === 'hide_target' ? <AlertTriangle className="h-5 w-5" /> : <Info className="h-5 w-5" />}
               </div>
@@ -374,7 +374,7 @@ export default function AdminReportsPage() {
                 onChange={e => setResolveNote(e.target.value)}
                 placeholder="Nhập lý do hoặc thông tin phản hồi bổ sung..."
                 rows={3}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-205 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none resize-none"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-205 focus:ring-2 focus:ring-primary/20 focus:outline-none resize-none"
               />
             </div>
 
@@ -394,7 +394,7 @@ export default function AdminReportsPage() {
                     ? "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
                     : pendingAction?.status === 'dismissed'
                       ? "bg-slate-600 hover:bg-slate-700 dark:bg-slate-500 dark:hover:bg-slate-600"
-                      : "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                      : "bg-primary hover:bg-primary/90"
                 )}
               >
                 {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}

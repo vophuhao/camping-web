@@ -14,7 +14,7 @@ import {
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
   pending: { label: 'Chờ xác nhận', class: 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/30' },
   confirmed: { label: 'Đã xác nhận', class: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450 border border-emerald-200/60 dark:border-emerald-900/30' },
-  completed: { label: 'Hoàn thành', class: 'bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-450 border border-blue-200/60 dark:border-blue-900/30' },
+  completed: { label: 'Hoàn thành', class: 'bg-primary/10 dark:bg-primary/20 text-primary border border-primary/20' },
   cancelled: { label: 'Đã hủy', class: 'bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 border border-rose-200/60 dark:border-rose-900/30' },
   refunded: { label: 'Đã hoàn tiền', class: 'bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400 border border-purple-200/60 dark:border-purple-900/30' },
   refund_requested: { label: 'Yêu cầu hoàn tiền', class: 'bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 border border-orange-200/60 dark:border-orange-900/30' },
@@ -24,7 +24,7 @@ const PAYMENT_MAP: Record<string, { label: string; class: string }> = {
   pending: { label: 'Chờ TT', class: 'bg-amber-50/80 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400' },
   paid: { label: 'Đã TT', class: 'bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450' },
   failed: { label: 'Thất bại', class: 'bg-rose-50/80 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450' },
-  processing: { label: 'Đang xử lý', class: 'bg-blue-50/80 dark:bg-blue-950/20 text-blue-700 dark:text-blue-450' },
+  processing: { label: 'Đang xử lý', class: 'bg-primary/10 dark:bg-primary/25 text-primary' },
 };
 
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
@@ -118,7 +118,7 @@ export default function AdminBookingsPage() {
   };
 
   const statCards = stats ? [
-    { label: 'Tổng booking', value: stats.statusStats?.reduce((s: number, x: any) => s + x.count, 0) || 0, icon: Calendar, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+    { label: 'Tổng booking', value: stats.statusStats?.reduce((s: number, x: any) => s + x.count, 0) || 0, icon: Calendar, color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20' },
     { label: 'Doanh thu', value: `${fmt(stats.totalRevenue || 0)}₫`, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
     { label: 'Phí platform 5%', value: `${fmt(stats.platformFee || 0)}₫`, icon: DollarSign, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/40' },
     { label: 'Chờ hoàn tiền', value: stats.pendingRefunds || 0, icon: AlertCircle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-950/40' },
@@ -128,7 +128,7 @@ export default function AdminBookingsPage() {
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Title Header */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">
           Quản lý Booking hệ thống
         </h1>
         <p className="text-xs text-slate-400 mt-1">Theo dõi và phê duyệt hoàn tiền các booking của khách hàng cắm trại.</p>
@@ -169,7 +169,7 @@ export default function AdminBookingsPage() {
               className={cn(
                 'px-4 py-2.5 text-xs font-extrabold transition-all border-b-2 rounded-t-lg -mb-[2px]',
                 isActive
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/10 dark:bg-indigo-950/10'
+                  ? 'border-primary text-primary bg-primary/10'
                   : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               )}
             >
@@ -189,7 +189,7 @@ export default function AdminBookingsPage() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Tìm theo mã, tên, email..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:text-slate-100"
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-slate-100"
             />
           </div>
 
@@ -198,7 +198,7 @@ export default function AdminBookingsPage() {
             <select
               value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-650 dark:text-slate-350"
+              className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-650 dark:text-slate-350"
             >
               <option value="">Tất cả trạng thái</option>
               {Object.entries(STATUS_MAP).map(([k, v]) => (
@@ -217,7 +217,7 @@ export default function AdminBookingsPage() {
                   className={cn(
                     'px-3 py-1.5 text-[11px] font-extrabold rounded-xl border transition-colors cursor-pointer',
                     cannotAttendFilter === opt.v
-                      ? 'bg-indigo-600 border-indigo-600 text-white'
+                      ? 'bg-primary border-primary text-white'
                       : 'bg-white dark:bg-slate-950 border-slate-250 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                   )}
                 >
@@ -231,7 +231,7 @@ export default function AdminBookingsPage() {
           <select
             value={hostFilter}
             onChange={e => { setHostFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-650 dark:text-slate-350"
+            className="px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-650 dark:text-slate-350"
           >
             <option value="">Tất cả Host</option>
             {hosts.map(h => (
@@ -289,7 +289,7 @@ export default function AdminBookingsPage() {
       {/* Table Data View */}
       {loading ? (
         <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-850 rounded-2xl">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
       ) : bookings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-850 rounded-2xl shadow-xs text-slate-400">
@@ -368,7 +368,7 @@ export default function AdminBookingsPage() {
                           <button
                             onClick={() => setDetail(b)}
                             title="Xem chi tiết booking"
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-250 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition-colors cursor-pointer text-xs font-bold"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer text-xs font-bold"
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </button>
@@ -415,7 +415,7 @@ export default function AdminBookingsPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl w-full max-w-3xl transform transition-all my-8">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <span className="text-[10px] font-black text-indigo-650 bg-indigo-50 dark:bg-indigo-950/50 dark:text-indigo-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                <span className="text-[10px] font-black text-primary bg-primary/10 dark:bg-primary/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
                   Mã: {detail.code || detail._id?.slice(-6).toUpperCase()}
                 </span>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1.5 flex items-center gap-2">
@@ -432,7 +432,7 @@ export default function AdminBookingsPage() {
               <div className="space-y-5">
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4">
                   <h4 className="text-xs font-black text-slate-450 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Info className="h-3.5 w-3.5 text-indigo-500" /> Thông tin chung
+                    <Info className="h-3.5 w-3.5 text-primary" /> Thông tin chung
                   </h4>
                   <div className="space-y-2.5 text-xs">
                     <div className="flex justify-between"><span className="text-slate-400">Trạng thái booking:</span>
@@ -456,7 +456,7 @@ export default function AdminBookingsPage() {
 
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4">
                   <h4 className="text-xs font-black text-slate-450 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-indigo-500" /> Khách hàng
+                    <Users className="h-3.5 w-3.5 text-primary" /> Khách hàng
                   </h4>
                   <div className="space-y-2.5 text-xs">
                     <div className="flex justify-between"><span className="text-slate-400">Họ và tên:</span> <span className="font-bold text-slate-800 dark:text-slate-200">{detail.fullnameGuest || detail.guest?.username || '—'}</span></div>
@@ -478,13 +478,13 @@ export default function AdminBookingsPage() {
               <div className="space-y-5">
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4">
                   <h4 className="text-xs font-black text-slate-450 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Tent className="h-3.5 w-3.5 text-indigo-500" /> Khu cắm trại & Site
+                    <Tent className="h-3.5 w-3.5 text-primary" /> Khu cắm trại & Site
                   </h4>
                   <div className="space-y-2.5 text-xs">
                     <div className="flex justify-between"><span className="text-slate-400">Khu cắm trại:</span> <span className="font-bold text-slate-800 dark:text-slate-200">{detail.property?.name || '—'}</span></div>
                     <div className="flex justify-between"><span className="text-slate-400">Vị trí (Site):</span> <span className="font-semibold text-slate-700 dark:text-slate-300">{detail.site?.name || '—'}</span></div>
                     <div className="flex justify-between"><span className="text-slate-400">Chủ vườn (Host):</span> <span className="font-semibold text-slate-700 dark:text-slate-300">{detail.host?.username || '—'} ({detail.host?.email})</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Thời gian đi:</span> <span className="font-extrabold text-indigo-600 dark:text-indigo-400">{fmtDate(detail.checkIn)} → {fmtDate(detail.checkOut)}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-400">Thời gian đi:</span> <span className="font-extrabold text-primary">{fmtDate(detail.checkIn)} → {fmtDate(detail.checkOut)}</span></div>
                     <div className="flex justify-between"><span className="text-slate-400">Số đêm:</span> <span className="font-semibold text-slate-700 dark:text-slate-300">{detail.nights} đêm</span></div>
                     <div className="flex justify-between"><span className="text-slate-400">Thành viên:</span> <span className="font-semibold text-slate-700 dark:text-slate-300">{detail.numberOfGuests} khách, {detail.numberOfPets || 0} thú cưng, {detail.numberOfVehicles || 0} xe</span></div>
                   </div>
@@ -492,7 +492,7 @@ export default function AdminBookingsPage() {
 
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4">
                   <h4 className="text-xs font-black text-slate-450 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5 text-indigo-500" /> Chi tiết chi phí
+                    <DollarSign className="h-3.5 w-3.5 text-primary" /> Chi tiết chi phí
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between"><span className="text-slate-400">Giá cơ bản:</span> <span className="font-semibold text-slate-700 dark:text-slate-300">{fmt(detail.pricing?.basePrice || 0)}₫</span></div>
@@ -586,8 +586,8 @@ export default function AdminBookingsPage() {
                   const platformAmt = total - refundAmt - hostAmt;
 
                   return (
-                    <div className="bg-gradient-to-br from-indigo-50/50 via-slate-50/50 to-purple-50/50 dark:from-indigo-950/10 dark:via-slate-900/10 dark:to-purple-950/10 border border-slate-200 dark:border-slate-850 rounded-xl p-4 mb-4">
-                      <div className="text-xs font-black text-indigo-700 dark:text-indigo-400 mb-3 flex items-center justify-between">
+                    <div className="bg-gradient-to-br from-primary/5 via-slate-50/50 to-orange-50/5 dark:from-primary/5 dark:via-slate-900/10 dark:to-orange-950/5 border border-slate-200 dark:border-slate-850 rounded-xl p-4 mb-4">
+                      <div className="text-xs font-black text-primary mb-3 flex items-center justify-between">
                         <span>TÍNH TOÁN PHÂN CHIA HỦY BOOKING</span>
                         <span className="text-[10px] font-bold text-slate-450 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                           Khoảng cách: {diffDays.toFixed(1)} ngày
@@ -706,7 +706,7 @@ export default function AdminBookingsPage() {
 
             <div className="space-y-3.5">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Booking mã: <strong className="text-slate-700 dark:text-slate-200 font-bold">{modal.booking.code}</strong> — Giá trị: <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{fmt(modal.booking.pricing?.total || 0)}₫</strong>
+                Booking mã: <strong className="text-slate-700 dark:text-slate-200 font-bold">{modal.booking.code}</strong> — Giá trị: <strong className="text-primary font-bold">{fmt(modal.booking.pricing?.total || 0)}₫</strong>
               </p>
 
               {/* Cannot-attend refund summary */}
@@ -724,10 +724,10 @@ export default function AdminBookingsPage() {
                 const refundAmt = Math.round(total * refundRate);
                 const hostAmt = Math.round(total * hostRate);
                 return (
-                  <div className="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/30 text-xs">
-                    <div className="font-black text-indigo-700 dark:text-indigo-400 mb-2">Tóm tắt xử lý</div>
+                  <div className="p-3 rounded-xl bg-primary/10 dark:bg-primary/20 border border-primary/20 text-xs">
+                    <div className="font-black text-primary mb-2">Tóm tắt xử lý</div>
                     <div className="space-y-1">
-                      <div className="flex justify-between"><span className="text-slate-400">Hoàn cho khách ({Math.round(refundRate * 100)}%):</span> <span className="font-bold text-blue-600">{fmt(refundAmt)}₫</span></div>
+                      <div className="flex justify-between"><span className="text-slate-400">Hoàn cho khách ({Math.round(refundRate * 100)}%):</span> <span className="font-bold text-primary">{fmt(refundAmt)}₫</span></div>
                       <div className="flex justify-between"><span className="text-slate-400">Ví host nhận ({Math.round(hostRate * 100)}%):</span> <span className="font-bold text-purple-600">{fmt(hostAmt)}₫</span></div>
                       <div className="flex justify-between border-t border-slate-200/60 dark:border-slate-700/40 pt-1 mt-1"><span className="text-slate-400">Platform giữ ({Math.round((1 - refundRate - hostRate) * 100)}%):</span> <span className="font-bold text-slate-600">{fmt(total - refundAmt - hostAmt)}₫</span></div>
                     </div>
@@ -758,7 +758,7 @@ export default function AdminBookingsPage() {
                   onChange={e => setActionNote(e.target.value)}
                   placeholder="Nhập ghi chú phản hồi..."
                   rows={3}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:text-slate-200"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-slate-200"
                 />
               </div>
             </div>
@@ -777,7 +777,7 @@ export default function AdminBookingsPage() {
                   'px-4 py-2 rounded-xl text-xs font-extrabold text-white transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
                   (modal.type === 'refund-reject' || modal.type === 'cannot-attend-reject')
                     ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/10'
-                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/10'
+                    : 'bg-primary hover:bg-primary/90 shadow-primary/10'
                 )}
               >
                 {acting ? 'Đang xử lý...' : (modal.type.includes('reject') ? 'Từ chối' : 'Xác nhận')}

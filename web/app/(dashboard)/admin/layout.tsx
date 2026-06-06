@@ -25,7 +25,7 @@ export default function AdminLayout({
         </p>
         <Link
           href="/"
-          className="mt-6 rounded bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
+          className="mt-6 rounded bg-primary px-6 py-3 font-medium text-white transition hover:bg-primary/90"
         >
           Quay về trang chủ
         </Link>

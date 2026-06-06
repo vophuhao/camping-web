@@ -120,8 +120,8 @@ export default function UsersManagementPage() {
       label: 'Tổng người dùng',
       value: totalCount,
       icon: Users,
-      bg: 'bg-indigo-50 dark:bg-indigo-950/30',
-      color: 'text-indigo-600 dark:text-indigo-400',
+      bg: 'bg-primary/10 dark:bg-primary/20',
+      color: 'text-primary dark:text-primary',
     },
     {
       label: 'Quản trị viên',
@@ -134,8 +134,8 @@ export default function UsersManagementPage() {
       label: 'Chủ nhà (Host)',
       value: hostCount,
       icon: UserCheck,
-      bg: 'bg-sky-50 dark:bg-sky-950/30',
-      color: 'text-sky-600 dark:text-sky-400',
+      bg: 'bg-primary/10 dark:bg-primary/20',
+      color: 'text-primary dark:text-primary',
     },
     {
       label: 'Tài khoản bị khóa',
@@ -151,9 +151,9 @@ export default function UsersManagementPage() {
       case 'admin':
         return 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-500/20';
       case 'host':
-        return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20';
+        return 'bg-primary/10 text-primary dark:text-primary border border-primary/20';
       default:
-        return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20';
+        return 'bg-primary/10 text-primary dark:text-primary border border-primary/20';
     }
   };
 
@@ -210,7 +210,7 @@ export default function UsersManagementPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm theo tên, email, điện thoại..."
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-205 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-205 focus:ring-2 focus:ring-primary/20 focus:outline-none"
               />
             </div>
 
@@ -220,7 +220,7 @@ export default function UsersManagementPage() {
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer",
                 showFilters
-                  ? "border-indigo-600 bg-indigo-50/10 text-indigo-600 dark:text-indigo-400"
+                  ? "border-primary bg-primary/10 text-primary dark:text-primary"
                   : "border-slate-255 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-655 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900"
               )}
             >
@@ -249,7 +249,7 @@ export default function UsersManagementPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-705 dark:text-slate-200"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-705 dark:text-slate-200"
               >
                 <option value="all">Tất cả vai trò</option>
                 <option value="user">Người dùng (Member)</option>
@@ -263,7 +263,7 @@ export default function UsersManagementPage() {
               <select
                 value={verifiedFilter}
                 onChange={(e) => setVerifiedFilter(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-slate-705 dark:text-slate-200"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-primary/20 focus:outline-none text-slate-705 dark:text-slate-200"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="verified">Đã xác thực</option>
@@ -277,7 +277,7 @@ export default function UsersManagementPage() {
       {/* Users Table */}
       {loading ? (
         <div className="flex items-center justify-center py-24 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
       ) : filteredUsers.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-855 rounded-2xl shadow-xs text-slate-400">
@@ -312,7 +312,7 @@ export default function UsersManagementPage() {
                             className="h-9 w-9 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800"
                           />
                         ) : (
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950/55 text-xs font-bold text-indigo-650 dark:text-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-900/40">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20 text-xs font-bold text-primary ring-2 ring-primary/20">
                             {user.username.slice(0, 2).toUpperCase()}
                           </div>
                         )}
@@ -345,7 +345,7 @@ export default function UsersManagementPage() {
                     {/* Verified Status */}
                     <td className="px-5 py-3.5">
                       {user.isVerified ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-bold">
+                        <span className="inline-flex items-center gap-1 text-xs text-primary dark:text-primary font-bold">
                           <CheckCircle className="h-3.5 w-3.5" />
                           Đã xác thực
                         </span>
@@ -365,7 +365,7 @@ export default function UsersManagementPage() {
                           Đã khóa
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-full border border-indigo-500/10">
+                        <span className="inline-flex items-center gap-1 text-xs text-primary dark:text-primary font-bold bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-full border border-primary/10">
                           <ShieldCheck className="h-3.5 w-3.5" />
                           Hoạt động
                         </span>
@@ -390,7 +390,7 @@ export default function UsersManagementPage() {
                         className={cn(
                           "inline-flex items-center justify-center p-1.5 rounded-lg border transition-all cursor-pointer shadow-sm hover:shadow",
                           user.isBlocked
-                            ? "text-indigo-600 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700 dark:text-indigo-400 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40"
+                            ? "text-primary border-primary/20 bg-primary/10 hover:bg-primary/20 hover:text-primary dark:text-primary dark:border-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30"
                             : "text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 dark:text-rose-400 dark:border-rose-900/50 dark:bg-rose-950/20 dark:hover:bg-rose-950/40"
                         )}
                         title={user.isBlocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
@@ -411,7 +411,7 @@ export default function UsersManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner", selectedUser.isBlocked ? "bg-indigo-50 dark:bg-indigo-950 text-indigo-650 dark:text-indigo-400" : "bg-rose-50 dark:bg-rose-950 text-rose-650 dark:text-rose-455")}>
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner", selectedUser.isBlocked ? "bg-primary/10 dark:bg-primary/20 text-primary" : "bg-rose-50 dark:bg-rose-950 text-rose-650 dark:text-rose-455")}>
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <h3 className="text-md font-black text-slate-850 dark:text-slate-100">
@@ -440,7 +440,7 @@ export default function UsersManagementPage() {
                 className={cn(
                   "rounded-xl px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer shadow-xs",
                   selectedUser.isBlocked
-                    ? "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                    ? "bg-primary hover:bg-primary/90"
                     : "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
                 )}
               >

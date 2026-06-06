@@ -530,9 +530,9 @@ export default function PropertySitesPage() {
 
   if (loading && sites === null) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-[#FAF9F5]">
+      <div className="flex min-h-[60vh] items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#1B4332] border-t-transparent" />
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="mt-4 text-stone-600 font-serif font-medium">Đang tải...</p>
         </div>
       </div>
@@ -567,7 +567,7 @@ export default function PropertySitesPage() {
             </div>
 
             <Button
-              className="bg-[#1B4332] hover:bg-[#122c21] text-white font-medium rounded-xl px-5 py-5 text-sm transition-all flex-shrink-0 gap-2"
+              className="bg-primary hover:bg-primary/90 text-white font-medium rounded-xl px-5 py-5 text-sm transition-all flex-shrink-0 gap-2"
               onClick={() =>
                 router.push(`/host/properties/${propertyId}/sites/new`)
               }
@@ -591,7 +591,7 @@ export default function PropertySitesPage() {
                     placeholder="Tìm kiếm theo tên site..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-10 border-stone-200 focus:ring-2 focus:ring-emerald-800/20 focus:border-[#1B4332] rounded-xl h-10 text-sm"
+                    className="pl-10 border-stone-200 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl h-10 text-sm"
                   />
                 </div>
 
@@ -666,7 +666,7 @@ export default function PropertySitesPage() {
                 </p>
                 {!searchQuery && statusFilter === 'all' && typeFilter === 'all' && (
                   <Button
-                    className="bg-[#1B4332] hover:bg-[#122c21] text-white font-medium rounded-xl px-5 py-5 text-sm transition-all"
+                    className="bg-primary hover:bg-primary/90 text-white font-medium rounded-xl px-5 py-5 text-sm transition-all"
                     onClick={() =>
                       router.push(`/host/properties/${propertyId}/sites/new`)
                     }

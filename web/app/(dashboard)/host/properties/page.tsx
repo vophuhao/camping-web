@@ -108,9 +108,9 @@ export default function PropertiesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAF9F5]">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#1B4332] border-t-transparent" />
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="mt-4 text-stone-600 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function PropertiesPage() {
             <h1 className="text-3xl  font-bold text-stone-900 tracking-tight">Khu cắm trại</h1>
           </div>
           <Button
-            className="bg-[#1B4332] hover:bg-[#122c21] text-white shadow-md hover:shadow-lg transition-all rounded-xl px-5 py-5 text-sm font-medium gap-2"
+            className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all rounded-xl px-5 py-5 text-sm font-medium gap-2"
             onClick={() => router.push('/host/properties/new')}
           >
             <Plus className="h-4 w-4" />
@@ -146,7 +146,7 @@ export default function PropertiesPage() {
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-stone-500 block">Trạng thái</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="bg-stone-50 border-stone-200 h-10 text-sm rounded-xl focus:ring-[#1B4332]/20 focus:border-[#1B4332]">
+                  <SelectTrigger className="bg-stone-50 border-stone-200 h-10 text-sm rounded-xl focus:ring-primary/20 focus:border-primary">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -192,7 +192,7 @@ export default function PropertiesPage() {
                 placeholder="Tìm kiếm khu cắm trại..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 bg-white border-stone-200/80 h-11 rounded-xl focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] text-sm"
+                className="pl-11 bg-white border-stone-200/80 h-11 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
               />
             </div>
 
@@ -200,14 +200,14 @@ export default function PropertiesPage() {
             <div className="flex bg-white border border-stone-200/80 rounded-xl p-1 shadow-sm">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-emerald-50 text-[#1B4332]' : 'text-stone-500 hover:text-stone-850'}`}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-500 hover:text-stone-850'}`}
                 title="Bố cục thẻ ngang"
               >
                 <Grid3x3 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-emerald-50 text-[#1B4332]' : 'text-stone-500 hover:text-stone-850'}`}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-500 hover:text-stone-850'}`}
                 title="Bố cục bảng danh sách"
               >
                 <List className="h-4 w-4" />
@@ -229,7 +229,7 @@ export default function PropertiesPage() {
               </p>
               {!searchQuery && statusFilter === 'all' && (
                 <Button
-                  className="bg-[#1B4332] hover:bg-[#122c21] text-white rounded-xl px-5 py-5 text-sm"
+                  className="bg-primary hover:bg-primary/90 text-white rounded-xl px-5 py-5 text-sm"
                   onClick={() => router.push('/host/properties/new')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -376,7 +376,7 @@ function PropertyGridCard({ property, statusConfig, onEdit, onViewSites, onAddSi
       <div className="flex flex-row md:flex-col justify-center items-stretch gap-3 p-6 border-t md:border-t-0 md:border-l border-stone-200/80 bg-stone-50/50 md:min-w-[220px]">
         <Button
           onClick={() => onViewSites(property._id)}
-          className="flex-1 md:flex-initial bg-[#1B4332] hover:bg-[#122c21] text-white font-medium py-5 shadow-sm hover:shadow transition-all rounded-xl gap-2 text-sm"
+          className="flex-1 md:flex-initial bg-primary hover:bg-primary/90 text-white font-medium py-5 shadow-sm hover:shadow transition-all rounded-xl gap-2 text-sm"
         >
           <Eye className="h-4 w-4" />
           Quản lý sites
@@ -439,7 +439,7 @@ function PropertyListRow({ property, statusConfig, onEdit, onViewSites, onAddSit
         </div>
       </td>
       <td className="px-6 py-4 text-center">
-        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-emerald-50 border border-emerald-100 text-[#1B4332] font-bold text-sm">
+        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-sm">
           {property.stats?.totalSites || 0}
         </span>
       </td>

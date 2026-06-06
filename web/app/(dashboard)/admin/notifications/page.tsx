@@ -119,7 +119,7 @@ function ComposeTab() {
               onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
               placeholder="Nhập tiêu đề thông báo..."
               maxLength={100}
-              className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
             <div className="text-[11px] text-slate-400 dark:text-slate-500 text-right mt-1">{form.title.length}/100</div>
           </div>
@@ -134,7 +134,7 @@ function ComposeTab() {
               placeholder="Nhập nội dung thông báo chi tiết..."
               rows={4}
               maxLength={500}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-955 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
             />
             <div className="text-[11px] text-slate-400 dark:text-slate-500 text-right mt-1">{form.message.length}/500</div>
           </div>
@@ -149,7 +149,7 @@ function ComposeTab() {
                 value={form.link}
                 onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
                 placeholder="Ví dụ: /host/properties hoặc URL khác..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -179,7 +179,7 @@ function ComposeTab() {
             className={`w-full py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all mt-6 shadow-sm ${
               sending || !form.title.trim() || !form.message.trim()
                 ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
+                : 'bg-primary hover:bg-primary/90 active:scale-[0.98]'
             }`}
           >
             {sending ? (
@@ -199,20 +199,20 @@ function ComposeTab() {
         <div className="space-y-4">
           <label className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
             sendToAll
-              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20'
+              ? 'border-primary bg-primary/5 dark:bg-primary/5'
               : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
           }`}>
             <input
               type="checkbox"
               checked={sendToAll}
               onChange={e => { setSendToAll(e.target.checked); setSelectedHosts([]); }}
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+              className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer"
             />
             <div className="flex-1">
-              <div className={`font-bold text-sm ${sendToAll ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>Tất cả host</div>
+              <div className={`font-bold text-sm ${sendToAll ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>Tất cả host</div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500">{hosts.length} host đang hoạt động</div>
             </div>
-            {sendToAll && <Check size={16} className="text-indigo-600 dark:text-indigo-400 ml-auto" />}
+            {sendToAll && <Check size={16} className="text-primary ml-auto" />}
           </label>
 
           {!sendToAll && (
@@ -223,12 +223,12 @@ function ComposeTab() {
                   value={hostSearch}
                   onChange={e => setHostSearch(e.target.value)}
                   placeholder="Tìm kiếm host..."
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-955 text-xs focus:outline-none focus:ring-1 focus:ring-primary transition-all"
                 />
               </div>
 
               {selectedHosts.length > 0 && (
-                <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-primary/10 dark:bg-primary/20 text-xs text-primary font-semibold">
                   <span>Đã chọn: {selectedHosts.length} host</span>
                   <button onClick={() => setSelectedHosts([])} className="text-[10px] text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-all">
                     Bỏ chọn tất cả
@@ -248,14 +248,14 @@ function ComposeTab() {
                       <label
                         key={host._id}
                         className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/40 ${
-                          selected ? 'bg-indigo-50/40 dark:bg-indigo-950/10 border-l-2 border-indigo-500 pl-2' : ''
+                          selected ? 'bg-primary/5 dark:bg-primary/5 border-l-2 border-primary pl-2' : ''
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={selected}
                           onChange={() => toggleHost(host._id)}
-                          className="w-3.5 h-3.5 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+                          className="w-3.5 h-3.5 text-primary rounded focus:ring-primary cursor-pointer"
                         />
                         {host.avatarUrl ? (
                           <img src={host.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800" />
@@ -342,7 +342,7 @@ function SentHistoryTab() {
 
   const PRIORITY_BADGE: Record<string, { label: string; color: string }> = {
     low: { label: 'Thấp', color: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/80 dark:text-slate-400 dark:border-slate-800' },
-    medium: { label: 'Trung bình', color: 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30' },
+    medium: { label: 'Trung bình', color: 'bg-primary/10 text-primary border-primary/20' },
     high: { label: 'Cao', color: 'bg-red-50 text-red-600 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30' },
   };
 
@@ -399,7 +399,7 @@ function SentHistoryTab() {
                     </div>
 
                     {notif.link && (
-                      <a href={notif.link} className="flex items-center gap-1 text-indigo-500 hover:text-indigo-600 font-semibold">
+                      <a href={notif.link} className="flex items-center gap-1 text-primary hover:underline font-semibold">
                         <ExternalLink size={10} /> {notif.link}
                       </a>
                     )}
@@ -495,10 +495,10 @@ export default function AdminNotificationsPage() {
     <div className="h-[calc(100vh-2rem)] flex flex-col gap-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
           Quản lý thông báo
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <p className="text-xs text-slate-400 font-semibold mt-0.5">
           Xem các thông báo nhận được từ hệ thống hoặc gửi thông báo mới cho các host.
         </p>
       </div>

@@ -98,25 +98,25 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed top-0 left-0 h-screen bg-slate-900 border-r border-slate-800/80 shadow-2xl flex flex-col transition-all duration-300 z-50',
+        'fixed top-0 left-0 h-screen bg-custom-sidebar border-r border-custom-sidebar-border shadow-2xl flex flex-col transition-all duration-300 z-50',
         collapsed ? 'w-16' : 'w-56'
       )}
     >
-      {/* Logo + Toggle */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800/50">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
-            <Home className="h-4.5 w-4.5 text-sky-400" />
-          </div>
-          {!collapsed && (
-            <span className="text-sm font-bold text-white tracking-wide truncate">
-              HDCamping
-            </span>
-          )}
-        </div>
+      <div className={cn(
+        "relative flex h-16 items-center border-b border-custom-sidebar-border/50 px-4",
+        collapsed ? "justify-center" : "justify-center"
+      )}>
+        {!collapsed && (
+          <span className="text-xl font-bold text-white tracking-wide truncate">
+            HDCAMPING
+          </span>
+        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors"
+          className={cn(
+            "p-1.5 rounded-lg text-slate-300 hover:bg-custom-sidebar-hover hover:text-white transition-colors",
+            !collapsed ? "absolute right-4" : ""
+          )}
           title={collapsed ? 'Mở rộng' : 'Thu gọn'}
         >
           <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsed && "rotate-180")} />
@@ -137,16 +137,16 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           const isSubmenuActive = hasSubmenu && item.subMenu!.some(sub => pathname.startsWith(sub.href));
 
           const finalClasses = cn(
-            'group relative flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 w-full justify-between cursor-pointer',
+            'group relative flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 w-full justify-between cursor-pointer',
             isActive || isSubmenuActive
-              ? 'bg-sky-500/15 text-sky-300'
-              : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-100'
+              ? 'bg-primary/15 text-primary'
+              : 'text-slate-200 hover:bg-custom-sidebar-hover/70 hover:text-white'
           );
 
           const mainContent = (
             <div className="flex items-center gap-3 w-full min-w-0">
               <div className="relative flex-shrink-0">
-                <Icon className={cn("h-4.5 w-4.5 transition-colors", (isActive || isSubmenuActive) ? "text-sky-400" : "text-slate-500 group-hover:text-slate-200")} />
+                <Icon className={cn("h-4.5 w-4.5 transition-colors", (isActive || isSubmenuActive) ? "text-primary" : "text-slate-400 group-hover:text-slate-100")} />
                 {item.name === 'Thông báo' && unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -170,7 +170,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
 
           // Active indicator pill on left edge
           const activeIndicator = (isActive || isSubmenuActive) && (
-            <div className="absolute left-0 top-1/2 h-7 w-0.5 -translate-y-1/2 rounded-r bg-sky-400" />
+            <div className="absolute left-0 top-1/2 h-7 w-0.5 -translate-y-1/2 rounded-r bg-primary" />
           );
 
           if (hasSubmenu) {
@@ -188,7 +188,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
 
                 {/* Submenu list */}
                 {isExpanded && !collapsed && (
-                  <div className="pl-9 pr-2 py-1 flex flex-col gap-1 border-l border-slate-800/80 ml-5 mt-1 space-y-1">
+                  <div className="pl-9 pr-2 py-1 flex flex-col gap-1 border-l border-custom-sidebar-border ml-5 mt-1 space-y-1">
                     {item.subMenu!.map((sub) => {
                       const subActive = pathname.startsWith(sub.href);
                       return (
@@ -196,10 +196,10 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
                           key={sub.name}
                           href={sub.href}
                           className={cn(
-                            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors truncate',
+                            'px-3 py-1.5 rounded-md text-xs transition-colors truncate',
                             subActive
-                              ? 'text-sky-400 bg-sky-500/10'
-                              : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/30'
+                              ? 'text-primary bg-primary/10 font-semibold'
+                              : 'text-slate-300 hover:text-white hover:bg-custom-sidebar-hover/30 font-medium'
                           )}
                         >
                           {sub.name}
@@ -244,14 +244,14 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       </nav>
 
       {/* ── Bottom Section ── */}
-      <div className="border-t border-slate-800/60 p-3 space-y-1.5 bg-slate-950/20">
+      <div className="border-t border-custom-sidebar-border/60 p-3 space-y-1.5 bg-black/20">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
           className={cn(
-            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
-            'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors',
+            'text-slate-200 hover:bg-custom-sidebar-hover/50 hover:text-white',
           )}
         >
           <div className="relative flex-shrink-0 h-4 w-4">
@@ -268,8 +268,8 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           onClick={handleLogout}
           title="Đăng xuất"
           className={cn(
-            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors',
-            'text-slate-400 hover:bg-red-950/20 hover:text-red-400',
+            'flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors',
+            'text-slate-200 hover:bg-red-950/20 hover:text-red-400',
           )}
         >
           <LogOut className="h-4 w-4 flex-shrink-0" />
@@ -281,7 +281,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         {/* User Info */}
         <div
           className={cn(
-            'flex items-center gap-3 rounded-lg p-2 border border-slate-800/40 bg-slate-950/40 transition-all duration-200',
+            'flex items-center gap-3 rounded-lg p-2 border border-custom-sidebar-border/40 bg-black/20 transition-all duration-200',
             collapsed ? 'justify-center' : '',
           )}
         >
@@ -290,8 +290,8 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             {userInitial}
           </div>
           <div className={cn('min-w-0 transition-all duration-300 text-left', collapsed ? 'w-0 overflow-hidden opacity-0' : 'opacity-100')}>
-            <p className="text-xs font-semibold text-slate-200 truncate">{user?.username || 'Admin'}</p>
-            <p className="text-[10px] text-slate-500 truncate">{user?.email || 'admin@campo.vn'}</p>
+            <p className="text-xs font-bold text-white truncate">{user?.username || 'Admin'}</p>
+            <p className="text-[10px] text-slate-300 truncate">{user?.email || 'admin@campo.vn'}</p>
           </div>
         </div>
       </div>

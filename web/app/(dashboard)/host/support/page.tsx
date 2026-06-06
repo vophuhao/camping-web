@@ -318,7 +318,7 @@ export default function HostSupportPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900">Tin nhắn</h1>
             {totalUnread > 0 && (
-              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-blue-500 px-2 text-xs font-semibold text-white">
+              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-2 text-xs font-semibold text-white">
                 {totalUnread > 99 ? '99+' : totalUnread}
               </span>
             )}
@@ -336,7 +336,7 @@ export default function HostSupportPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm..."
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -344,7 +344,7 @@ export default function HostSupportPage() {
         <div className="flex-1 overflow-y-auto">
           {loadingConvs && (
             <div className="flex justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
             </div>
           )}
 
@@ -363,7 +363,7 @@ export default function HostSupportPage() {
               <button
                 key={conv._id}
                 onClick={() => handleSelectConv(conv)}
-                className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''
+                className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${isSelected ? 'bg-primary/10' : ''
                   }`}
               >
                 <div className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export default function HostSupportPage() {
                       </div>
                     )}
                     {hasUnread && (
-                      <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white">
+                      <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                         {conv.unreadCount}
                       </span>
                     )}
@@ -445,7 +445,7 @@ export default function HostSupportPage() {
             <div ref={messagesEndRef} className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100 p-5">
               {loadingMsgs && (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
 
@@ -527,7 +527,7 @@ export default function HostSupportPage() {
                       ) : (
                         <div
                           className={`relative rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${isHost
-                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                            ? 'bg-primary text-white'
                             : 'bg-white text-gray-900 border border-gray-200'
                             }`}
                         >
@@ -594,7 +594,7 @@ export default function HostSupportPage() {
                             })}
                         </span>
                         {isHost && msg.isRead && (
-                          <svg className="h-3.5 w-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="h-3.5 w-3.5 text-primary" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
                           </svg>
                         )}
@@ -664,10 +664,10 @@ export default function HostSupportPage() {
                     }}
                     placeholder={isConnected ? "Nhập tin nhắn..." : "Đang kết nối..."}
                     disabled={sending || uploadingImages || !isConnected}
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-12 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-12 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-gray-50"
                   />
                   {selectedImages.length > 0 && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-xs font-semibold text-blue-600">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-xs font-semibold text-primary">
                       {selectedImages.length}
                     </span>
                   )}
@@ -677,7 +677,7 @@ export default function HostSupportPage() {
                 <button
                   onClick={sendReply}
                   disabled={sending || uploadingImages || (!replyText.trim() && selectedImages.length === 0) || !isConnected}
-                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/10 transition-all hover:shadow-lg hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {sending || uploadingImages ? (
                     <Loader2 className="h-5 w-5 animate-spin" />

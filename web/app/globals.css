@@ -59,6 +59,9 @@
   --primary-light: color-mix(in oklab, var(--primary) 18%, transparent);
   --primary-dark: color-mix(in oklab, var(--primary) 80%, black);
   --primary-alpha: color-mix(in oklab, var(--primary) 14%, transparent);
+  --custom-sidebar-bg: oklch(15% 0.03 40.225);
+  --custom-sidebar-border: oklch(20% 0.04 40.225);
+  --custom-sidebar-hover: oklch(24% 0.05 40.225);
 }
 
 .dark {
@@ -118,6 +121,9 @@
   --primary-light: color-mix(in oklab, var(--primary) 20%, transparent);
   --primary-dark: color-mix(in oklab, var(--primary) 70%, black);
   --primary-alpha: color-mix(in oklab, var(--primary) 15%, transparent);
+  --custom-sidebar-bg: oklch(12% 0.035 200);
+  --custom-sidebar-border: oklch(17% 0.045 200);
+  --custom-sidebar-hover: oklch(20% 0.055 200);
 }
 
 @theme inline {
@@ -156,6 +162,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-custom-sidebar: var(--custom-sidebar-bg);
+  --color-custom-sidebar-border: var(--custom-sidebar-border);
+  --color-custom-sidebar-hover: var(--custom-sidebar-hover);
 }
 
 @utility info-label {

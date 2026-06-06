@@ -638,22 +638,6 @@ export default function ConfirmationPage() {
                   </Button>
                 )}
 
-              {/* Debug info để kiểm tra trên web */}
-              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 space-y-1">
-                <p className="font-semibold text-slate-900">🔍 Thông tin kiểm tra nút Không hài lòng:</p>
-                <p>• Trạng thái booking: <span className="font-mono bg-white px-1 py-0.5 rounded border">{booking.status}</span> (Yêu cầu: confirmed)</p>
-                <p>• Thanh toán: <span className="font-mono bg-white px-1 py-0.5 rounded border">{booking.paymentStatus}</span> (Yêu cầu: paid)</p>
-                <p>• Đã gửi yêu cầu KHL chưa: <span className="font-mono bg-white px-1 py-0.5 rounded border">{booking.dissatisfactionRequest?.requestedAt ? 'Đã gửi' : 'Chưa gửi'}</span> (Yêu cầu: Chưa gửi)</p>
-                <p>• Thời gian hiện tại (Server/Client): <span className="font-mono bg-white px-1 py-0.5 rounded border">{new Date().toLocaleString('vi-VN')}</span></p>
-                <p>• Thời gian Check-in: <span className="font-mono bg-white px-1 py-0.5 rounded border">{new Date(booking.checkIn).toLocaleString('vi-VN')}</span></p>
-                <p>• Hạn chót 12h sau Check-in: <span className="font-mono bg-white px-1 py-0.5 rounded border">{new Date(new Date(booking.checkIn).getTime() + 12 * 60 * 60 * 1000).toLocaleString('vi-VN')}</span></p>
-                <p>• Đang trong khung 12h: <span className="font-mono bg-white px-1 py-0.5 rounded border">{(() => {
-                  const now = new Date();
-                  const checkIn = new Date(booking.checkIn);
-                  const limit = new Date(checkIn.getTime() + 12 * 60 * 60 * 1000);
-                  return (now >= checkIn && now <= limit) ? 'ĐÚNG' : 'SAI';
-                })()}</span></p>
-              </div>
 
               {/* Trạng thái đang chờ xét duyệt hoàn tiền */}
               {booking.dissatisfactionRequest?.status === 'pending' && (

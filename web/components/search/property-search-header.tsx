@@ -121,9 +121,9 @@ export function PropertySearchHeader() {
     <>
       <div className="sticky top-0 z-10 bg-white shadow-sm">
         <div className="container px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-center md:justify-between gap-3 md:gap-4">
             {/* Compact Search Bar */}
-            <div className="shrink-0">
+            <div className="w-full md:w-auto flex justify-center md:shrink-0">
               <CompactSearchBar
                 location={location}
                 dateRange={dateRange}
@@ -134,7 +134,7 @@ export function PropertySearchHeader() {
             </div>
 
             {/* Property Filters */}
-            <div className="flex-1 overflow-x-auto">
+            <div className="w-full md:flex-1 overflow-x-auto py-1 scrollbar-none">
               <PropertyFilter />
             </div>
           </div>

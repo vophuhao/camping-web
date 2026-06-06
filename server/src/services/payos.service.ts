@@ -2,6 +2,7 @@ import { ErrorFactory } from "@/errors";
 import { AvailabilityModel, BookingModel } from "@/models";
 import appAssert from "../utils/app-assert";
 import mongoose from "mongoose";
+import { sendBookingSuccessEmail } from "../utils/send-booking-email";
 
 
 
@@ -22,11 +23,22 @@ export default class PayOSService {
                 const orderCode = data.data?.orderCode;
                 const success = data.data?.status === "PAID" || data.success;
                 const booking = await BookingModel.findOne({ payOSOrderCode: orderCode })
+                    .populate("property", "name location")
+                    .populate("site", "name")
+                    .populate("guest", "username email fullName name");
                 appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
                 console.log("Found booking for PayOS webhook:", booking);
                 if (success) {
                     booking.paymentStatus = "paid";
                     await booking.save();
+                    
+                    // Gửi email xác nhận đặt chỗ cho khách hàng
+                    try {
+                        await sendBookingSuccessEmail(booking);
+                    } catch (mailErr) {
+                        console.error("Lỗi khi gửi email xác nhận đặt chỗ:", mailErr);
+                    }
+
                     return { success: true, code: "PAYMENT_SUCCESS", message: "Thanh toán thành công", booking };
                 } else {
                     console.error("Payment failed for booking with orderCode:", orderCode);

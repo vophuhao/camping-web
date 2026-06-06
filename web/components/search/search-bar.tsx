@@ -63,13 +63,13 @@ export function SearchBar({
   return (
     <div className="w-full max-w-6xl">
       {/* Search Bar - Hipcamp Style */}
-      <div className="flex w-full items-stretch gap-4">
+      <div className="flex flex-col md:flex-row w-full items-stretch gap-3 md:gap-4 bg-white md:bg-transparent p-4 md:p-0 rounded-xl border border-gray-200 md:border-none shadow-sm md:shadow-none">
         {/* Location Popover */}
         <Popover open={locationOpen} onOpenChange={setLocationOpen}>
           <PopoverTrigger asChild>
             <button
               className={cn(
-                'flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-left shadow-sm transition-all hover:shadow-md',
+                'flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-left shadow-sm transition-all hover:shadow-md w-full',
                 locationOpen && 'border-gray-900 ring-2 ring-gray-900',
               )}
             >
@@ -80,7 +80,7 @@ export function SearchBar({
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-[500px] p-0"
+            className="w-[var(--radix-popover-trigger-width)] md:w-[500px] p-0"
             align="start"
             sideOffset={8}
           >
@@ -118,7 +118,7 @@ export function SearchBar({
           onOpenChange={setDateOpen}
           placeholder="Thêm ngày"
           buttonClassName={cn(
-            'h-auto flex-1 gap-3 rounded-lg border-gray-300 px-4 py-3 shadow-sm hover:shadow-md',
+            'h-auto flex-1 gap-3 rounded-lg border-gray-300 px-4 py-3 shadow-sm hover:shadow-md w-full',
             dateOpen && 'border-gray-900 ring-2 ring-gray-900',
           )}
           align="center"
@@ -137,7 +137,7 @@ export function SearchBar({
           open={guestOpen}
           onOpenChange={setGuestOpen}
           buttonClassName={cn(
-            'h-auto flex-1 gap-3 rounded-lg border-gray-300 px-4 py-3 shadow-sm hover:shadow-md',
+            'h-auto flex-1 gap-3 rounded-lg border-gray-300 px-4 py-3 shadow-sm hover:shadow-md w-full',
             guestOpen && 'border-gray-900 ring-2 ring-gray-900',
           )}
           align="end"
@@ -154,7 +154,7 @@ export function SearchBar({
         {/* Search Button */}
         <Button
           size="lg"
-          className="bg-primary hover:brightness-80 h-auto cursor-pointer rounded-lg px-8 py-3 text-base font-semibold"
+          className="bg-primary hover:brightness-80 h-auto cursor-pointer rounded-lg px-8 py-3 text-base font-semibold w-full md:w-auto"
           onClick={onSearch}
           disabled={loading}
         >

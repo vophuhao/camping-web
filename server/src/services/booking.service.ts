@@ -10,6 +10,7 @@ import {
 } from "@/models";
 import appAssert from "../utils/app-assert";
 import { sendMail } from "../utils/send-mail";
+import { sendBookingSuccessEmail } from "../utils/send-booking-email";
 import type {
   CancelBookingInput,
   CreateBookingInput,
@@ -267,12 +268,23 @@ export class BookingService {
       const orderCode = data.data?.code;
       const success = data.data?.status === "PAID" || data.success;
 
-      const booking = await BookingModel.findOne({ payOSOrderCode: orderCode });
+      const booking = await BookingModel.findOne({ payOSOrderCode: orderCode })
+        .populate("property", "name location")
+        .populate("site", "name")
+        .populate("guest", "username email fullName name");
       appAssert(booking, ErrorFactory.resourceNotFound("Booking"));
 
       if (success) {
         booking.paymentStatus = "paid";
         await booking.save();
+
+        // Gửi email xác nhận đặt chỗ cho khách hàng
+        try {
+          await sendBookingSuccessEmail(booking);
+        } catch (mailErr) {
+          console.error("Lỗi khi gửi email xác nhận đặt chỗ:", mailErr);
+        }
+
         return {
           success: true,
           code: "PAYMENT_SUCCESS",

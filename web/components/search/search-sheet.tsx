@@ -66,7 +66,6 @@ export function SearchSheet({
         </SheetHeader>
         <div className="mb-6 flex justify-center">
           <SearchBar
-            isMobileCollapsed={false}
             location={location}
             onLocationChange={onLocationChange}
             onLocationSelect={onLocationSelect}

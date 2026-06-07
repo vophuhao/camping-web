@@ -4,19 +4,23 @@ import { oneWeekFromNow, thirtyDaysFromNow } from "./date";
 
 export const REFRESH_PATH = "/auth/refresh";
 
-const defaults: CookieOptions = {
-  sameSite: NODE_ENV === "production" ? "none" : "lax",
-  httpOnly: true,
-  secure: NODE_ENV === "production" ? true : false,
+const defaults = (): CookieOptions => {
+  const cookieDomain = process.env.COOKIE_DOMAIN;
+  return {
+    sameSite: NODE_ENV === "production" ? "none" : "lax",
+    httpOnly: true,
+    secure: NODE_ENV === "production" ? true : false,
+    ...(cookieDomain && NODE_ENV === "production" ? { domain: cookieDomain } : {}),
+  };
 };
 
 export const getAccessTokenCookieOptions = (): CookieOptions => ({
-  ...defaults,
+  ...defaults(),
   expires: thirtyDaysFromNow(),
 });
 
 export const getRefreshTokenCookieOptions = (): CookieOptions => ({
-  ...defaults,
+  ...defaults(),
   expires: oneWeekFromNow(),
   path: REFRESH_PATH,
 });
@@ -33,14 +37,18 @@ export const setAuthCookies = ({ res, accessToken, refreshToken }: Params) =>
     .cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions());
 
 
-export const clearAuthCookies = (res: Response) =>
-  res
+export const clearAuthCookies = (res: Response) => {
+  const opts = defaults();
+  return res
     .clearCookie("accessToken", {
-      sameSite: NODE_ENV === "production" ? "none" : "lax",
-      secure: NODE_ENV === "production"
+      sameSite: opts.sameSite,
+      secure: opts.secure,
+      domain: opts.domain,
     })
     .clearCookie("refreshToken", {
       path: REFRESH_PATH,
-      sameSite: NODE_ENV === "production" ? "none" : "lax",
-      secure: NODE_ENV === "production"
+      sameSite: opts.sameSite,
+      secure: opts.secure,
+      domain: opts.domain,
     });
+};
